@@ -14,24 +14,25 @@
 
 
 <link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
 
 <script id="hexo-configurations">
     var NexT = window.NexT || {};
-    var CONFIG = {"hostname":"yoursite.com","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+    var CONFIG = {"hostname":"yoursite.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
   </script>
 
-  <meta name="description" content="轮式里程计模型两轮差分底盘的运动学模型 优点  结构简单 便宜，只需要两个电机（驱动器） 模型简单，并且可以实现任何轨迹跟踪   差分模型及运动解算    考虑两轮在做半径为r的圆周运动，v和w是底盘中心的线速度和角速度，$v{L&#x2F;R}$ 和 $\omega{L&#x2F;R}$ 分别对应左&#x2F;右轮子的线速度和角速度，d为底盘中心离两侧轮子的距离，b为两轮之间的距离（b &#x3D; 2d） 目标：根据两轮的角速度（编">
+  <meta name="description" content="本文是我在学习深蓝学院的激光slam第二课的学习笔记，这一课主要介绍了两轮差分底盘的运动模型以及怎么对里程计数据进行校正。">
 <meta property="og:type" content="article">
 <meta property="og:title" content="轮式里程计运动模型及标定">
 <meta property="og:url" content="http://yoursite.com/2020/04/18/2-wheel-odometry-model-calibration/index.html">
 <meta property="og:site_name" content="Hexo">
-<meta property="og:description" content="轮式里程计模型两轮差分底盘的运动学模型 优点  结构简单 便宜，只需要两个电机（驱动器） 模型简单，并且可以实现任何轨迹跟踪   差分模型及运动解算    考虑两轮在做半径为r的圆周运动，v和w是底盘中心的线速度和角速度，$v{L&#x2F;R}$ 和 $\omega{L&#x2F;R}$ 分别对应左&#x2F;右轮子的线速度和角速度，d为底盘中心离两侧轮子的距离，b为两轮之间的距离（b &#x3D; 2d） 目标：根据两轮的角速度（编">
+<meta property="og:description" content="本文是我在学习深蓝学院的激光slam第二课的学习笔记，这一课主要介绍了两轮差分底盘的运动模型以及怎么对里程计数据进行校正。">
 <meta property="og:locale" content="en_US">
 <meta property="og:image" content="http://yoursite.com/2020/04/18/2-wheel-odometry-model-calibration/diffence_model.png">
 <meta property="og:image" content="http://yoursite.com/2020/04/18/2-wheel-odometry-model-calibration/dead_reckoning.png.png">
 <meta property="article:published_time" content="2020-04-19T01:38:13.000Z">
-<meta property="article:modified_time" content="2020-04-19T02:14:26.568Z">
-<meta property="article:author" content="John Doe">
+<meta property="article:modified_time" content="2020-04-19T02:59:34.165Z">
+<meta property="article:author" content="Xiaotao Guo">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="http://yoursite.com/2020/04/18/2-wheel-odometry-model-calibration/diffence_model.png">
 
@@ -120,6 +121,16 @@
     <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
 
   </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a>
+
+  </li>
         <li class="menu-item menu-item-archives">
 
     <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
@@ -156,8 +167,8 @@
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/04/18/2-wheel-odometry-model-calibration/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="John Doe">
+      <meta itemprop="image" content="https://avatars3.githubusercontent.com/u/45047478?s=460&u=3be5d506be9a30bd6eadfd29cd36c61e30833bb2&v=4">
+      <meta itemprop="name" content="Xiaotao Guo">
       <meta itemprop="description" content="">
     </span>
 
@@ -177,7 +188,7 @@
               <span class="post-meta-item-text">Posted on</span>
               
 
-              <time title="Created: 2020-04-18 21:38:13 / Modified: 22:14:26" itemprop="dateCreated datePublished" datetime="2020-04-18T21:38:13-04:00">2020-04-18</time>
+              <time title="Created: 2020-04-18 21:38:13 / Modified: 22:59:34" itemprop="dateCreated datePublished" datetime="2020-04-18T21:38:13-04:00">2020-04-18</time>
             </span>
 
           
@@ -191,7 +202,9 @@
     <div class="post-body" itemprop="articleBody">
 
       
-        <h2 id="轮式里程计模型"><a href="#轮式里程计模型" class="headerlink" title="轮式里程计模型"></a>轮式里程计模型</h2><h3 id="两轮差分底盘的运动学模型"><a href="#两轮差分底盘的运动学模型" class="headerlink" title="两轮差分底盘的运动学模型"></a>两轮差分底盘的运动学模型</h3><ol>
+        <p>本文是我在学习深蓝学院的激光slam第二课的学习笔记，这一课主要介绍了两轮差分底盘的运动模型以及怎么对里程计数据进行校正。</p>
+<a id="more"></a>
+<h2 id="轮式里程计模型"><a href="#轮式里程计模型" class="headerlink" title="轮式里程计模型"></a>轮式里程计模型</h2><h3 id="两轮差分底盘的运动学模型"><a href="#两轮差分底盘的运动学模型" class="headerlink" title="两轮差分底盘的运动学模型"></a>两轮差分底盘的运动学模型</h3><ol>
 <li><p>优点</p>
 <ul>
 <li>结构简单</li>
@@ -202,7 +215,7 @@
 <li><p>差分模型及运动解算</p>
  <img src="/2020/04/18/2-wheel-odometry-model-calibration/diffence_model.png" class="" title="2-wheel-odometry-model-calibration&#x2F;diffence_model.png">
 <ul>
-<li>考虑两轮在做半径为r的圆周运动，v和w是底盘中心的线速度和角速度，$v<em>{L/R}$ 和 $\omega</em>{L/R}$ 分别对应左/右轮子的线速度和角速度，d为底盘中心离两侧轮子的距离，b为两轮之间的距离（b = 2d）</li>
+<li>考虑两轮在做半径为r的圆周运动，v和w是底盘中心的线速度和角速度，$v_{L/R}$ 和 $\omega_{L/R}$ 分别对应左/右轮子的线速度和角速度，d为底盘中心离两侧轮子的距离，b为两轮之间的距离（b = 2d）</li>
 <li>目标：根据两轮的角速度（编码器测出的数据）以及其他参数求出底盘中心（机器人）运动的线速度v和角速度w</li>
 <li><p>求解：</p>
 <ul>
@@ -266,7 +279,7 @@
 <li>用激光雷达的scan-match数据作为真值$u_i^*$</li>
 <li>里程计测量数据为$u_i$</li>
 <li><p>假设两者成线性关系$u_i^* = Xu_i$，其中：</p>
-<p>  $X = \begin{bmatrix}x<em>{11} &amp; x</em>{12} &amp; x<em>{13} \x</em>{21} &amp; x<em>{22} &amp; x</em>{23} \x<em>{31} &amp; x</em>{32} &amp; x_{33}\end{bmatrix}$</p>
+<p>  $X = \begin{bmatrix}x_{11} &amp; x_{12} &amp; x_{13} \\x_{21} &amp; x_{22} &amp; x_{23} \\x_{31} &amp; x_{32} &amp; x_{33}\end{bmatrix}$</p>
 </li>
 <li>标定过程就是求解$X$的过程（如何矫正里程计测量数据）</li>
 <li><p>对于每一组数据，有以下关系：</p>
@@ -308,8 +321,8 @@
 <li>假设激光雷达位于车体的正中心</li>
 <li>激光雷达的匹配值作为观测值</li>
 <li>里程计的积分值作为预测值</li>
-<li><em>通过最小化预测值和观测值的差即可得到里程计的参数</em></li>
-<li>里程计的积分值用$r<em>x$ , $r_y$ , $r</em>θ$ 表示，激光雷达的匹配值用 $s<em>x$ , $s_y$ , $s</em>θ$ 表示</li>
+<li>_通过最小化预测值和观测值的差即可得到里程计的参数_</li>
+<li>里程计的积分值用$r_x$ , $r_y$ , $r_θ$ 表示，激光雷达的匹配值用 $s_x$ , $s_y$ , $s_θ$ 表示</li>
 </ul>
 </li>
 </ul>
@@ -321,9 +334,9 @@
    \int \omega(t)dt = \int J_{21}\omega_{L} + J_{22}\omega_Rdt \\
     r_\theta(t) &= (\omega_L\Delta T \:\:\: \omega_R\Delta T)(\begin{aligned}J_{21} \\J_{22}\end{aligned}) = s_\theta
    \end{aligned}</script><script type="math/tex; mode=display">\rightarrow A_0 J_2 = s_{\theta 0}</script></li>
-<li><p>结合所有时间数据点可以求解 $Ax = b$，可以求得 $J<em>{21}$ 和 $J</em>{22}$</p>
+<li><p>结合所有时间数据点可以求解 $Ax = b$，可以求得 $J_{21}$ 和 $J_{22}$</p>
 </li>
-<li><p>在已知 $J<em>{21}$ 和 $J</em>{22}$ 的情况下，对里程计的位置积分可以表示成与参数b成线性关系（$\cos\theta_t$ 的积分可求）：</p>
+<li><p>在已知 $J_{21}$ 和 $J_{22}$ 的情况下，对里程计的位置积分可以表示成与参数b成线性关系（$\cos\theta_t$ 的积分可求）：</p>
 <script type="math/tex; mode=display">\begin{aligned}
   r_x(t) &= \int v(t) \cos{(\theta(t))} dt \\
   &= \frac{b}{2}(-J_{21}\omega_{L} + J_{22}\omega_{R})\int \cos{(\theta(t))} dt \\
@@ -334,7 +347,7 @@
   \end{aligned}</script></li>
 <li><p>通过罗列所有时间点的约束方程，可以通过最小二乘求解两轮距离 $b$</p>
 </li>
-<li><p>已知 $b, J<em>{21}, J</em>{22}$ 可以求得:</p>
+<li><p>已知 $b, J_{21}, J_{22}$ 可以求得:</p>
 <script type="math/tex; mode=display">r_L = -J_{21}b</script><script type="math/tex; mode=display">r_R = J_{22}b</script></li>
 <li><p>至此轮式里程计标定完毕</p>
 </li>
@@ -424,7 +437,9 @@
 
       <div class="site-overview-wrap sidebar-panel">
         <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
-  <p class="site-author-name" itemprop="name">John Doe</p>
+    <img class="site-author-image" itemprop="image" alt="Xiaotao Guo"
+      src="https://avatars3.githubusercontent.com/u/45047478?s=460&u=3be5d506be9a30bd6eadfd29cd36c61e30833bb2&v=4">
+  <p class="site-author-name" itemprop="name">Xiaotao Guo</p>
   <div class="site-description" itemprop="description"></div>
 </div>
 <div class="site-state-wrap motion-element">
@@ -436,8 +451,28 @@
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">1</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">1</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
   </nav>
 </div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/XiaotaoGuo" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;XiaotaoGuo" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:guoxiaotao0819@gmail.com" title="E-Mail → mailto:guoxiaotao0819@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
 
 
 
@@ -464,9 +499,9 @@
   <span class="with-love">
     <i class="fa fa-heart"></i>
   </span>
-  <span class="author" itemprop="copyrightHolder">John Doe</span>
+  <span class="author" itemprop="copyrightHolder">Xiaotao Guo</span>
 </div>
-  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a>
   </div>
 
         
@@ -483,7 +518,11 @@
   </div>
 
   
+  
+  <script color='0,0,255' opacity='0.5' zIndex='-1' count='99' src="//cdn.jsdelivr.net/gh/theme-next/theme-next-canvas-nest@1/canvas-nest.min.js"></script>
   <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
   <script src="/lib/velocity/velocity.min.js"></script>
   <script src="/lib/velocity/velocity.ui.min.js"></script>
 
@@ -492,7 +531,7 @@
 <script src="/js/motion.js"></script>
 
 
-<script src="/js/schemes/muse.js"></script>
+<script src="/js/schemes/pisces.js"></script>
 
 
 <script src="/js/next-boot.js"></script>
