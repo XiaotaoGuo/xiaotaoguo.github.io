@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"yoursite.com","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="轮式里程计模型两轮差分底盘的运动学模型 优点  结构简单 便宜，只需要两个电机（驱动器） 模型简单，并且可以实现任何轨迹跟踪   差分模型及运动解算    考虑两轮在做半径为r的圆周运动，v和w是底盘中心的线速度和角速度，$v{L&#x2F;R}$ 和 $\omega{L&#x2F;R}$ 分别对应左&#x2F;右轮子的线速度和角速度，d为底盘中心离两侧轮子的距离，b为两轮之间的距离（b &#x3D; 2d） 目标：根据两轮的角速度（编">
+<meta property="og:type" content="article">
+<meta property="og:title" content="轮式里程计运动模型及标定">
+<meta property="og:url" content="http://yoursite.com/2020/04/18/2-wheel-odometry-model-calibration/index.html">
+<meta property="og:site_name" content="Hexo">
+<meta property="og:description" content="轮式里程计模型两轮差分底盘的运动学模型 优点  结构简单 便宜，只需要两个电机（驱动器） 模型简单，并且可以实现任何轨迹跟踪   差分模型及运动解算    考虑两轮在做半径为r的圆周运动，v和w是底盘中心的线速度和角速度，$v{L&#x2F;R}$ 和 $\omega{L&#x2F;R}$ 分别对应左&#x2F;右轮子的线速度和角速度，d为底盘中心离两侧轮子的距离，b为两轮之间的距离（b &#x3D; 2d） 目标：根据两轮的角速度（编">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="http://yoursite.com/2020/04/18/2-wheel-odometry-model-calibration/diffence_model.png">
+<meta property="og:image" content="http://yoursite.com/2020/04/18/2-wheel-odometry-model-calibration/dead_reckoning.png.png">
+<meta property="article:published_time" content="2020-04-19T01:38:13.000Z">
+<meta property="article:modified_time" content="2020-04-19T02:14:26.568Z">
+<meta property="article:author" content="John Doe">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://yoursite.com/2020/04/18/2-wheel-odometry-model-calibration/diffence_model.png">
+
+<link rel="canonical" href="http://yoursite.com/2020/04/18/2-wheel-odometry-model-calibration/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en'
+  };
+</script>
+
+  <title>轮式里程计运动模型及标定 | Hexo</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Hexo</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/04/18/2-wheel-odometry-model-calibration/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="John Doe">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Hexo">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          轮式里程计运动模型及标定
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2020-04-18 21:38:13 / Modified: 22:14:26" itemprop="dateCreated datePublished" datetime="2020-04-18T21:38:13-04:00">2020-04-18</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="轮式里程计模型"><a href="#轮式里程计模型" class="headerlink" title="轮式里程计模型"></a>轮式里程计模型</h2><h3 id="两轮差分底盘的运动学模型"><a href="#两轮差分底盘的运动学模型" class="headerlink" title="两轮差分底盘的运动学模型"></a>两轮差分底盘的运动学模型</h3><ol>
+<li><p>优点</p>
+<ul>
+<li>结构简单</li>
+<li>便宜，只需要两个电机（驱动器）</li>
+<li>模型简单，并且可以实现任何轨迹跟踪</li>
+</ul>
+</li>
+<li><p>差分模型及运动解算</p>
+ <img src="/2020/04/18/2-wheel-odometry-model-calibration/diffence_model.png" class="" title="2-wheel-odometry-model-calibration&#x2F;diffence_model.png">
+<ul>
+<li>考虑两轮在做半径为r的圆周运动，v和w是底盘中心的线速度和角速度，$v<em>{L/R}$ 和 $\omega</em>{L/R}$ 分别对应左/右轮子的线速度和角速度，d为底盘中心离两侧轮子的距离，b为两轮之间的距离（b = 2d）</li>
+<li>目标：根据两轮的角速度（编码器测出的数据）以及其他参数求出底盘中心（机器人）运动的线速度v和角速度w</li>
+<li><p>求解：</p>
+<ul>
+<li><p>根据两轮绕圆周中心的角速度相等：</p>
+<script type="math/tex; mode=display">\frac{v_L}{r - d} = \frac{v_R}{r + d}</script><script type="math/tex; mode=display">\rightarrow v_L(r + d) = v_R(r - d)</script><script type="math/tex; mode=display">\rightarrow (v_L - v_R)r = (v_R + v_L)d</script><script type="math/tex; mode=display">\rightarrow r = \frac{v_R + v_L}{v_R - v_L}d</script></li>
+<li><p>因此，</p>
+<script type="math/tex; mode=display">r + d = \frac{v_R + v_L}{v_R - v_L}d + d = 2\frac{v_R}{v_R - v_L}d</script></li>
+<li><p>根据底盘中心和两轮角速度相等：</p>
+<script type="math/tex; mode=display">\omega = \frac{v_R}{r + d} = \frac{v_R - v_L}{2d}</script></li>
+<li><p>根据$v = \omega r$</p>
+<script type="math/tex; mode=display">\omega = \frac{\omega_Rr_R - \omega_Lr_L}{2d}</script><script type="math/tex; mode=display">v = \omega r = \frac{v_R - v_L}{2d}\frac{v_R + v_L}{v_R - v_L}d = \frac{v_R + v_L}{2} = \frac{\omega_Rr_R + \omega_Lr_L}{2}</script></li>
+<li><p>整理得</p>
+<script type="math/tex; mode=display">\begin{bmatrix}v \\ \omega\end{bmatrix} = \begin{bmatrix} \frac{r_L}{2} & \frac{r_R}{2} \\ -\frac{r_L}{b} & \frac{r_R}{b}\end{bmatrix}\begin{bmatrix}\omega_L \\ \omega_R\end{bmatrix} = J\begin{bmatrix}\omega_L \\ \omega_R\end{bmatrix}</script></li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+<h3 id="轨迹推算（Dead-Reckoning）"><a href="#轨迹推算（Dead-Reckoning）" class="headerlink" title="轨迹推算（Dead Reckoning）"></a>轨迹推算（Dead Reckoning）</h3><ol>
+<li><p>示意图</p>
+ <img src="/2020/04/18/2-wheel-odometry-model-calibration/dead_reckoning.png.png" class="" title="2-wheel-odometry-model-calibration&#x2F;dead_reckoning.png.png">
+</li>
+<li><p>递推公式</p>
+<ul>
+<li><p>假设</p>
+<ul>
+<li>当前位姿（世界坐标系下）为$(x, y, \theta)$</li>
+<li>运动增量（车体坐标系下）为$(dx, dy, d\theta)$</li>
+</ul>
+</li>
+<li><p>求解更新后的位姿</p>
+<script type="math/tex; mode=display">\begin{bmatrix}x \\ y \\ \theta\end{bmatrix}=\begin{bmatrix}x \\ y \\ \theta\end{bmatrix} + \begin{bmatrix}\cos{\theta} & -\sin{\theta} & 0 \\ \sin{\theta} & \cos{\theta} & 0 \\ 0 & 0 & 1\end{bmatrix}\begin{bmatrix}dx \\ dy \\ d\theta\end{bmatrix}</script></li>
+<li><p><em>加入噪声后</em></p>
+<script type="math/tex; mode=display">\begin{bmatrix}x \\ y \\ \theta\end{bmatrix}=\begin{bmatrix}x \\ y \\ \theta\end{bmatrix} + \begin{bmatrix}\cos{\theta} & -\sin{\theta} & 0 \\ \sin{\theta} & \cos{\theta} & 0 \\ 0 & 0 & 1\end{bmatrix}\begin{bmatrix}dx + \epsilon_x \\ dy + \epsilon_y \\ d\theta + \epsilon_\theta\end{bmatrix}</script></li>
+<li><p>噪声会随时间积累，所以dead reckoning精度会越来越低</p>
+</li>
+</ul>
+</li>
+</ol>
+<h2 id="轮式里程计标定"><a href="#轮式里程计标定" class="headerlink" title="轮式里程计标定"></a>轮式里程计标定</h2><h3 id="线性最小二乘的基本概念"><a href="#线性最小二乘的基本概念" class="headerlink" title="线性最小二乘的基本概念"></a>线性最小二乘的基本概念</h3><ul>
+<li><p>求解线性方程组 $Ax = b$，其中</p>
+<ul>
+<li>$A$ 为 $m\times n$ 的矩阵</li>
+<li>$x$ 为 $n\times 1$ 的向量</li>
+<li>当 $m &gt; n$ 时为超定方程组，方程组无解。实际情况中进行slam时移动机器人约束条件远远多于状态维度，通常为此种情况，此时需要求解最小二乘解</li>
+</ul>
+</li>
+<li><p>最小二乘解</p>
+<p>  $x^*=(A^TA)^{-1}A^Tb$</p>
+</li>
+</ul>
+<h3 id="线性最小二乘在里程计标定中的应用"><a href="#线性最小二乘在里程计标定中的应用" class="headerlink" title="线性最小二乘在里程计标定中的应用"></a>线性最小二乘在里程计标定中的应用</h3><ol>
+<li><p>主要方法包括：</p>
+<ul>
+<li>直接线性方法：通用性强，实现简单，精度不高（因此实际中比较少直接使用）</li>
+<li>基于模型的方法：精度高，实现复杂，特异性强（实际中较多使用）</li>
+</ul>
+</li>
+<li><p>直接线性方法</p>
+<ul>
+<li>用激光雷达的scan-match数据作为真值$u_i^*$</li>
+<li>里程计测量数据为$u_i$</li>
+<li><p>假设两者成线性关系$u_i^* = Xu_i$，其中：</p>
+<p>  $X = \begin{bmatrix}x<em>{11} &amp; x</em>{12} &amp; x<em>{13} \x</em>{21} &amp; x<em>{22} &amp; x</em>{23} \x<em>{31} &amp; x</em>{32} &amp; x_{33}\end{bmatrix}$</p>
+</li>
+<li>标定过程就是求解$X$的过程（如何矫正里程计测量数据）</li>
+<li><p>对于每一组数据，有以下关系：</p>
+<script type="math/tex; mode=display">\begin{aligned}u_{ix}x_{11} + u_{iy}x_{12} + u_{i\theta}x_{13} = u_{ix}^* \\ u_{ix}x_{21} + u_{iy}x_{22} + u_{i\theta}x_{23} = u_{iy}^* \\ u_{ix}x_{31} + u_{iy}x_{32} + u_{i\theta}x_{33} = u_{i\theta}^*\end{aligned}</script></li>
+<li><p>写成矩阵形式有：</p>
+<script type="math/tex; mode=display">\begin{bmatrix}u_{i_x} & u_{iy} & u_{i\theta} & 0 & 0 & 0& 0 & 0 & 0\\ 0 & 0 & 0 &u_{i_x} & u_{iy} & u_{i\theta}& 0 & 0 & 0\\0 & 0 & 0& 0 & 0 & 0 &u_{i_x} & u_{iy} & u_{i\theta}\end{bmatrix}\begin{bmatrix}x_{11}\\x_{12}\\ ... \\ x_{33}\end{bmatrix} = \begin{bmatrix}u^*_{ix} \\ u^*_{iy} \\ u^*_{i\theta}\end{bmatrix}</script><script type="math/tex; mode=display">\rightarrow A_i\vec{X} = b_i</script></li>
+<li><p>对于所有n个数据点有：</p>
+<script type="math/tex; mode=display">A = \begin{aligned}A_1 \\ ...\\ A_n\end{aligned}</script><script type="math/tex; mode=display">b = \begin{aligned}
+      b_1 \\ ... \\ b_n
+  \end{aligned}</script></li>
+<li><p>此时可以用最小二乘求解</p>
+</li>
+</ul>
+</li>
+<li><p>基于模型方法</p>
+<ul>
+<li><p>运动学模型</p>
+<script type="math/tex; mode=display">\begin{bmatrix}v \\ \omega\end{bmatrix} = \begin{bmatrix} \frac{r_L}{2} & \frac{r_R}{2} \\ -\frac{r_L}{b} & \frac{r_R}{b}\end{bmatrix}\begin{bmatrix}\omega_L \\ \omega_R\end{bmatrix} = J\begin{bmatrix}\omega_L \\ \omega_R\end{bmatrix} = \begin{bmatrix}J_{11} & J_{12} \\ J_{21} & J_{22}\end{bmatrix}</script><ul>
+<li><p>知道 $v$ 和 $\omega$ 之后，可以根据采样时间积分求得机器人状态 $(x(t), y(t), \theta(t))$：</p>
+<script type="math/tex; mode=display">\begin{aligned}
+  \theta(t) &= \int\omega(t)dt \\
+  x(t) &= \int v(t)\cos{(\theta(t))}dt \\
+  y(t) &= \int v(t)\sin{(\theta(t))}dt
+  \end{aligned}</script></li>
+</ul>
+</li>
+<li><p>根据匀速运动假设（采样时间内机器人保持匀速运动），及运动学模型有：</p>
+<script type="math/tex; mode=display">\begin{aligned}
+  \omega(t) = \omega = J_{21}\omega_{L} + J_{22}\omega_{R} \\
+  v(t) = v = J_{11}\omega_{L} + J_{12}\omega_{R}
+  \end{aligned}</script><script type="math/tex; mode=display">\begin{aligned}
+  J_{11} &= -\frac{b}{2}J_{21} \\
+  J_{12} &= \frac{b}{2}J_{22}
+  \end{aligned}</script><script type="math/tex; mode=display">\rightarrow v(t) = v = \frac{b}{2}(-J_{21}\omega_{L} + J_{22}\omega_{R})</script></li>
+<li><p><em>已知两轮的角速度 $\omega_L$ 和 $\omega_R$，需要求解两轮半径（$r_L$ 和 $r_R$）和两轮之间的距离 $b$</em></p>
+</li>
+<li><p>基本过程：</p>
+<ul>
+<li>假设激光雷达位于车体的正中心</li>
+<li>激光雷达的匹配值作为观测值</li>
+<li>里程计的积分值作为预测值</li>
+<li><em>通过最小化预测值和观测值的差即可得到里程计的参数</em></li>
+<li>里程计的积分值用$r<em>x$ , $r_y$ , $r</em>θ$ 表示，激光雷达的匹配值用 $s<em>x$ , $s_y$ , $s</em>θ$ 表示</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>具体求解过程</p>
+<ul>
+<li><p>角度积分表达式(单一时间数据点)</p>
+<script type="math/tex; mode=display">\begin{aligned} r_\theta(t) &=
+   \int \omega(t)dt = \int J_{21}\omega_{L} + J_{22}\omega_Rdt \\
+    r_\theta(t) &= (\omega_L\Delta T \:\:\: \omega_R\Delta T)(\begin{aligned}J_{21} \\J_{22}\end{aligned}) = s_\theta
+   \end{aligned}</script><script type="math/tex; mode=display">\rightarrow A_0 J_2 = s_{\theta 0}</script></li>
+<li><p>结合所有时间数据点可以求解 $Ax = b$，可以求得 $J<em>{21}$ 和 $J</em>{22}$</p>
+</li>
+<li><p>在已知 $J<em>{21}$ 和 $J</em>{22}$ 的情况下，对里程计的位置积分可以表示成与参数b成线性关系（$\cos\theta_t$ 的积分可求）：</p>
+<script type="math/tex; mode=display">\begin{aligned}
+  r_x(t) &= \int v(t) \cos{(\theta(t))} dt \\
+  &= \frac{b}{2}(-J_{21}\omega_{L} + J_{22}\omega_{R})\int \cos{(\theta(t))} dt \\
+  &= c_x b  = s_x\\
+  r_y(t) &= \int v(t) \sin{(\theta(t))} dt \\
+  &= \frac{b}{2}(-J_{21}\omega_{L} + J_{22}\omega_{R})\int \sin{(\theta(t))} dt \\
+  &= c_y b = s_y
+  \end{aligned}</script></li>
+<li><p>通过罗列所有时间点的约束方程，可以通过最小二乘求解两轮距离 $b$</p>
+</li>
+<li><p>已知 $b, J<em>{21}, J</em>{22}$ 可以求得:</p>
+<script type="math/tex; mode=display">r_L = -J_{21}b</script><script type="math/tex; mode=display">r_R = J_{22}b</script></li>
+<li><p>至此轮式里程计标定完毕</p>
+</li>
+</ul>
+</li>
+</ol>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/04/18/1-intro-math-basics/" rel="prev" title="激光slam介绍及相关数学基础">
+      <i class="fa fa-chevron-left"></i> 激光slam介绍及相关数学基础
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#轮式里程计模型"><span class="nav-number">1.</span> <span class="nav-text">轮式里程计模型</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#两轮差分底盘的运动学模型"><span class="nav-number">1.1.</span> <span class="nav-text">两轮差分底盘的运动学模型</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#轨迹推算（Dead-Reckoning）"><span class="nav-number">1.2.</span> <span class="nav-text">轨迹推算（Dead Reckoning）</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#轮式里程计标定"><span class="nav-number">2.</span> <span class="nav-text">轮式里程计标定</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#线性最小二乘的基本概念"><span class="nav-number">2.1.</span> <span class="nav-text">线性最小二乘的基本概念</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#线性最小二乘在里程计标定中的应用"><span class="nav-number">2.2.</span> <span class="nav-text">线性最小二乘在里程计标定中的应用</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">John Doe</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">2</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">John Doe</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+      
+
+<script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      loader: {
+        source: {
+          '[tex]/amsCd': '[tex]/amscd',
+          '[tex]/AMScd': '[tex]/amscd'
+        }
+      },
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'ams'
+      },
+      options: {
+        renderActions: {
+          findScript: [10, doc => {
+            document.querySelectorAll('script[type^="math/tex"]').forEach(node => {
+              const display = !!node.type.match(/; *mode=display/);
+              const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+              const text = document.createTextNode('');
+              node.parentNode.replaceChild(text, node);
+              math.start = {node: text, delim: '', n: 0};
+              math.end = {node: text, delim: '', n: 0};
+              doc.math.push(math);
+            });
+          }, '', false],
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              let target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    (function () {
+      var script = document.createElement('script');
+      script.src = '//cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+      script.defer = true;
+      document.head.appendChild(script);
+    })();
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+    
+
+  
+
+</body>
+</html>
