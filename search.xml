@@ -1,225 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
-    <title>输入/输出系统-I/O system</title>
-    <url>/2020/04/19/IO-system/</url>
-    <content><![CDATA[<p>本文是我在上UCSD的 <a href="http://cseweb.ucsd.edu/classes/wi20/cse120-a/" target="_blank" rel="noopener">CSE 120: Principles of Operating Systems (Winter 2020)</a> 整理的笔记，这一课主要介绍了操作系统里面输入系统系统的概念，包括硬件上的组成以及软件的结构。</p>
-<a id="more"></a>
-<h2 id="I-O-basic"><a href="#I-O-basic" class="headerlink" title="I/O basic"></a>I/O basic</h2><ol>
-<li><p>Intro</p>
-<ul>
-<li><p>I/O = Input/Output</p>
-<ul>
-<li>Input from attached device to CPU/memory</li>
-<li>Output from CPU/memory to device</li>
-</ul>
-</li>
-<li><p>Synchronization and transferring data</p>
-</li>
-</ul>
-</li>
-<li><p>Issues</p>
-<ul>
-<li><p>Problems:</p>
-<ul>
-<li>So many different types of I/O devices</li>
-<li>Wide range: speed, operation, data transfer units</li>
-</ul>
-</li>
-<li><p>Questions:</p>
-<ul>
-<li>How does a process initiate I/O?</li>
-<li>How is synchronization achieved?</li>
-<li>How is data transferred?</li>
-</ul>
-</li>
-</ul>
-</li>
-<li><p>Background: I/O Hardware</p>
-<ul>
-<li><p>CPU and device (controller) communicate via</p>
-<ul>
-<li>I/O instructions</li>
-<li>Memory instructuions (memory-mapped)</li>
-</ul>
-</li>
-<li><p>Data transfer: progammed I/O vs. DMA (direct memory access)</p>
-</li>
-<li><p>Synchronization: polling vs. interrupts</p>
-<p>  <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/hardware_io.png" width="500"></p>
-</li>
-</ul>
-</li>
-<li><p>Buffered/Unbuffered I/O</p>
-<ul>
-<li><p>Pros:</p>
-<ul>
-<li>What if pages containing buffer are paged out?</li>
-<li>What if entire process is swapped out?</li>
-<li>Can pin pages, but if too many processes do this?</li>
-</ul>
-</li>
-<li><p>Cons:</p>
-<ul>
-<li>Memory copying is expensive</li>
-<li>Consider effect on caches</li>
-</ul>
-</li>
-</ul>
-</li>
-<li><p>Dealing with Complexity of Devices</p>
-<ul>
-<li><p>Many different types of devices</p>
-<ul>
-<li>Classify by shared characteristics</li>
-<li>Imposes structure: shared code, lower complexity</li>
-</ul>
-</li>
-<li><p>Dimensions</p>
-<ul>
-<li>Varaible vs. fixed size units</li>
-<li>Sequential vs. random-access</li>
-<li>Synchronous vs. asynchronous</li>
-<li>Speed of operation</li>
-</ul>
-</li>
-</ul>
-</li>
-</ol>
-<h2 id="I-O-system"><a href="#I-O-system" class="headerlink" title="I/O system"></a>I/O system</h2><ol>
-<li><p>I/O system Intro</p>
-<ul>
-<li><p>Software that deals with I/O</p>
-<ul>
-<li>Mostly in the kernel</li>
-<li>Also in processes (in form of library, e.g., stdio)</li>
-</ul>
-</li>
-<li><p>Separated into two portions</p>
-<ul>
-<li>Device-dependent</li>
-<li>Device- independent</li>
-</ul>
-</li>
-<li><p>Structure: Layered</p>
-<p>  <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/IO_system_structure.png" width="500"></p>
-</li>
-</ul>
-</li>
-<li><p>Device Dependent: Device Drivers</p>
-<ul>
-<li><p>Encapsulates device-dependent code</p>
-<ul>
-<li>Contains device-specific register reads/write</li>
-</ul>
-</li>
-<li><p>Implements a standard interface</p>
-<ul>
-<li>open(), close(), read(), write()</li>
-</ul>
-</li>
-<li><p>Interrupt handlers</p>
-<ul>
-<li>Executes when I/O completes</li>
-<li>Updates data structure</li>
-<li>Wakes up waiting process</li>
-</ul>
-</li>
-</ul>
-</li>
-<li><p>Device-Independent I/O</p>
-<ul>
-<li>Uniform interfacing for device drivers</li>
-<li>Naming, protection</li>
-<li>Uniform block size</li>
-<li>Buffering, caching</li>
-<li>Storage allocation</li>
-<li>Locking</li>
-<li>Error handling</li>
-</ul>
-</li>
-<li><p>User-space I/O <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/user_space_io.png" width="180" style="float: right;"></p>
-<ul>
-<li><p>Convenient interface</p>
-<ul>
-<li>printf() vs. write()</li>
-</ul>
-</li>
-<li><p>User-level buffering</p>
-<ul>
-<li>Unix: stdio library</li>
-</ul>
-</li>
-<li><p>Spooling daemons</p>
-<ul>
-<li>Printer</li>
-</ul>
-</li>
-</ul>
-</li>
-<li><p>Overall Operation</p>
-<p> <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/io_operation.png" width="350"></p>
-</li>
-</ol>
-<h3 id="Example-UNIX"><a href="#Example-UNIX" class="headerlink" title="Example: UNIX"></a>Example: UNIX</h3><ol>
-<li><p>I/O Model <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/unix_io.png" width="180" style="float: right;"></p>
-<ul>
-<li>Uses file system interface</li>
-<li>stdio.h: C standard I/O library</li>
-<li><p>Block devices (disks, USB cameras, …)</p>
-<ul>
-<li>Fixed-size blocks</li>
-<li>Randomly addressable</li>
-<li>Uses buffer cache</li>
-</ul>
-</li>
-<li><p>Character devices (serial ports, parallel ports, sound cards,…)</p>
-<ul>
-<li>Variable sequence of bytes</li>
-<li>For non-block devices</li>
-</ul>
-</li>
-</ul>
-</li>
-<li><p>I/O System Call Interface</p>
-<ul>
-<li>fd = open(“/dev/devname”, …)</li>
-<li>close(fd)</li>
-<li>nr = read(fd, buf, n)</li>
-<li>nw = write(fd, buf, n)</li>
-<li>ioctl(fd, cmd, buf) //(input/output control)</li>
-</ul>
-</li>
-<li><p>Standard I/O Library</p>
-<ul>
-<li>fopen, fread, fwrite, fprintf, fscanf, fclose, …</li>
-<li>Private buffer kept in user space</li>
-<li>Minimizes the number of I/O system calls</li>
-</ul>
-</li>
-<li><p>Software Block Cache Design</p>
-<ul>
-<li>Has copies of blocks that are also on disk</li>
-<li><p>Upon read or write</p>
-<ul>
-<li>Check if a buffer contains the block</li>
-<li>If not, get from disk</li>
-<li>To make room, remove LRU block</li>
-</ul>
-</li>
-</ul>
-</li>
-</ol>
-]]></content>
-      <categories>
-        <category>Operating Systems</category>
-      </categories>
-      <tags>
-        <tag>OS</tag>
-        <tag>操作系统</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>死锁-deadlock</title>
     <url>/2020/04/19/deadlock/</url>
     <content><![CDATA[<p>本文是我在上UCSD的 <a href="http://cseweb.ucsd.edu/classes/wi20/cse120-a/" target="_blank" rel="noopener">CSE 120: Principles of Operating Systems (Winter 2020)</a> 整理的笔记，这一课主要介绍了操作系统里面死锁概念包括出现的原因，以及避免（防止出现）以及解决办法（出现死锁时最好的方法是重启大法！！）</p>
@@ -478,6 +259,388 @@
       </tags>
   </entry>
   <entry>
+    <title>输入/输出系统-I/O system</title>
+    <url>/2020/04/19/IO-system/</url>
+    <content><![CDATA[<p>本文是我在上UCSD的 <a href="http://cseweb.ucsd.edu/classes/wi20/cse120-a/" target="_blank" rel="noopener">CSE 120: Principles of Operating Systems (Winter 2020)</a> 整理的笔记，这一课主要介绍了操作系统里面输入系统系统的概念，包括硬件上的组成以及软件的结构。</p>
+<a id="more"></a>
+<h2 id="I-O-basic"><a href="#I-O-basic" class="headerlink" title="I/O basic"></a>I/O basic</h2><ol>
+<li><p>Intro</p>
+<ul>
+<li><p>I/O = Input/Output</p>
+<ul>
+<li>Input from attached device to CPU/memory</li>
+<li>Output from CPU/memory to device</li>
+</ul>
+</li>
+<li><p>Synchronization and transferring data</p>
+</li>
+</ul>
+</li>
+<li><p>Issues</p>
+<ul>
+<li><p>Problems:</p>
+<ul>
+<li>So many different types of I/O devices</li>
+<li>Wide range: speed, operation, data transfer units</li>
+</ul>
+</li>
+<li><p>Questions:</p>
+<ul>
+<li>How does a process initiate I/O?</li>
+<li>How is synchronization achieved?</li>
+<li>How is data transferred?</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Background: I/O Hardware</p>
+<ul>
+<li><p>CPU and device (controller) communicate via</p>
+<ul>
+<li>I/O instructions</li>
+<li>Memory instructuions (memory-mapped)</li>
+</ul>
+</li>
+<li><p>Data transfer: progammed I/O vs. DMA (direct memory access)</p>
+</li>
+<li><p>Synchronization: polling vs. interrupts</p>
+<p>  <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/hardware_io.png" width="500"></p>
+</li>
+</ul>
+</li>
+<li><p>Buffered/Unbuffered I/O</p>
+<ul>
+<li><p>Pros:</p>
+<ul>
+<li>What if pages containing buffer are paged out?</li>
+<li>What if entire process is swapped out?</li>
+<li>Can pin pages, but if too many processes do this?</li>
+</ul>
+</li>
+<li><p>Cons:</p>
+<ul>
+<li>Memory copying is expensive</li>
+<li>Consider effect on caches</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Dealing with Complexity of Devices</p>
+<ul>
+<li><p>Many different types of devices</p>
+<ul>
+<li>Classify by shared characteristics</li>
+<li>Imposes structure: shared code, lower complexity</li>
+</ul>
+</li>
+<li><p>Dimensions</p>
+<ul>
+<li>Varaible vs. fixed size units</li>
+<li>Sequential vs. random-access</li>
+<li>Synchronous vs. asynchronous</li>
+<li>Speed of operation</li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+<h2 id="I-O-system"><a href="#I-O-system" class="headerlink" title="I/O system"></a>I/O system</h2><ol>
+<li><p>I/O system Intro</p>
+<ul>
+<li><p>Software that deals with I/O</p>
+<ul>
+<li>Mostly in the kernel</li>
+<li>Also in processes (in form of library, e.g., stdio)</li>
+</ul>
+</li>
+<li><p>Separated into two portions</p>
+<ul>
+<li>Device-dependent</li>
+<li>Device- independent</li>
+</ul>
+</li>
+<li><p>Structure: Layered</p>
+<p>  <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/IO_system_structure.png" width="500"></p>
+</li>
+</ul>
+</li>
+<li><p>Device Dependent: Device Drivers</p>
+<ul>
+<li><p>Encapsulates device-dependent code</p>
+<ul>
+<li>Contains device-specific register reads/write</li>
+</ul>
+</li>
+<li><p>Implements a standard interface</p>
+<ul>
+<li>open(), close(), read(), write()</li>
+</ul>
+</li>
+<li><p>Interrupt handlers</p>
+<ul>
+<li>Executes when I/O completes</li>
+<li>Updates data structure</li>
+<li>Wakes up waiting process</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Device-Independent I/O</p>
+<ul>
+<li>Uniform interfacing for device drivers</li>
+<li>Naming, protection</li>
+<li>Uniform block size</li>
+<li>Buffering, caching</li>
+<li>Storage allocation</li>
+<li>Locking</li>
+<li>Error handling</li>
+</ul>
+</li>
+<li><p>User-space I/O <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/user_space_io.png" width="180" style="float: right;"></p>
+<ul>
+<li><p>Convenient interface</p>
+<ul>
+<li>printf() vs. write()</li>
+</ul>
+</li>
+<li><p>User-level buffering</p>
+<ul>
+<li>Unix: stdio library</li>
+</ul>
+</li>
+<li><p>Spooling daemons</p>
+<ul>
+<li>Printer</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Overall Operation</p>
+<p> <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/io_operation.png" width="350"></p>
+</li>
+</ol>
+<h3 id="Example-UNIX"><a href="#Example-UNIX" class="headerlink" title="Example: UNIX"></a>Example: UNIX</h3><ol>
+<li><p>I/O Model <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/unix_io.png" width="180" style="float: right;"></p>
+<ul>
+<li>Uses file system interface</li>
+<li>stdio.h: C standard I/O library</li>
+<li><p>Block devices (disks, USB cameras, …)</p>
+<ul>
+<li>Fixed-size blocks</li>
+<li>Randomly addressable</li>
+<li>Uses buffer cache</li>
+</ul>
+</li>
+<li><p>Character devices (serial ports, parallel ports, sound cards,…)</p>
+<ul>
+<li>Variable sequence of bytes</li>
+<li>For non-block devices</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>I/O System Call Interface</p>
+<ul>
+<li>fd = open(“/dev/devname”, …)</li>
+<li>close(fd)</li>
+<li>nr = read(fd, buf, n)</li>
+<li>nw = write(fd, buf, n)</li>
+<li>ioctl(fd, cmd, buf) //(input/output control)</li>
+</ul>
+</li>
+<li><p>Standard I/O Library</p>
+<ul>
+<li>fopen, fread, fwrite, fprintf, fscanf, fclose, …</li>
+<li>Private buffer kept in user space</li>
+<li>Minimizes the number of I/O system calls</li>
+</ul>
+</li>
+<li><p>Software Block Cache Design</p>
+<ul>
+<li>Has copies of blocks that are also on disk</li>
+<li><p>Upon read or write</p>
+<ul>
+<li>Check if a buffer contains the block</li>
+<li>If not, get from disk</li>
+<li>To make room, remove LRU block</li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+]]></content>
+      <categories>
+        <category>Operating Systems</category>
+      </categories>
+      <tags>
+        <tag>OS</tag>
+        <tag>操作系统</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>轮式里程计运动模型及标定</title>
+    <url>/2020/04/18/%E8%BD%AE%E5%BC%8F%E9%87%8C%E7%A8%8B%E8%AE%A1%E8%BF%90%E5%8A%A8%E6%A8%A1%E5%9E%8B%E5%8F%8A%E6%A0%87%E5%AE%9A/</url>
+    <content><![CDATA[<p>本文是我在学习深蓝学院的激光slam第二课的学习笔记，这一课主要介绍了两轮差分底盘的运动模型以及怎么对里程计数据进行校正。</p>
+<a id="more"></a>
+<h2 id="轮式里程计模型"><a href="#轮式里程计模型" class="headerlink" title="轮式里程计模型"></a>轮式里程计模型</h2><h3 id="两轮差分底盘的运动学模型"><a href="#两轮差分底盘的运动学模型" class="headerlink" title="两轮差分底盘的运动学模型"></a>两轮差分底盘的运动学模型</h3><ol>
+<li><p>优点</p>
+<ul>
+<li>结构简单</li>
+<li>便宜，只需要两个电机（驱动器）</li>
+<li>模型简单，并且可以实现任何轨迹跟踪</li>
+</ul>
+</li>
+<li><p>差分模型及运动解算</p>
+ <img src="/2020/04/18/%E8%BD%AE%E5%BC%8F%E9%87%8C%E7%A8%8B%E8%AE%A1%E8%BF%90%E5%8A%A8%E6%A8%A1%E5%9E%8B%E5%8F%8A%E6%A0%87%E5%AE%9A/diffence_model.png" class="" title="2-wheel-odometry-model-calibration&#x2F;diffence_model.png">
+<ul>
+<li>考虑两轮在做半径为r的圆周运动，v和w是底盘中心的线速度和角速度，$v_{L/R}$ 和 $\omega_{L/R}$ 分别对应左/右轮子的线速度和角速度，d为底盘中心离两侧轮子的距离，b为两轮之间的距离（b = 2d）</li>
+<li>目标：根据两轮的角速度（编码器测出的数据）以及其他参数求出底盘中心（机器人）运动的线速度v和角速度w</li>
+<li><p>求解：</p>
+<ul>
+<li><p>根据两轮绕圆周中心的角速度相等：</p>
+<script type="math/tex; mode=display">\frac{v_L}{r - d} = \frac{v_R}{r + d}</script><script type="math/tex; mode=display">\rightarrow v_L(r + d) = v_R(r - d)</script><script type="math/tex; mode=display">\rightarrow (v_L - v_R)r = (v_R + v_L)d</script><script type="math/tex; mode=display">\rightarrow r = \frac{v_R + v_L}{v_R - v_L}d</script></li>
+<li><p>因此，</p>
+<script type="math/tex; mode=display">r + d = \frac{v_R + v_L}{v_R - v_L}d + d = 2\frac{v_R}{v_R - v_L}d</script></li>
+<li><p>根据底盘中心和两轮角速度相等：</p>
+<script type="math/tex; mode=display">\omega = \frac{v_R}{r + d} = \frac{v_R - v_L}{2d}</script></li>
+<li><p>根据$v = \omega r$</p>
+<script type="math/tex; mode=display">\omega = \frac{\omega_Rr_R - \omega_Lr_L}{2d}</script><script type="math/tex; mode=display">v = \omega r = \frac{v_R - v_L}{2d}\frac{v_R + v_L}{v_R - v_L}d = \frac{v_R + v_L}{2} = \frac{\omega_Rr_R + \omega_Lr_L}{2}</script></li>
+<li><p>整理得</p>
+<script type="math/tex; mode=display">\begin{bmatrix}v \\ \omega\end{bmatrix} = \begin{bmatrix} \frac{r_L}{2} & \frac{r_R}{2} \\ -\frac{r_L}{b} & \frac{r_R}{b}\end{bmatrix}\begin{bmatrix}\omega_L \\ \omega_R\end{bmatrix} = J\begin{bmatrix}\omega_L \\ \omega_R\end{bmatrix}</script></li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+<h3 id="轨迹推算（Dead-Reckoning）"><a href="#轨迹推算（Dead-Reckoning）" class="headerlink" title="轨迹推算（Dead Reckoning）"></a>轨迹推算（Dead Reckoning）</h3><ol>
+<li><p>示意图</p>
+ <img src="/2020/04/18/%E8%BD%AE%E5%BC%8F%E9%87%8C%E7%A8%8B%E8%AE%A1%E8%BF%90%E5%8A%A8%E6%A8%A1%E5%9E%8B%E5%8F%8A%E6%A0%87%E5%AE%9A/dead_reckoning.png.png" class="" title="2-wheel-odometry-model-calibration&#x2F;dead_reckoning.png.png">
+</li>
+<li><p>递推公式</p>
+<ul>
+<li><p>假设</p>
+<ul>
+<li>当前位姿（世界坐标系下）为$(x, y, \theta)$</li>
+<li>运动增量（车体坐标系下）为$(dx, dy, d\theta)$</li>
+</ul>
+</li>
+<li><p>求解更新后的位姿</p>
+<script type="math/tex; mode=display">\begin{bmatrix}x \\ y \\ \theta\end{bmatrix}=\begin{bmatrix}x \\ y \\ \theta\end{bmatrix} + \begin{bmatrix}\cos{\theta} & -\sin{\theta} & 0 \\ \sin{\theta} & \cos{\theta} & 0 \\ 0 & 0 & 1\end{bmatrix}\begin{bmatrix}dx \\ dy \\ d\theta\end{bmatrix}</script></li>
+<li><p><em>加入噪声后</em></p>
+<script type="math/tex; mode=display">\begin{bmatrix}x \\ y \\ \theta\end{bmatrix}=\begin{bmatrix}x \\ y \\ \theta\end{bmatrix} + \begin{bmatrix}\cos{\theta} & -\sin{\theta} & 0 \\ \sin{\theta} & \cos{\theta} & 0 \\ 0 & 0 & 1\end{bmatrix}\begin{bmatrix}dx + \epsilon_x \\ dy + \epsilon_y \\ d\theta + \epsilon_\theta\end{bmatrix}</script></li>
+<li><p>噪声会随时间积累，所以dead reckoning精度会越来越低</p>
+</li>
+</ul>
+</li>
+</ol>
+<h2 id="轮式里程计标定"><a href="#轮式里程计标定" class="headerlink" title="轮式里程计标定"></a>轮式里程计标定</h2><h3 id="线性最小二乘的基本概念"><a href="#线性最小二乘的基本概念" class="headerlink" title="线性最小二乘的基本概念"></a>线性最小二乘的基本概念</h3><ul>
+<li><p>求解线性方程组 $Ax = b$，其中</p>
+<ul>
+<li>$A$ 为 $m\times n$ 的矩阵</li>
+<li>$x$ 为 $n\times 1$ 的向量</li>
+<li>当 $m &gt; n$ 时为超定方程组，方程组无解。实际情况中进行slam时移动机器人约束条件远远多于状态维度，通常为此种情况，此时需要求解最小二乘解</li>
+</ul>
+</li>
+<li><p>最小二乘解</p>
+<p>  $x^*=(A^TA)^{-1}A^Tb$</p>
+</li>
+</ul>
+<h3 id="线性最小二乘在里程计标定中的应用"><a href="#线性最小二乘在里程计标定中的应用" class="headerlink" title="线性最小二乘在里程计标定中的应用"></a>线性最小二乘在里程计标定中的应用</h3><ol>
+<li><p>主要方法包括：</p>
+<ul>
+<li>直接线性方法：通用性强，实现简单，精度不高（因此实际中比较少直接使用）</li>
+<li>基于模型的方法：精度高，实现复杂，特异性强（实际中较多使用）</li>
+</ul>
+</li>
+<li><p>直接线性方法</p>
+<ul>
+<li>用激光雷达的scan-match数据作为真值$u_i^*$</li>
+<li>里程计测量数据为$u_i$</li>
+<li><p>假设两者成线性关系$u_i^* = Xu_i$，其中：</p>
+<p>  $X = \begin{bmatrix}x_{11} &amp; x_{12} &amp; x_{13} \\x_{21} &amp; x_{22} &amp; x_{23} \\x_{31} &amp; x_{32} &amp; x_{33}\end{bmatrix}$</p>
+</li>
+<li>标定过程就是求解$X$的过程（如何矫正里程计测量数据）</li>
+<li><p>对于每一组数据，有以下关系：</p>
+<script type="math/tex; mode=display">\begin{aligned}u_{ix}x_{11} + u_{iy}x_{12} + u_{i\theta}x_{13} = u_{ix}^* \\ u_{ix}x_{21} + u_{iy}x_{22} + u_{i\theta}x_{23} = u_{iy}^* \\ u_{ix}x_{31} + u_{iy}x_{32} + u_{i\theta}x_{33} = u_{i\theta}^*\end{aligned}</script></li>
+<li><p>写成矩阵形式有：</p>
+<script type="math/tex; mode=display">\begin{bmatrix}u_{i_x} & u_{iy} & u_{i\theta} & 0 & 0 & 0& 0 & 0 & 0\\ 0 & 0 & 0 &u_{i_x} & u_{iy} & u_{i\theta}& 0 & 0 & 0\\0 & 0 & 0& 0 & 0 & 0 &u_{i_x} & u_{iy} & u_{i\theta}\end{bmatrix}\begin{bmatrix}x_{11}\\x_{12}\\ ... \\ x_{33}\end{bmatrix} = \begin{bmatrix}u^*_{ix} \\ u^*_{iy} \\ u^*_{i\theta}\end{bmatrix}</script><script type="math/tex; mode=display">\rightarrow A_i\vec{X} = b_i</script></li>
+<li><p>对于所有n个数据点有：</p>
+<script type="math/tex; mode=display">A = \begin{aligned}A_1 \\ ...\\ A_n\end{aligned}</script><script type="math/tex; mode=display">b = \begin{aligned}
+      b_1 \\ ... \\ b_n
+  \end{aligned}</script></li>
+<li><p>此时可以用最小二乘求解</p>
+</li>
+</ul>
+</li>
+<li><p>基于模型方法</p>
+<ul>
+<li><p>运动学模型</p>
+<script type="math/tex; mode=display">\begin{bmatrix}v \\ \omega\end{bmatrix} = \begin{bmatrix} \frac{r_L}{2} & \frac{r_R}{2} \\ -\frac{r_L}{b} & \frac{r_R}{b}\end{bmatrix}\begin{bmatrix}\omega_L \\ \omega_R\end{bmatrix} = J\begin{bmatrix}\omega_L \\ \omega_R\end{bmatrix} = \begin{bmatrix}J_{11} & J_{12} \\ J_{21} & J_{22}\end{bmatrix}</script><ul>
+<li><p>知道 $v$ 和 $\omega$ 之后，可以根据采样时间积分求得机器人状态 $(x(t), y(t), \theta(t))$：</p>
+<script type="math/tex; mode=display">\begin{aligned}
+  \theta(t) &= \int\omega(t)dt \\
+  x(t) &= \int v(t)\cos{(\theta(t))}dt \\
+  y(t) &= \int v(t)\sin{(\theta(t))}dt
+  \end{aligned}</script></li>
+</ul>
+</li>
+<li><p>根据匀速运动假设（采样时间内机器人保持匀速运动），及运动学模型有：</p>
+<script type="math/tex; mode=display">\begin{aligned}
+  \omega(t) = \omega = J_{21}\omega_{L} + J_{22}\omega_{R} \\
+  v(t) = v = J_{11}\omega_{L} + J_{12}\omega_{R}
+  \end{aligned}</script><script type="math/tex; mode=display">\begin{aligned}
+  J_{11} &= -\frac{b}{2}J_{21} \\
+  J_{12} &= \frac{b}{2}J_{22}
+  \end{aligned}</script><script type="math/tex; mode=display">\rightarrow v(t) = v = \frac{b}{2}(-J_{21}\omega_{L} + J_{22}\omega_{R})</script></li>
+<li><p><em>已知两轮的角速度 $\omega_L$ 和 $\omega_R$，需要求解两轮半径（$r_L$ 和 $r_R$）和两轮之间的距离 $b$</em></p>
+</li>
+<li><p>基本过程：</p>
+<ul>
+<li>假设激光雷达位于车体的正中心</li>
+<li>激光雷达的匹配值作为观测值</li>
+<li>里程计的积分值作为预测值</li>
+<li>_通过最小化预测值和观测值的差即可得到里程计的参数_</li>
+<li>里程计的积分值用$r_x$ , $r_y$ , $r_θ$ 表示，激光雷达的匹配值用 $s_x$ , $s_y$ , $s_θ$ 表示</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>具体求解过程</p>
+<ul>
+<li><p>角度积分表达式(单一时间数据点)</p>
+<script type="math/tex; mode=display">\begin{aligned} r_\theta(t) &=
+   \int \omega(t)dt = \int J_{21}\omega_{L} + J_{22}\omega_Rdt \\
+    r_\theta(t) &= (\omega_L\Delta T \:\:\: \omega_R\Delta T)(\begin{aligned}J_{21} \\J_{22}\end{aligned}) = s_\theta
+   \end{aligned}</script><script type="math/tex; mode=display">\rightarrow A_0 J_2 = s_{\theta 0}</script></li>
+<li><p>结合所有时间数据点可以求解 $Ax = b$，可以求得 $J_{21}$ 和 $J_{22}$</p>
+</li>
+<li><p>在已知 $J_{21}$ 和 $J_{22}$ 的情况下，对里程计的位置积分可以表示成与参数b成线性关系（$\cos\theta_t$ 的积分可求）：</p>
+<script type="math/tex; mode=display">\begin{aligned}
+  r_x(t) &= \int v(t) \cos{(\theta(t))} dt \\
+  &= \frac{b}{2}(-J_{21}\omega_{L} + J_{22}\omega_{R})\int \cos{(\theta(t))} dt \\
+  &= c_x b  = s_x\\
+  r_y(t) &= \int v(t) \sin{(\theta(t))} dt \\
+  &= \frac{b}{2}(-J_{21}\omega_{L} + J_{22}\omega_{R})\int \sin{(\theta(t))} dt \\
+  &= c_y b = s_y
+  \end{aligned}</script></li>
+<li><p>通过罗列所有时间点的约束方程，可以通过最小二乘求解两轮距离 $b$</p>
+</li>
+<li><p>已知 $b, J_{21}, J_{22}$ 可以求得:</p>
+<script type="math/tex; mode=display">r_L = -J_{21}b</script><script type="math/tex; mode=display">r_R = J_{22}b</script></li>
+<li><p>至此轮式里程计标定完毕</p>
+</li>
+</ul>
+</li>
+</ol>
+]]></content>
+      <categories>
+        <category>激光slam</category>
+      </categories>
+      <tags>
+        <tag>slam</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>分布式系统-distributed system</title>
     <url>/2020/04/19/distributed-system/</url>
     <content><![CDATA[<p>本文是我在上UCSD的 <a href="http://cseweb.ucsd.edu/classes/wi20/cse120-a/" target="_blank" rel="noopener">CSE 120: Principles of Operating Systems (Winter 2020)</a> 整理的笔记，这一课主要介绍了分布式系统中最基础的一些概念的方法。</p>
@@ -636,6 +799,165 @@
 <li>Enter critical section (may get requests, defers)</li>
 <li>Upon exiting, responds (to release) to all deferred</li>
 <li>Use timestamps to order “simultaneous” requests</li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+]]></content>
+      <categories>
+        <category>Operating Systems</category>
+      </categories>
+      <tags>
+        <tag>OS</tag>
+        <tag>操作系统</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>进程间通信-inter process communication(IPC)</title>
+    <url>/2020/04/19/inter_process_communication/</url>
+    <content><![CDATA[<p>本文是我在上UCSD的 <a href="http://cseweb.ucsd.edu/classes/wi20/cse120-a/" target="_blank" rel="noopener">CSE 120: Principles of Operating Systems (Winter 2020)</a> 整理的笔记，这一课主要介绍了操作系统里面不同进程之间通信的算法和实现。</p>
+<a id="more"></a>
+<ol>
+<li><p>Cooperating Processes and IPC</p>
+<ul>
+<li><p>Advantage of Cooperating Processes</p>
+<ul>
+<li>performance: speed<ul>
+<li>Exploit inherent parallelism of computation</li>
+<li>Allow some parts to proceed why other do I/O</li>
+</ul>
+</li>
+<li>Modularity: resuable self-contained programs<ul>
+<li>Each may do a useful task on its own</li>
+<li>May also be useful as a sub-task for others</li>
+</ul>
+</li>
+<li><p>Examples:</p>
+<p> <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/cooperating_processes_example.png" width="350"></p>
+</li>
+</ul>
+</li>
+<li><p>IPC: communication between processes</p>
+</li>
+<li><strong>IPC requires</strong>:<ul>
+<li>data transfer</li>
+<li>synchronization</li>
+</ul>
+</li>
+<li><strong>Three abstraction for IPC</strong><ul>
+<li>shared memory + semaphores</li>
+<li>monitors</li>
+<li>message passing</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>The producer/consumer problem</p>
+<ul>
+<li>Producer produces data, inserts in shared buffer</li>
+<li>Consumer removes data from buffer, consumes it</li>
+<li>Cooperation: Producer feeds Consumer<ul>
+<li>How does data get from producer to consumer?</li>
+<li>How does consumer wait for producer?</li>
+</ul>
+</li>
+<li><p>Example:</p>
+<p><img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/producer_consumer.png" width="350"></p>
+</li>
+</ul>
+</li>
+<li><p>Shared memory + semaphore</p>
+<ul>
+<li><p>implementation:</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line">shared <span class="keyword">int</span> buf[N], in = <span class="number">0</span>, out = <span class="number">0</span>;</span><br><span class="line">sem filledslots = <span class="number">0</span>, emptyslots = N, mutex = <span class="number">1</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Producer1, 2, ...</span></span><br><span class="line"><span class="keyword">while</span> (<span class="literal">true</span>) &#123;</span><br><span class="line">  wait (emptyslots); <span class="comment">// wait for available empty slots</span></span><br><span class="line">  wait (mutex); <span class="comment">// avoid racondition</span></span><br><span class="line">  buf[in] = Produce();</span><br><span class="line">  in = (in + <span class="number">1</span>) % N;</span><br><span class="line">  signal(mutex);</span><br><span class="line">  signal(filledslots); <span class="comment">// increment the number of filled slots</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Consumer1, 2, ...</span></span><br><span class="line"><span class="keyword">while</span> (<span class="literal">true</span>) &#123;</span><br><span class="line">  wait(filledslot);</span><br><span class="line">  wait(mutex);</span><br><span class="line">  Consume(buf[out]);</span><br><span class="line">  out = (out + <span class="number">1</span>) % N;</span><br><span class="line">  signal(mutex);</span><br><span class="line">  signal(emptyslots);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>work for multiple producers and consumer</p>
+</li>
+<li>Not easy to understand(many wait/signal statements), easily leads to bugs</li>
+</ul>
+</li>
+<li><p>monitors</p>
+<ul>
+<li><p>Programming language contruct for IPC</p>
+<ul>
+<li>monitors are variables requiring controlled access</li>
+<li>accessd via procedures</li>
+<li>condition variables<ul>
+<li>wait(cond)</li>
+<li>signal(cond)</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Only one process can be active inside monitor</p>
+</li>
+<li><p>Usage</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="comment">// a possible monitor implementation (provided by programming language)</span></span><br><span class="line">monitor ProducerConsumer &#123;</span><br><span class="line">  <span class="keyword">int</span> buf[N], in = <span class="number">0</span>, out = <span class="number">0</span>, count = <span class="number">0</span>;</span><br><span class="line">  cond slotavail, itemavail;</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">void</span> <span class="title">PutItem</span> <span class="params">(<span class="keyword">int</span> item)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (count == N) wait(slotavail);</span><br><span class="line">    buf[in] = item;</span><br><span class="line">    in = (in + <span class="number">1</span>) % N;</span><br><span class="line">    count++;</span><br><span class="line">    signal(itemavail);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">int</span> <span class="title">GetItem</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">int</span> item;</span><br><span class="line">    <span class="keyword">if</span> (count == <span class="number">0</span>) wait(itemavail);</span><br><span class="line">    item = buf[out];</span><br><span class="line">    out = (out + <span class="number">1</span>) % N;</span><br><span class="line">    count--;</span><br><span class="line">    signal(slotavail);</span><br><span class="line">    <span class="keyword">return</span> (item);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Producer</span></span><br><span class="line"><span class="keyword">while</span> (<span class="literal">true</span>) &#123;</span><br><span class="line">  PutItem(Produce());</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Consumer</span></span><br><span class="line"><span class="keyword">while</span> (<span class="literal">true</span>) &#123;</span><br><span class="line">  Consume(GetItem());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>mechanism</p>
+<p> <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/monitors.png" width="400"></p>
+</li>
+<li><p>more on Monitors</p>
+<ul>
+<li>If one process A siganl condition c while another process B is waiting on c, at that time two process are able to run at the same time, which breaks mutual exclusion. <strong>So each process only signal condition just before returning.</strong></li>
+<li><em>Contition variable have no memory</em><ul>
+<li>It has no value and only indicate whether an event occurs or not</li>
+<li>Signal without someone waiting does nothing</li>
+<li>Signal is “lost”</li>
+</ul>
+</li>
+<li>Monitors bring structure to IPC<ul>
+<li>localizes critical sections and synchronization</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Message Passing</p>
+<ul>
+<li><p>Model:</p>
+<p>  <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/Message_Passing.png" width="400"></p>
+</li>
+<li><p>methods:</p>
+<ul>
+<li>send(destination, &amp;message)</li>
+<li>receive(source, &amp;message)</li>
+</ul>
+</li>
+<li><p>Data transfer: in to and out of kernel message buffer</p>
+</li>
+<li><p>Synchronization: receive blocks to wait for message</p>
+</li>
+<li><p>Usage</p>
+<ul>
+<li><p>basic</p>
+  <figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="comment">/* NO SHARED MEMORY */</span></span><br><span class="line"><span class="comment">// Producer</span></span><br><span class="line"><span class="keyword">int</span> item;</span><br><span class="line"></span><br><span class="line"><span class="keyword">while</span> (<span class="literal">true</span>) &#123;</span><br><span class="line">item = Produce();</span><br><span class="line">send(Consumer, &amp;item);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Consumer</span></span><br><span class="line"><span class="keyword">int</span> item;</span><br><span class="line"></span><br><span class="line"><span class="keyword">while</span> (<span class="literal">true</span>) &#123;</span><br><span class="line">receive(Producer, &amp;item);</span><br><span class="line">Consume(item);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>with Flow Control</p>
+  <figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="comment">// Producer</span></span><br><span class="line"><span class="keyword">int</span> item, empty;</span><br><span class="line"></span><br><span class="line"><span class="keyword">while</span> (<span class="literal">true</span>) &#123;</span><br><span class="line">    item = Produce();</span><br><span class="line">    receive (Consumer,&amp;empty);</span><br><span class="line">    send(Consumer, &amp;item);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Consumer</span></span><br><span class="line"><span class="keyword">int</span> item, empty;</span><br><span class="line"></span><br><span class="line"><span class="keyword">do</span> N times &#123;</span><br><span class="line">    send(Producer, &amp;empty);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">while</span> (<span class="literal">true</span>) &#123;</span><br><span class="line">    receive(Producer, &amp;item);</span><br><span class="line">    send(Producer, &amp;empty);</span><br><span class="line">    Consume(item);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+</li>
+<li><p>more on Message Passing</p>
+<ul>
+<li><p>who should message be addressed to?</p>
+<ul>
+<li>ports(“mailbox”) rather than specific process</li>
+</ul>
+</li>
+<li><p>how to make process recieve from anyone?</p>
+<ul>
+<li>pid = receive(*, &amp;message)?</li>
+</ul>
+</li>
+<li>kernel buffering: outstanding message<ul>
+<li>message sent that haven’t been received yet</li>
+</ul>
+</li>
+<li>Good praradigm for IPC over networks</li>
+<li>Safer than shard memory paradigms</li>
 </ul>
 </li>
 </ul>
@@ -1109,151 +1431,234 @@
       </tags>
   </entry>
   <entry>
-    <title>进程间通信-inter process communication(IPC)</title>
-    <url>/2020/04/19/inter_process_communication/</url>
-    <content><![CDATA[<p>本文是我在上UCSD的 <a href="http://cseweb.ucsd.edu/classes/wi20/cse120-a/" target="_blank" rel="noopener">CSE 120: Principles of Operating Systems (Winter 2020)</a> 整理的笔记，这一课主要介绍了操作系统里面不同进程之间通信的算法和实现。</p>
+    <title>内存管理-memory_management</title>
+    <url>/2020/04/19/memory_management/</url>
+    <content><![CDATA[<p>本文是我在上UCSD的 <a href="http://cseweb.ucsd.edu/classes/wi20/cse120-a/" target="_blank" rel="noopener">CSE 120: Principles of Operating Systems (Winter 2020)</a> 整理的笔记，这一课主要介绍了操作系统里面对内存的分配以及管理方式</p>
 <a id="more"></a>
-<ol>
-<li><p>Cooperating Processes and IPC</p>
+<h2 id="Basic"><a href="#Basic" class="headerlink" title="Basic"></a>Basic</h2><ol>
+<li><p>Allocation of memory occurs when</p>
 <ul>
-<li><p>Advantage of Cooperating Processes</p>
+<li>new process is created</li>
+<li>process requests more memory</li>
+</ul>
+</li>
+<li><p>Freeing of memory occurs when</p>
 <ul>
-<li>performance: speed<ul>
-<li>Exploit inherent parallelism of computation</li>
-<li>Allow some parts to proceed why other do I/O</li>
+<li>process exits</li>
+<li>process no longer needs memory it requested</li>
 </ul>
 </li>
-<li>Modularity: resuable self-contained programs<ul>
-<li>Each may do a useful task on its own</li>
-<li>May also be useful as a sub-task for others</li>
-</ul>
-</li>
-<li><p>Examples:</p>
-<p> <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/cooperating_processes_example.png" width="350"></p>
-</li>
-</ul>
-</li>
-<li><p>IPC: communication between processes</p>
-</li>
-<li><strong>IPC requires</strong>:<ul>
-<li>data transfer</li>
-<li>synchronization</li>
-</ul>
-</li>
-<li><strong>Three abstraction for IPC</strong><ul>
-<li>shared memory + semaphores</li>
-<li>monitors</li>
-<li>message passing</li>
-</ul>
-</li>
-</ul>
-</li>
-<li><p>The producer/consumer problem</p>
+<li><p>Memory overview</p>
 <ul>
-<li>Producer produces data, inserts in shared buffer</li>
-<li>Consumer removes data from buffer, consumes it</li>
-<li>Cooperation: Producer feeds Consumer<ul>
-<li>How does data get from producer to consumer?</li>
-<li>How does consumer wait for producer?</li>
-</ul>
-</li>
-<li><p>Example:</p>
-<p><img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/producer_consumer.png" width="350"></p>
-</li>
-</ul>
-</li>
-<li><p>Shared memory + semaphore</p>
+<li><p>Porcess memory store:</p>
 <ul>
-<li><p>implementation:</p>
-<figure class="highlight c"><table><tr><td class="code"><pre><span class="line">shared <span class="keyword">int</span> buf[N], in = <span class="number">0</span>, out = <span class="number">0</span>;</span><br><span class="line">sem filledslots = <span class="number">0</span>, emptyslots = N, mutex = <span class="number">1</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Producer1, 2, ...</span></span><br><span class="line"><span class="keyword">while</span> (<span class="literal">true</span>) &#123;</span><br><span class="line">  wait (emptyslots); <span class="comment">// wait for available empty slots</span></span><br><span class="line">  wait (mutex); <span class="comment">// avoid racondition</span></span><br><span class="line">  buf[in] = Produce();</span><br><span class="line">  in = (in + <span class="number">1</span>) % N;</span><br><span class="line">  signal(mutex);</span><br><span class="line">  signal(filledslots); <span class="comment">// increment the number of filled slots</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Consumer1, 2, ...</span></span><br><span class="line"><span class="keyword">while</span> (<span class="literal">true</span>) &#123;</span><br><span class="line">  wait(filledslot);</span><br><span class="line">  wait(mutex);</span><br><span class="line">  Consume(buf[out]);</span><br><span class="line">  out = (out + <span class="number">1</span>) % N;</span><br><span class="line">  signal(mutex);</span><br><span class="line">  signal(emptyslots);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-</li>
-<li><p>work for multiple producers and consumer</p>
-</li>
-<li>Not easy to understand(many wait/signal statements), easily leads to bugs</li>
+<li>Text: code of program</li>
+<li>Data: static varibales, heap</li>
+<li>Stack: automatic variables, activation records</li>
+<li>Other: shared memory regions</li>
 </ul>
 </li>
-<li><p>monitors</p>
+<li><p>Process memory address space <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/process_mem.png" width="120" style="float: right;"></p>
 <ul>
-<li><p>Programming language contruct for IPC</p>
+<li><p>Address space</p>
 <ul>
-<li>monitors are variables requiring controlled access</li>
-<li>accessd via procedures</li>
-<li>condition variables<ul>
-<li>wait(cond)</li>
-<li>signal(cond)</li>
+<li>set of addresses to access memory</li>
+<li>Typically, linear and sequential</li>
+<li>0 to N-1</li>
 </ul>
 </li>
-</ul>
-</li>
-<li><p>Only one process can be active inside monitor</p>
-</li>
-<li><p>Usage</p>
-<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="comment">// a possible monitor implementation (provided by programming language)</span></span><br><span class="line">monitor ProducerConsumer &#123;</span><br><span class="line">  <span class="keyword">int</span> buf[N], in = <span class="number">0</span>, out = <span class="number">0</span>, count = <span class="number">0</span>;</span><br><span class="line">  cond slotavail, itemavail;</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">void</span> <span class="title">PutItem</span> <span class="params">(<span class="keyword">int</span> item)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (count == N) wait(slotavail);</span><br><span class="line">    buf[in] = item;</span><br><span class="line">    in = (in + <span class="number">1</span>) % N;</span><br><span class="line">    count++;</span><br><span class="line">    signal(itemavail);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">int</span> <span class="title">GetItem</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">int</span> item;</span><br><span class="line">    <span class="keyword">if</span> (count == <span class="number">0</span>) wait(itemavail);</span><br><span class="line">    item = buf[out];</span><br><span class="line">    out = (out + <span class="number">1</span>) % N;</span><br><span class="line">    count--;</span><br><span class="line">    signal(slotavail);</span><br><span class="line">    <span class="keyword">return</span> (item);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Producer</span></span><br><span class="line"><span class="keyword">while</span> (<span class="literal">true</span>) &#123;</span><br><span class="line">  PutItem(Produce());</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Consumer</span></span><br><span class="line"><span class="keyword">while</span> (<span class="literal">true</span>) &#123;</span><br><span class="line">  Consume(GetItem());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-</li>
-<li><p>mechanism</p>
-<p> <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/monitors.png" width="400"></p>
-</li>
-<li><p>more on Monitors</p>
+<li><p>Example (right):</p>
 <ul>
-<li>If one process A siganl condition c while another process B is waiting on c, at that time two process are able to run at the same time, which breaks mutual exclusion. <strong>So each process only signal condition just before returning.</strong></li>
-<li><em>Contition variable have no memory</em><ul>
-<li>It has no value and only indicate whether an event occurs or not</li>
-<li>Signal without someone waiting does nothing</li>
-<li>Signal is “lost”</li>
-</ul>
-</li>
-<li>Monitors bring structure to IPC<ul>
-<li>localizes critical sections and synchronization</li>
+<li>Text of size X at 0 ~ X-1</li>
+<li>Data of size Y at X ~ X+Y-1</li>
+<li>Stack of size Z at N-Z ~ N-1(grow reversely)</li>
 </ul>
 </li>
 </ul>
 </li>
-</ul>
-</li>
-<li><p>Message Passing</p>
+<li><p>Compiler’s model of memory</p>
 <ul>
-<li><p>Model:</p>
-<p>  <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/Message_Passing.png" width="400"></p>
-</li>
-<li><p>methods:</p>
+<li><p>Compiler generates memory address</p>
 <ul>
-<li>send(destination, &amp;message)</li>
-<li>receive(source, &amp;message)</li>
+<li>Address ranges of text, data, stack</li>
+<li>allow data and stack to grow</li>
 </ul>
 </li>
-<li><p>Data transfer: in to and out of kernel message buffer</p>
-</li>
-<li><p>Synchronization: receive blocks to wait for message</p>
-</li>
-<li><p>Usage</p>
+<li><p>What is not known in compiler</p>
 <ul>
-<li><p>basic</p>
-  <figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="comment">/* NO SHARED MEMORY */</span></span><br><span class="line"><span class="comment">// Producer</span></span><br><span class="line"><span class="keyword">int</span> item;</span><br><span class="line"></span><br><span class="line"><span class="keyword">while</span> (<span class="literal">true</span>) &#123;</span><br><span class="line">item = Produce();</span><br><span class="line">send(Consumer, &amp;item);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Consumer</span></span><br><span class="line"><span class="keyword">int</span> item;</span><br><span class="line"></span><br><span class="line"><span class="keyword">while</span> (<span class="literal">true</span>) &#123;</span><br><span class="line">receive(Producer, &amp;item);</span><br><span class="line">Consume(item);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-</li>
-<li><p>with Flow Control</p>
-  <figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="comment">// Producer</span></span><br><span class="line"><span class="keyword">int</span> item, empty;</span><br><span class="line"></span><br><span class="line"><span class="keyword">while</span> (<span class="literal">true</span>) &#123;</span><br><span class="line">    item = Produce();</span><br><span class="line">    receive (Consumer,&amp;empty);</span><br><span class="line">    send(Consumer, &amp;item);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Consumer</span></span><br><span class="line"><span class="keyword">int</span> item, empty;</span><br><span class="line"></span><br><span class="line"><span class="keyword">do</span> N times &#123;</span><br><span class="line">    send(Producer, &amp;empty);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">while</span> (<span class="literal">true</span>) &#123;</span><br><span class="line">    receive(Producer, &amp;item);</span><br><span class="line">    send(Producer, &amp;empty);</span><br><span class="line">    Consume(item);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<li>Physical memory size</li>
+<li>Allocated region of physical memory</li>
+</ul>
 </li>
 </ul>
 </li>
-<li><p>more on Message Passing</p>
+<li><p>Memory characteristics</p>
 <ul>
-<li><p>who should message be addressed to?</p>
+<li>Size, fixed or variable (max size)</li>
+<li>Permission: r, w, x</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Goal: support multiple processes</p>
 <ul>
-<li>ports(“mailbox”) rather than specific process</li>
-</ul>
-</li>
-<li><p>how to make process recieve from anyone?</p>
+<li><p>Support programs running “simultaneously”</p>
 <ul>
-<li>pid = receive(*, &amp;message)?</li>
+<li>implement process abstraction</li>
+<li>Multiplex CPU time over all runnable processes</li>
+<li>Disk r/w speed is low: must keep multiple processes in memory</li>
 </ul>
 </li>
-<li>kernel buffering: outstanding message<ul>
-<li>message sent that haven’t been received yet</li>
+<li><p>Process requires more than CPU time: memory</p>
+</li>
 </ul>
 </li>
-<li>Good praradigm for IPC over networks</li>
-<li>Safer than shard memory paradigms</li>
+<li><p>Memory issues and topics</p>
+<ul>
+<li>Where should process memories be placed? -&gt; Memory Management</li>
+<li>How does the compiler model memory? -&gt; Logical memory model, segmentation</li>
+<li>How to deal with limited physical memory? -&gt; Virtual memory, paging</li>
+<li>Machanism and Policies</li>
 </ul>
+</li>
+</ol>
+<h2 id="Memory-Managemeng-Implementation"><a href="#Memory-Managemeng-Implementation" class="headerlink" title="Memory Managemeng Implementation"></a>Memory Managemeng Implementation</h2><ol>
+<li><p>example process <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/memory_allocate.png" width="150" style="float: right;"></p>
+<ul>
+<li>Phsical memory starts as one empty “hole”</li>
+<li>When processes are created, areas get allocated</li>
+<li><p>To allocate memory</p>
+<ul>
+<li>find large enough hole</li>
+<li>allocate region within hole</li>
+<li>mostly leaves smaller hole (when the hole size does not exactly match the size of process memory)</li>
+<li>when process exit (or memeory no longer needed), release that area, which create a new hole, coaleasce with adjacent</li>
+</ul>
+</li>
+<li><p>problem: if there are multiple holes, which to select?</p>
+<ul>
+<li><p><em>First fit: simple, fast</em></p>
+<ul>
+<li>consider tradeoff: fit vs. search time</li>
+<li>memory is cheap, time is expensive</li>
+</ul>
+</li>
+<li><p>Best fit: optimal, must check every hole, leaves very small fragments</p>
+</li>
+<li>Worst fit: leaves large fragments, must check every hole</li>
+</ul>
+</li>
+<li><p>complication: is region fixed or variable size?</p>
+</li>
+</ul>
+</li>
+<li><p>Fragmentation</p>
+<ul>
+<li>Over time, memory becomes fragmented, there may be signficant unused space (fragmented)</li>
+<li><p>Internal fragmentation</p>
+<ul>
+<li>Unused space within (allocated) block</li>
+<li>Cannot be allocated to others</li>
+<li>Can come in handy for growth (for stack or heap)</li>
+</ul>
+</li>
+<li><p>External fragmentation</p>
+<ul>
+<li>Unused space outside any blocks (holes)</li>
+<li>Can be allocated (too small/not useful)</li>
+</ul>
+</li>
+<li><p>Approaches</p>
+<ul>
+<li><p>Compaction</p>
+<ul>
+<li>Simple idea</li>
+<li>Very time consuming</li>
+</ul>
+</li>
+<li><p>Break block (to be allocated) into sub-blocks</p>
+<ul>
+<li>Easier to fit</li>
+<li>But complex</li>
+</ul>
+</li>
+<li><p>Use pre-sized holes</p>
+<ul>
+<li><p>Same-sized holes:</p>
+<ul>
+<li>all holes same, easy allocation</li>
+<li>may be too small which is inflexible</li>
+</ul>
+</li>
+<li><p>Varaiety of sizes (small, medium, large)</p>
+<ul>
+<li>more flexible</li>
+<li>complex</li>
+<li>what should sizes be? how to determine</li>
+</ul>
+</li>
+<li><p>Not adaptable, cause internel fragmentation</p>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Some rules</p>
+<ul>
+<li><p>50% Rule: m = n / 2</p>
+<ul>
+<li>Block: an allocated block</li>
+<li>Hole: free space between blocks</li>
+<li>m = number of holes</li>
+<li>n = number of blocks</li>
+</ul>
+</li>
+<li><p><strong>Unused Memory Rule: f = k / (k + 2)</strong></p>
+<ul>
+<li>Given average size of blocks and holes are known</li>
+<li>b = average size of blocks</li>
+<li>h = average size of holes</li>
+<li>k = h / b, ratio of average hole-to-block size</li>
+<li>f = k / (k + 2) is fraction space lost to holes</li>
+</ul>
+</li>
+<li><p>Usage:</p>
+<ul>
+<li>k = 1, f = 1/3 -&gt; avg hole size = avg block size, 33% waste</li>
+<li>k = 2, f = 1/2 -&gt; avg hole size = 2 * avg block size, 50% waste</li>
+<li>k = 8, f = 4/5 -&gt; avg hole size = 8 * avg block size, 80% waste</li>
+</ul>
+</li>
+<li><p>Limits</p>
+<ul>
+<li><p>In general, f increases with increasing k</p>
+<ul>
+<li>as $k \rightarrow \infty, f \rightarrow 1$</li>
+</ul>
+</li>
+<li><p>Alternatively, f decreases with decreasing k</p>
+<ul>
+<li>as $k \rightarrow 0, f \rightarrow 0$</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p><strong>The Buddy System</strong></p>
+<ul>
+<li>Partition into power-of-2 size chunks</li>
+<li><p>Allocation: given request for size r</p>
+  <figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">find chunk larger than r (else return failure)</span><br><span class="line">while (r &lt; sizeof(chunk) &#x2F; 2)</span><br><span class="line">    divide chunk into buddies (each 1&#x2F;2 size)</span><br><span class="line">allocate the chunk</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>Free: free the chunk and coalesce with buddy</p>
+  <figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">free the chunk</span><br><span class="line">while (buddy is also free)</span><br><span class="line">    coalesce</span><br></pre></td></tr></table></figure>
+</li>
+<li><p><a href="https://opendsa-server.cs.vt.edu/ODSA/Books/Everything/html/Buddy.html" target="_blank" rel="noopener">visualization</a></p>
+</li>
+<li><p>Data structure for buddy-system -&gt; binary tree</p>
 </li>
 </ul>
 </li>
@@ -1789,689 +2194,6 @@
       </tags>
   </entry>
   <entry>
-    <title>轮式里程计运动模型及标定</title>
-    <url>/2020/04/18/%E8%BD%AE%E5%BC%8F%E9%87%8C%E7%A8%8B%E8%AE%A1%E8%BF%90%E5%8A%A8%E6%A8%A1%E5%9E%8B%E5%8F%8A%E6%A0%87%E5%AE%9A/</url>
-    <content><![CDATA[<p>本文是我在学习深蓝学院的激光slam第二课的学习笔记，这一课主要介绍了两轮差分底盘的运动模型以及怎么对里程计数据进行校正。</p>
-<a id="more"></a>
-<h2 id="轮式里程计模型"><a href="#轮式里程计模型" class="headerlink" title="轮式里程计模型"></a>轮式里程计模型</h2><h3 id="两轮差分底盘的运动学模型"><a href="#两轮差分底盘的运动学模型" class="headerlink" title="两轮差分底盘的运动学模型"></a>两轮差分底盘的运动学模型</h3><ol>
-<li><p>优点</p>
-<ul>
-<li>结构简单</li>
-<li>便宜，只需要两个电机（驱动器）</li>
-<li>模型简单，并且可以实现任何轨迹跟踪</li>
-</ul>
-</li>
-<li><p>差分模型及运动解算</p>
- <img src="/2020/04/18/%E8%BD%AE%E5%BC%8F%E9%87%8C%E7%A8%8B%E8%AE%A1%E8%BF%90%E5%8A%A8%E6%A8%A1%E5%9E%8B%E5%8F%8A%E6%A0%87%E5%AE%9A/diffence_model.png" class="" title="2-wheel-odometry-model-calibration&#x2F;diffence_model.png">
-<ul>
-<li>考虑两轮在做半径为r的圆周运动，v和w是底盘中心的线速度和角速度，$v_{L/R}$ 和 $\omega_{L/R}$ 分别对应左/右轮子的线速度和角速度，d为底盘中心离两侧轮子的距离，b为两轮之间的距离（b = 2d）</li>
-<li>目标：根据两轮的角速度（编码器测出的数据）以及其他参数求出底盘中心（机器人）运动的线速度v和角速度w</li>
-<li><p>求解：</p>
-<ul>
-<li><p>根据两轮绕圆周中心的角速度相等：</p>
-<script type="math/tex; mode=display">\frac{v_L}{r - d} = \frac{v_R}{r + d}</script><script type="math/tex; mode=display">\rightarrow v_L(r + d) = v_R(r - d)</script><script type="math/tex; mode=display">\rightarrow (v_L - v_R)r = (v_R + v_L)d</script><script type="math/tex; mode=display">\rightarrow r = \frac{v_R + v_L}{v_R - v_L}d</script></li>
-<li><p>因此，</p>
-<script type="math/tex; mode=display">r + d = \frac{v_R + v_L}{v_R - v_L}d + d = 2\frac{v_R}{v_R - v_L}d</script></li>
-<li><p>根据底盘中心和两轮角速度相等：</p>
-<script type="math/tex; mode=display">\omega = \frac{v_R}{r + d} = \frac{v_R - v_L}{2d}</script></li>
-<li><p>根据$v = \omega r$</p>
-<script type="math/tex; mode=display">\omega = \frac{\omega_Rr_R - \omega_Lr_L}{2d}</script><script type="math/tex; mode=display">v = \omega r = \frac{v_R - v_L}{2d}\frac{v_R + v_L}{v_R - v_L}d = \frac{v_R + v_L}{2} = \frac{\omega_Rr_R + \omega_Lr_L}{2}</script></li>
-<li><p>整理得</p>
-<script type="math/tex; mode=display">\begin{bmatrix}v \\ \omega\end{bmatrix} = \begin{bmatrix} \frac{r_L}{2} & \frac{r_R}{2} \\ -\frac{r_L}{b} & \frac{r_R}{b}\end{bmatrix}\begin{bmatrix}\omega_L \\ \omega_R\end{bmatrix} = J\begin{bmatrix}\omega_L \\ \omega_R\end{bmatrix}</script></li>
-</ul>
-</li>
-</ul>
-</li>
-</ol>
-<h3 id="轨迹推算（Dead-Reckoning）"><a href="#轨迹推算（Dead-Reckoning）" class="headerlink" title="轨迹推算（Dead Reckoning）"></a>轨迹推算（Dead Reckoning）</h3><ol>
-<li><p>示意图</p>
- <img src="/2020/04/18/%E8%BD%AE%E5%BC%8F%E9%87%8C%E7%A8%8B%E8%AE%A1%E8%BF%90%E5%8A%A8%E6%A8%A1%E5%9E%8B%E5%8F%8A%E6%A0%87%E5%AE%9A/dead_reckoning.png.png" class="" title="2-wheel-odometry-model-calibration&#x2F;dead_reckoning.png.png">
-</li>
-<li><p>递推公式</p>
-<ul>
-<li><p>假设</p>
-<ul>
-<li>当前位姿（世界坐标系下）为$(x, y, \theta)$</li>
-<li>运动增量（车体坐标系下）为$(dx, dy, d\theta)$</li>
-</ul>
-</li>
-<li><p>求解更新后的位姿</p>
-<script type="math/tex; mode=display">\begin{bmatrix}x \\ y \\ \theta\end{bmatrix}=\begin{bmatrix}x \\ y \\ \theta\end{bmatrix} + \begin{bmatrix}\cos{\theta} & -\sin{\theta} & 0 \\ \sin{\theta} & \cos{\theta} & 0 \\ 0 & 0 & 1\end{bmatrix}\begin{bmatrix}dx \\ dy \\ d\theta\end{bmatrix}</script></li>
-<li><p><em>加入噪声后</em></p>
-<script type="math/tex; mode=display">\begin{bmatrix}x \\ y \\ \theta\end{bmatrix}=\begin{bmatrix}x \\ y \\ \theta\end{bmatrix} + \begin{bmatrix}\cos{\theta} & -\sin{\theta} & 0 \\ \sin{\theta} & \cos{\theta} & 0 \\ 0 & 0 & 1\end{bmatrix}\begin{bmatrix}dx + \epsilon_x \\ dy + \epsilon_y \\ d\theta + \epsilon_\theta\end{bmatrix}</script></li>
-<li><p>噪声会随时间积累，所以dead reckoning精度会越来越低</p>
-</li>
-</ul>
-</li>
-</ol>
-<h2 id="轮式里程计标定"><a href="#轮式里程计标定" class="headerlink" title="轮式里程计标定"></a>轮式里程计标定</h2><h3 id="线性最小二乘的基本概念"><a href="#线性最小二乘的基本概念" class="headerlink" title="线性最小二乘的基本概念"></a>线性最小二乘的基本概念</h3><ul>
-<li><p>求解线性方程组 $Ax = b$，其中</p>
-<ul>
-<li>$A$ 为 $m\times n$ 的矩阵</li>
-<li>$x$ 为 $n\times 1$ 的向量</li>
-<li>当 $m &gt; n$ 时为超定方程组，方程组无解。实际情况中进行slam时移动机器人约束条件远远多于状态维度，通常为此种情况，此时需要求解最小二乘解</li>
-</ul>
-</li>
-<li><p>最小二乘解</p>
-<p>  $x^*=(A^TA)^{-1}A^Tb$</p>
-</li>
-</ul>
-<h3 id="线性最小二乘在里程计标定中的应用"><a href="#线性最小二乘在里程计标定中的应用" class="headerlink" title="线性最小二乘在里程计标定中的应用"></a>线性最小二乘在里程计标定中的应用</h3><ol>
-<li><p>主要方法包括：</p>
-<ul>
-<li>直接线性方法：通用性强，实现简单，精度不高（因此实际中比较少直接使用）</li>
-<li>基于模型的方法：精度高，实现复杂，特异性强（实际中较多使用）</li>
-</ul>
-</li>
-<li><p>直接线性方法</p>
-<ul>
-<li>用激光雷达的scan-match数据作为真值$u_i^*$</li>
-<li>里程计测量数据为$u_i$</li>
-<li><p>假设两者成线性关系$u_i^* = Xu_i$，其中：</p>
-<p>  $X = \begin{bmatrix}x_{11} &amp; x_{12} &amp; x_{13} \\x_{21} &amp; x_{22} &amp; x_{23} \\x_{31} &amp; x_{32} &amp; x_{33}\end{bmatrix}$</p>
-</li>
-<li>标定过程就是求解$X$的过程（如何矫正里程计测量数据）</li>
-<li><p>对于每一组数据，有以下关系：</p>
-<script type="math/tex; mode=display">\begin{aligned}u_{ix}x_{11} + u_{iy}x_{12} + u_{i\theta}x_{13} = u_{ix}^* \\ u_{ix}x_{21} + u_{iy}x_{22} + u_{i\theta}x_{23} = u_{iy}^* \\ u_{ix}x_{31} + u_{iy}x_{32} + u_{i\theta}x_{33} = u_{i\theta}^*\end{aligned}</script></li>
-<li><p>写成矩阵形式有：</p>
-<script type="math/tex; mode=display">\begin{bmatrix}u_{i_x} & u_{iy} & u_{i\theta} & 0 & 0 & 0& 0 & 0 & 0\\ 0 & 0 & 0 &u_{i_x} & u_{iy} & u_{i\theta}& 0 & 0 & 0\\0 & 0 & 0& 0 & 0 & 0 &u_{i_x} & u_{iy} & u_{i\theta}\end{bmatrix}\begin{bmatrix}x_{11}\\x_{12}\\ ... \\ x_{33}\end{bmatrix} = \begin{bmatrix}u^*_{ix} \\ u^*_{iy} \\ u^*_{i\theta}\end{bmatrix}</script><script type="math/tex; mode=display">\rightarrow A_i\vec{X} = b_i</script></li>
-<li><p>对于所有n个数据点有：</p>
-<script type="math/tex; mode=display">A = \begin{aligned}A_1 \\ ...\\ A_n\end{aligned}</script><script type="math/tex; mode=display">b = \begin{aligned}
-      b_1 \\ ... \\ b_n
-  \end{aligned}</script></li>
-<li><p>此时可以用最小二乘求解</p>
-</li>
-</ul>
-</li>
-<li><p>基于模型方法</p>
-<ul>
-<li><p>运动学模型</p>
-<script type="math/tex; mode=display">\begin{bmatrix}v \\ \omega\end{bmatrix} = \begin{bmatrix} \frac{r_L}{2} & \frac{r_R}{2} \\ -\frac{r_L}{b} & \frac{r_R}{b}\end{bmatrix}\begin{bmatrix}\omega_L \\ \omega_R\end{bmatrix} = J\begin{bmatrix}\omega_L \\ \omega_R\end{bmatrix} = \begin{bmatrix}J_{11} & J_{12} \\ J_{21} & J_{22}\end{bmatrix}</script><ul>
-<li><p>知道 $v$ 和 $\omega$ 之后，可以根据采样时间积分求得机器人状态 $(x(t), y(t), \theta(t))$：</p>
-<script type="math/tex; mode=display">\begin{aligned}
-  \theta(t) &= \int\omega(t)dt \\
-  x(t) &= \int v(t)\cos{(\theta(t))}dt \\
-  y(t) &= \int v(t)\sin{(\theta(t))}dt
-  \end{aligned}</script></li>
-</ul>
-</li>
-<li><p>根据匀速运动假设（采样时间内机器人保持匀速运动），及运动学模型有：</p>
-<script type="math/tex; mode=display">\begin{aligned}
-  \omega(t) = \omega = J_{21}\omega_{L} + J_{22}\omega_{R} \\
-  v(t) = v = J_{11}\omega_{L} + J_{12}\omega_{R}
-  \end{aligned}</script><script type="math/tex; mode=display">\begin{aligned}
-  J_{11} &= -\frac{b}{2}J_{21} \\
-  J_{12} &= \frac{b}{2}J_{22}
-  \end{aligned}</script><script type="math/tex; mode=display">\rightarrow v(t) = v = \frac{b}{2}(-J_{21}\omega_{L} + J_{22}\omega_{R})</script></li>
-<li><p><em>已知两轮的角速度 $\omega_L$ 和 $\omega_R$，需要求解两轮半径（$r_L$ 和 $r_R$）和两轮之间的距离 $b$</em></p>
-</li>
-<li><p>基本过程：</p>
-<ul>
-<li>假设激光雷达位于车体的正中心</li>
-<li>激光雷达的匹配值作为观测值</li>
-<li>里程计的积分值作为预测值</li>
-<li>_通过最小化预测值和观测值的差即可得到里程计的参数_</li>
-<li>里程计的积分值用$r_x$ , $r_y$ , $r_θ$ 表示，激光雷达的匹配值用 $s_x$ , $s_y$ , $s_θ$ 表示</li>
-</ul>
-</li>
-</ul>
-</li>
-<li><p>具体求解过程</p>
-<ul>
-<li><p>角度积分表达式(单一时间数据点)</p>
-<script type="math/tex; mode=display">\begin{aligned} r_\theta(t) &=
-   \int \omega(t)dt = \int J_{21}\omega_{L} + J_{22}\omega_Rdt \\
-    r_\theta(t) &= (\omega_L\Delta T \:\:\: \omega_R\Delta T)(\begin{aligned}J_{21} \\J_{22}\end{aligned}) = s_\theta
-   \end{aligned}</script><script type="math/tex; mode=display">\rightarrow A_0 J_2 = s_{\theta 0}</script></li>
-<li><p>结合所有时间数据点可以求解 $Ax = b$，可以求得 $J_{21}$ 和 $J_{22}$</p>
-</li>
-<li><p>在已知 $J_{21}$ 和 $J_{22}$ 的情况下，对里程计的位置积分可以表示成与参数b成线性关系（$\cos\theta_t$ 的积分可求）：</p>
-<script type="math/tex; mode=display">\begin{aligned}
-  r_x(t) &= \int v(t) \cos{(\theta(t))} dt \\
-  &= \frac{b}{2}(-J_{21}\omega_{L} + J_{22}\omega_{R})\int \cos{(\theta(t))} dt \\
-  &= c_x b  = s_x\\
-  r_y(t) &= \int v(t) \sin{(\theta(t))} dt \\
-  &= \frac{b}{2}(-J_{21}\omega_{L} + J_{22}\omega_{R})\int \sin{(\theta(t))} dt \\
-  &= c_y b = s_y
-  \end{aligned}</script></li>
-<li><p>通过罗列所有时间点的约束方程，可以通过最小二乘求解两轮距离 $b$</p>
-</li>
-<li><p>已知 $b, J_{21}, J_{22}$ 可以求得:</p>
-<script type="math/tex; mode=display">r_L = -J_{21}b</script><script type="math/tex; mode=display">r_R = J_{22}b</script></li>
-<li><p>至此轮式里程计标定完毕</p>
-</li>
-</ul>
-</li>
-</ol>
-]]></content>
-      <categories>
-        <category>激光slam</category>
-      </categories>
-      <tags>
-        <tag>slam</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>内存管理-memory_management</title>
-    <url>/2020/04/19/memory_management/</url>
-    <content><![CDATA[<p>本文是我在上UCSD的 <a href="http://cseweb.ucsd.edu/classes/wi20/cse120-a/" target="_blank" rel="noopener">CSE 120: Principles of Operating Systems (Winter 2020)</a> 整理的笔记，这一课主要介绍了操作系统里面对内存的分配以及管理方式</p>
-<a id="more"></a>
-<h2 id="Basic"><a href="#Basic" class="headerlink" title="Basic"></a>Basic</h2><ol>
-<li><p>Allocation of memory occurs when</p>
-<ul>
-<li>new process is created</li>
-<li>process requests more memory</li>
-</ul>
-</li>
-<li><p>Freeing of memory occurs when</p>
-<ul>
-<li>process exits</li>
-<li>process no longer needs memory it requested</li>
-</ul>
-</li>
-<li><p>Memory overview</p>
-<ul>
-<li><p>Porcess memory store:</p>
-<ul>
-<li>Text: code of program</li>
-<li>Data: static varibales, heap</li>
-<li>Stack: automatic variables, activation records</li>
-<li>Other: shared memory regions</li>
-</ul>
-</li>
-<li><p>Process memory address space <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/process_mem.png" width="120" style="float: right;"></p>
-<ul>
-<li><p>Address space</p>
-<ul>
-<li>set of addresses to access memory</li>
-<li>Typically, linear and sequential</li>
-<li>0 to N-1</li>
-</ul>
-</li>
-<li><p>Example (right):</p>
-<ul>
-<li>Text of size X at 0 ~ X-1</li>
-<li>Data of size Y at X ~ X+Y-1</li>
-<li>Stack of size Z at N-Z ~ N-1(grow reversely)</li>
-</ul>
-</li>
-</ul>
-</li>
-<li><p>Compiler’s model of memory</p>
-<ul>
-<li><p>Compiler generates memory address</p>
-<ul>
-<li>Address ranges of text, data, stack</li>
-<li>allow data and stack to grow</li>
-</ul>
-</li>
-<li><p>What is not known in compiler</p>
-<ul>
-<li>Physical memory size</li>
-<li>Allocated region of physical memory</li>
-</ul>
-</li>
-</ul>
-</li>
-<li><p>Memory characteristics</p>
-<ul>
-<li>Size, fixed or variable (max size)</li>
-<li>Permission: r, w, x</li>
-</ul>
-</li>
-</ul>
-</li>
-<li><p>Goal: support multiple processes</p>
-<ul>
-<li><p>Support programs running “simultaneously”</p>
-<ul>
-<li>implement process abstraction</li>
-<li>Multiplex CPU time over all runnable processes</li>
-<li>Disk r/w speed is low: must keep multiple processes in memory</li>
-</ul>
-</li>
-<li><p>Process requires more than CPU time: memory</p>
-</li>
-</ul>
-</li>
-<li><p>Memory issues and topics</p>
-<ul>
-<li>Where should process memories be placed? -&gt; Memory Management</li>
-<li>How does the compiler model memory? -&gt; Logical memory model, segmentation</li>
-<li>How to deal with limited physical memory? -&gt; Virtual memory, paging</li>
-<li>Machanism and Policies</li>
-</ul>
-</li>
-</ol>
-<h2 id="Memory-Managemeng-Implementation"><a href="#Memory-Managemeng-Implementation" class="headerlink" title="Memory Managemeng Implementation"></a>Memory Managemeng Implementation</h2><ol>
-<li><p>example process <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/memory_allocate.png" width="150" style="float: right;"></p>
-<ul>
-<li>Phsical memory starts as one empty “hole”</li>
-<li>When processes are created, areas get allocated</li>
-<li><p>To allocate memory</p>
-<ul>
-<li>find large enough hole</li>
-<li>allocate region within hole</li>
-<li>mostly leaves smaller hole (when the hole size does not exactly match the size of process memory)</li>
-<li>when process exit (or memeory no longer needed), release that area, which create a new hole, coaleasce with adjacent</li>
-</ul>
-</li>
-<li><p>problem: if there are multiple holes, which to select?</p>
-<ul>
-<li><p><em>First fit: simple, fast</em></p>
-<ul>
-<li>consider tradeoff: fit vs. search time</li>
-<li>memory is cheap, time is expensive</li>
-</ul>
-</li>
-<li><p>Best fit: optimal, must check every hole, leaves very small fragments</p>
-</li>
-<li>Worst fit: leaves large fragments, must check every hole</li>
-</ul>
-</li>
-<li><p>complication: is region fixed or variable size?</p>
-</li>
-</ul>
-</li>
-<li><p>Fragmentation</p>
-<ul>
-<li>Over time, memory becomes fragmented, there may be signficant unused space (fragmented)</li>
-<li><p>Internal fragmentation</p>
-<ul>
-<li>Unused space within (allocated) block</li>
-<li>Cannot be allocated to others</li>
-<li>Can come in handy for growth (for stack or heap)</li>
-</ul>
-</li>
-<li><p>External fragmentation</p>
-<ul>
-<li>Unused space outside any blocks (holes)</li>
-<li>Can be allocated (too small/not useful)</li>
-</ul>
-</li>
-<li><p>Approaches</p>
-<ul>
-<li><p>Compaction</p>
-<ul>
-<li>Simple idea</li>
-<li>Very time consuming</li>
-</ul>
-</li>
-<li><p>Break block (to be allocated) into sub-blocks</p>
-<ul>
-<li>Easier to fit</li>
-<li>But complex</li>
-</ul>
-</li>
-<li><p>Use pre-sized holes</p>
-<ul>
-<li><p>Same-sized holes:</p>
-<ul>
-<li>all holes same, easy allocation</li>
-<li>may be too small which is inflexible</li>
-</ul>
-</li>
-<li><p>Varaiety of sizes (small, medium, large)</p>
-<ul>
-<li>more flexible</li>
-<li>complex</li>
-<li>what should sizes be? how to determine</li>
-</ul>
-</li>
-<li><p>Not adaptable, cause internel fragmentation</p>
-</li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-</li>
-<li><p>Some rules</p>
-<ul>
-<li><p>50% Rule: m = n / 2</p>
-<ul>
-<li>Block: an allocated block</li>
-<li>Hole: free space between blocks</li>
-<li>m = number of holes</li>
-<li>n = number of blocks</li>
-</ul>
-</li>
-<li><p><strong>Unused Memory Rule: f = k / (k + 2)</strong></p>
-<ul>
-<li>Given average size of blocks and holes are known</li>
-<li>b = average size of blocks</li>
-<li>h = average size of holes</li>
-<li>k = h / b, ratio of average hole-to-block size</li>
-<li>f = k / (k + 2) is fraction space lost to holes</li>
-</ul>
-</li>
-<li><p>Usage:</p>
-<ul>
-<li>k = 1, f = 1/3 -&gt; avg hole size = avg block size, 33% waste</li>
-<li>k = 2, f = 1/2 -&gt; avg hole size = 2 * avg block size, 50% waste</li>
-<li>k = 8, f = 4/5 -&gt; avg hole size = 8 * avg block size, 80% waste</li>
-</ul>
-</li>
-<li><p>Limits</p>
-<ul>
-<li><p>In general, f increases with increasing k</p>
-<ul>
-<li>as $k \rightarrow \infty, f \rightarrow 1$</li>
-</ul>
-</li>
-<li><p>Alternatively, f decreases with decreasing k</p>
-<ul>
-<li>as $k \rightarrow 0, f \rightarrow 0$</li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-</li>
-<li><p><strong>The Buddy System</strong></p>
-<ul>
-<li>Partition into power-of-2 size chunks</li>
-<li><p>Allocation: given request for size r</p>
-  <figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">find chunk larger than r (else return failure)</span><br><span class="line">while (r &lt; sizeof(chunk) &#x2F; 2)</span><br><span class="line">    divide chunk into buddies (each 1&#x2F;2 size)</span><br><span class="line">allocate the chunk</span><br></pre></td></tr></table></figure>
-</li>
-<li><p>Free: free the chunk and coalesce with buddy</p>
-  <figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">free the chunk</span><br><span class="line">while (buddy is also free)</span><br><span class="line">    coalesce</span><br></pre></td></tr></table></figure>
-</li>
-<li><p><a href="https://opendsa-server.cs.vt.edu/ODSA/Books/Everything/html/Buddy.html" target="_blank" rel="noopener">visualization</a></p>
-</li>
-<li><p>Data structure for buddy-system -&gt; binary tree</p>
-</li>
-</ul>
-</li>
-</ol>
-]]></content>
-      <categories>
-        <category>Operating Systems</category>
-      </categories>
-      <tags>
-        <tag>OS</tag>
-        <tag>操作系统</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>进程-process</title>
-    <url>/2020/04/19/process/</url>
-    <content><![CDATA[<p>本文是我在上UCSD的 <a href="http://cseweb.ucsd.edu/classes/wi20/cse120-a/" target="_blank" rel="noopener">CSE 120: Principles of Operating Systems (Winter 2020)</a> 整理的笔记，第一课主要介绍了操作系统以及进程的一些基本概念。</p>
-<a id="more"></a>
-<ol>
-<li><p>Definition</p>
-<ul>
-<li>Abstraction of a running program (<em>dynamic</em>)</li>
-<li>While program is just static code</li>
-</ul>
-</li>
-<li><p>Resources</p>
-<ul>
-<li>CPU<ul>
-<li>Processing cycles (CPU time)</li>
-<li>Execute intstructions</li>
-</ul>
-</li>
-<li>Memory<ul>
-<li>Bytes or words</li>
-<li>maintain state</li>
-</ul>
-</li>
-<li>Other resources (I/O)</li>
-</ul>
-</li>
-<li><p><strong>Context of a Process (machine and kernel-related state)</strong></p>
-<ul>
-<li>CPU context<ul>
-<li>PC (program counter)</li>
-<li>SP (stack pointer)</li>
-<li>FP (frame pointer)</li>
-<li>GP (general pointer)</li>
-</ul>
-</li>
-<li>Memory context<ul>
-<li>program code</li>
-<li>static variables(init, uninit)</li>
-<li>heap</li>
-<li>shared memory</li>
-<li>stack of activation records</li>
-</ul>
-</li>
-<li>Other (kernel-related state, …)</li>
-</ul>
-</li>
-<li><p>Process memory structure <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/process%20memory.png" width="120" style="float: right;"></p>
-<ul>
-<li>Text area: code (program instruction)</li>
-<li>Data<ul>
-<li>Global variable</li>
-<li>Static variable (local and global)</li>
-<li>Heap</li>
-</ul>
-</li>
-<li>Stack<ul>
-<li>Activation records</li>
-<li>Automatic growth/shrinkage</li>
-</ul>
-</li>
-</ul>
-</li>
-<li><p>Process stack <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/process%20stack.png" width="180" style="float: right;"></p>
-<ul>
-<li>Stack of activation records</li>
-<li>An activation records stores:<ul>
-<li>return address</li>
-<li>link to previous record</li>
-<li>local varibale</li>
-<li>other</li>
-</ul>
-</li>
-<li>Stack pointer points to top</li>
-</ul>
-</li>
-<li><p>Multi-Processes</p>
-<ul>
-<li>Goal: support several processes running “simultaneously” or let one process intentionally yield to another process</li>
-<li>Method: Context switching<ul>
-<li>Switch process A (running) to process B (waiting) while store context (state) of process A (since it’s not finished)</li>
-<li>process<ul>
-<li>save context of current process<ul>
-<li>save GP</li>
-<li>save SP</li>
-<li>save PC</li>
-</ul>
-</li>
-<li>load context of next process<ul>
-<li>load GP</li>
-<li>load SP</li>
-<li><strong>load PC (must be last, once PC is loaded, the process B begins to run (PC indicates instruction execution))</strong></li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-</li>
-</ol>
-]]></content>
-      <categories>
-        <category>Operating Systems</category>
-      </categories>
-      <tags>
-        <tag>OS</tag>
-        <tag>操作系统</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>保护-protection</title>
-    <url>/2020/04/19/protection/</url>
-    <content><![CDATA[<p>本文是我在上UCSD的 <a href="http://cseweb.ucsd.edu/classes/wi20/cse120-a/" target="_blank" rel="noopener">CSE 120: Principles of Operating Systems (Winter 2020)</a> 整理的笔记，这一课主要介绍了操作系统里面对文件和进程资源的保护方法，包括用户权限和用户组管理。</p>
-<a id="more"></a>
-<h2 id="Basics"><a href="#Basics" class="headerlink" title="Basics"></a>Basics</h2><ol>
-<li><p>Introduction</p>
-<ul>
-<li>Process access resources</li>
-<li><p>Resources are shared, need to be protected</p>
-<ul>
-<li>from process without permission</li>
-<li>from improper access by a process</li>
-</ul>
-</li>
-<li><p>What is the right protection model?</p>
-</li>
-<li>What are the mechanism?</li>
-</ul>
-</li>
-<li><p>The kernel enforces protection</p>
-<ul>
-<li>To pretect resources, have kernel “own” them, then kernel can allow access temporairily</li>
-<li>To access a resource, a process must ask for it, then kernel can test whether access should be given</li>
-<li><p>One a process is given access</p>
-<ul>
-<li>kernel can prevent others for gaining access</li>
-<li>kernel may/may not be able to take away access</li>
-</ul>
-</li>
-<li><p>This assumes kernel operates correctly</p>
-</li>
-</ul>
-</li>
-<li><p>Protecting the kernel</p>
-<ul>
-<li>The kernel itself must be protected</li>
-<li><p>Mechanism</p>
-<ul>
-<li>Memory protecion</li>
-<li>Protected mode of operation: kernel vs. user</li>
-<li>Clock interrupt, so kernel eventually gets control</li>
-</ul>
-</li>
-<li><p>Notice, mechanisms are hardware supported</p>
-</li>
-<li>Protected kernel can protect other resources</li>
-</ul>
-</li>
-<li><p>Goals supported by kernel</p>
-<ul>
-<li>Allow range of permissions</li>
-<li>Allow user to set/get them</li>
-<li>Be fast/simple for common use</li>
-<li>Support user expressing complex permissions</li>
-</ul>
-</li>
-</ol>
-<h2 id="Implementation"><a href="#Implementation" class="headerlink" title="Implementation"></a>Implementation</h2><h3 id="Simple-model"><a href="#Simple-model" class="headerlink" title="Simple model"></a>Simple model</h3><ol>
-<li><p>A formal model of protection</p>
-<ul>
-<li>Protection: how to limit access to a resource</li>
-<li>Resource: object that requires protection</li>
-<li>Domain: set of (resource, permission) pairs</li>
-<li>Process: accesses resources within domain</li>
-</ul>
-</li>
-<li><p>Protection Matrix</p>
-<ul>
-<li><p>Example: (X, Y: Resources A,B: Domains)</p>
-<p>  |   |  X  |  Y  | A | B |<br>  |—-|—-  | —- |—-|—-|<br>  | A | r,w | r,w |   |   |<br>  | B | w   | r   |   |   |</p>
-</li>
-<li><p>Can describe all domains as a matrix</p>
-<ul>
-<li>Rows are domains</li>
-<li>Columns are resources</li>
-<li>Matrix entry [d, r] contains permissions/rights</li>
-</ul>
-</li>
-<li><p>Access Control Lists (For resource)</p>
-<ul>
-<li>For each resource, list (domain, permissions) pairs</li>
-<li>ACL is associated with resource</li>
-<li>Like a registry: if name is on list, ok to access</li>
-<li>Can be inefficient: must lookup on each access</li>
-<li>Revocation is easy; just remove from list</li>
-</ul>
-</li>
-<li><p>Capability Lists (For domain)</p>
-<ul>
-<li>For each domain, list (resource, permissions pairs)</li>
-<li>Capability list associated with each domain</li>
-<li>Like key/ticker: if you have it, you get access</li>
-<li>Efficient: on access, just produce capability</li>
-<li>Hard to revoke</li>
-</ul>
-</li>
-</ul>
-</li>
-</ol>
-<h3 id="UNIX-Protecion"><a href="#UNIX-Protecion" class="headerlink" title="UNIX Protecion"></a>UNIX Protecion</h3><ol>
-<li><p>Basic</p>
-<ul>
-<li><p>Associated with each file is set of permissions</p>
-<ul>
-<li>Permission bits r/w/x for owner, group, world</li>
-<li>Limited form of access control list</li>
-</ul>
-</li>
-<li><p>Protection domain: UID (user account ID) + …</p>
-<ul>
-<li>A process is always in some domain</li>
-</ul>
-</li>
-<li><p>When process opens file, check permission</p>
-</li>
-<li><p>If ok, provide process with a capability</p>
-<ul>
-<li>Future operations then carried out efficiently</li>
-</ul>
-</li>
-</ul>
-</li>
-<li><p>More</p>
-<ul>
-<li>For common case, r/w/x for o/g/w adequate</li>
-<li>For special cases, can extend via user program</li>
-<li>SETUID mechanism: causes domain switch</li>
-<li><p>If executable file has SETUID bit set</p>
-<ul>
-<li>Process runs in domain of owner (of executable)</li>
-<li>Therefor, it runs with all the rights of the owner</li>
-</ul>
-</li>
-</ul>
-</li>
-<li><p>Example</p>
-<ul>
-<li>Pat has a file “Bil” of bibliography references</li>
-<li>Chris wants to read and add entries</li>
-<li>But, Chris lacks permissions (only Pat can r/w)</li>
-<li>Pat wisher to allow append access (only add entris to the back), but how?</li>
-<li><p>Solution:</p>
-<ul>
-<li>Pat can provide program (e.g., EditBib): only reads/appends</li>
-<li><p>Set permissions</p>
-<ul>
-<li>of program: execute (for Chris), and SETUID on</li>
-<li>of Bib file: read/write only for Pat, not Chris</li>
-</ul>
-</li>
-<li><p>When Chris executes EditBib, runs as Pat (since SETUID on, domain switch to Pat’s domain)</p>
-</li>
-<li>Program only does read/append.</li>
-</ul>
-</li>
-</ul>
-</li>
-</ol>
-]]></content>
-      <categories>
-        <category>Operating Systems</category>
-      </categories>
-      <tags>
-        <tag>OS</tag>
-        <tag>操作系统</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>网络-networks</title>
     <url>/2020/04/19/networks/</url>
     <content><![CDATA[<p>本文是我在上UCSD的 <a href="http://cseweb.ucsd.edu/classes/wi20/cse120-a/" target="_blank" rel="noopener">CSE 120: Principles of Operating Systems (Winter 2020)</a> 整理的笔记，这一课主要介绍了网络的概念，包括网络的类型和协议的概念。并且简单介绍了一下OSI7层模型，包括addressing和routing的过程。</p>
@@ -2751,6 +2473,284 @@
 </ul>
 </li>
 <li><p><a href="https://www.wikiwand.com/en/Two_Generals%27_Problem" target="_blank" rel="noopener">The two general’s problem</a></p>
+</li>
+</ol>
+]]></content>
+      <categories>
+        <category>Operating Systems</category>
+      </categories>
+      <tags>
+        <tag>OS</tag>
+        <tag>操作系统</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>进程-process</title>
+    <url>/2020/04/19/process/</url>
+    <content><![CDATA[<p>本文是我在上UCSD的 <a href="http://cseweb.ucsd.edu/classes/wi20/cse120-a/" target="_blank" rel="noopener">CSE 120: Principles of Operating Systems (Winter 2020)</a> 整理的笔记，第一课主要介绍了操作系统以及进程的一些基本概念。</p>
+<a id="more"></a>
+<ol>
+<li><p>Definition</p>
+<ul>
+<li>Abstraction of a running program (<em>dynamic</em>)</li>
+<li>While program is just static code</li>
+</ul>
+</li>
+<li><p>Resources</p>
+<ul>
+<li>CPU<ul>
+<li>Processing cycles (CPU time)</li>
+<li>Execute intstructions</li>
+</ul>
+</li>
+<li>Memory<ul>
+<li>Bytes or words</li>
+<li>maintain state</li>
+</ul>
+</li>
+<li>Other resources (I/O)</li>
+</ul>
+</li>
+<li><p><strong>Context of a Process (machine and kernel-related state)</strong></p>
+<ul>
+<li>CPU context<ul>
+<li>PC (program counter)</li>
+<li>SP (stack pointer)</li>
+<li>FP (frame pointer)</li>
+<li>GP (general pointer)</li>
+</ul>
+</li>
+<li>Memory context<ul>
+<li>program code</li>
+<li>static variables(init, uninit)</li>
+<li>heap</li>
+<li>shared memory</li>
+<li>stack of activation records</li>
+</ul>
+</li>
+<li>Other (kernel-related state, …)</li>
+</ul>
+</li>
+<li><p>Process memory structure <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/process%20memory.png" width="120" style="float: right;"></p>
+<ul>
+<li>Text area: code (program instruction)</li>
+<li>Data<ul>
+<li>Global variable</li>
+<li>Static variable (local and global)</li>
+<li>Heap</li>
+</ul>
+</li>
+<li>Stack<ul>
+<li>Activation records</li>
+<li>Automatic growth/shrinkage</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Process stack <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/process%20stack.png" width="180" style="float: right;"></p>
+<ul>
+<li>Stack of activation records</li>
+<li>An activation records stores:<ul>
+<li>return address</li>
+<li>link to previous record</li>
+<li>local varibale</li>
+<li>other</li>
+</ul>
+</li>
+<li>Stack pointer points to top</li>
+</ul>
+</li>
+<li><p>Multi-Processes</p>
+<ul>
+<li>Goal: support several processes running “simultaneously” or let one process intentionally yield to another process</li>
+<li>Method: Context switching<ul>
+<li>Switch process A (running) to process B (waiting) while store context (state) of process A (since it’s not finished)</li>
+<li>process<ul>
+<li>save context of current process<ul>
+<li>save GP</li>
+<li>save SP</li>
+<li>save PC</li>
+</ul>
+</li>
+<li>load context of next process<ul>
+<li>load GP</li>
+<li>load SP</li>
+<li><strong>load PC (must be last, once PC is loaded, the process B begins to run (PC indicates instruction execution))</strong></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+]]></content>
+      <categories>
+        <category>Operating Systems</category>
+      </categories>
+      <tags>
+        <tag>OS</tag>
+        <tag>操作系统</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>保护-protection</title>
+    <url>/2020/04/19/protection/</url>
+    <content><![CDATA[<p>本文是我在上UCSD的 <a href="http://cseweb.ucsd.edu/classes/wi20/cse120-a/" target="_blank" rel="noopener">CSE 120: Principles of Operating Systems (Winter 2020)</a> 整理的笔记，这一课主要介绍了操作系统里面对文件和进程资源的保护方法，包括用户权限和用户组管理。</p>
+<a id="more"></a>
+<h2 id="Basics"><a href="#Basics" class="headerlink" title="Basics"></a>Basics</h2><ol>
+<li><p>Introduction</p>
+<ul>
+<li>Process access resources</li>
+<li><p>Resources are shared, need to be protected</p>
+<ul>
+<li>from process without permission</li>
+<li>from improper access by a process</li>
+</ul>
+</li>
+<li><p>What is the right protection model?</p>
+</li>
+<li>What are the mechanism?</li>
+</ul>
+</li>
+<li><p>The kernel enforces protection</p>
+<ul>
+<li>To pretect resources, have kernel “own” them, then kernel can allow access temporairily</li>
+<li>To access a resource, a process must ask for it, then kernel can test whether access should be given</li>
+<li><p>One a process is given access</p>
+<ul>
+<li>kernel can prevent others for gaining access</li>
+<li>kernel may/may not be able to take away access</li>
+</ul>
+</li>
+<li><p>This assumes kernel operates correctly</p>
+</li>
+</ul>
+</li>
+<li><p>Protecting the kernel</p>
+<ul>
+<li>The kernel itself must be protected</li>
+<li><p>Mechanism</p>
+<ul>
+<li>Memory protecion</li>
+<li>Protected mode of operation: kernel vs. user</li>
+<li>Clock interrupt, so kernel eventually gets control</li>
+</ul>
+</li>
+<li><p>Notice, mechanisms are hardware supported</p>
+</li>
+<li>Protected kernel can protect other resources</li>
+</ul>
+</li>
+<li><p>Goals supported by kernel</p>
+<ul>
+<li>Allow range of permissions</li>
+<li>Allow user to set/get them</li>
+<li>Be fast/simple for common use</li>
+<li>Support user expressing complex permissions</li>
+</ul>
+</li>
+</ol>
+<h2 id="Implementation"><a href="#Implementation" class="headerlink" title="Implementation"></a>Implementation</h2><h3 id="Simple-model"><a href="#Simple-model" class="headerlink" title="Simple model"></a>Simple model</h3><ol>
+<li><p>A formal model of protection</p>
+<ul>
+<li>Protection: how to limit access to a resource</li>
+<li>Resource: object that requires protection</li>
+<li>Domain: set of (resource, permission) pairs</li>
+<li>Process: accesses resources within domain</li>
+</ul>
+</li>
+<li><p>Protection Matrix</p>
+<ul>
+<li><p>Example: (X, Y: Resources A,B: Domains)</p>
+<p>  |   |  X  |  Y  | A | B |<br>  |—-|—-  | —- |—-|—-|<br>  | A | r,w | r,w |   |   |<br>  | B | w   | r   |   |   |</p>
+</li>
+<li><p>Can describe all domains as a matrix</p>
+<ul>
+<li>Rows are domains</li>
+<li>Columns are resources</li>
+<li>Matrix entry [d, r] contains permissions/rights</li>
+</ul>
+</li>
+<li><p>Access Control Lists (For resource)</p>
+<ul>
+<li>For each resource, list (domain, permissions) pairs</li>
+<li>ACL is associated with resource</li>
+<li>Like a registry: if name is on list, ok to access</li>
+<li>Can be inefficient: must lookup on each access</li>
+<li>Revocation is easy; just remove from list</li>
+</ul>
+</li>
+<li><p>Capability Lists (For domain)</p>
+<ul>
+<li>For each domain, list (resource, permissions pairs)</li>
+<li>Capability list associated with each domain</li>
+<li>Like key/ticker: if you have it, you get access</li>
+<li>Efficient: on access, just produce capability</li>
+<li>Hard to revoke</li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+<h3 id="UNIX-Protecion"><a href="#UNIX-Protecion" class="headerlink" title="UNIX Protecion"></a>UNIX Protecion</h3><ol>
+<li><p>Basic</p>
+<ul>
+<li><p>Associated with each file is set of permissions</p>
+<ul>
+<li>Permission bits r/w/x for owner, group, world</li>
+<li>Limited form of access control list</li>
+</ul>
+</li>
+<li><p>Protection domain: UID (user account ID) + …</p>
+<ul>
+<li>A process is always in some domain</li>
+</ul>
+</li>
+<li><p>When process opens file, check permission</p>
+</li>
+<li><p>If ok, provide process with a capability</p>
+<ul>
+<li>Future operations then carried out efficiently</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>More</p>
+<ul>
+<li>For common case, r/w/x for o/g/w adequate</li>
+<li>For special cases, can extend via user program</li>
+<li>SETUID mechanism: causes domain switch</li>
+<li><p>If executable file has SETUID bit set</p>
+<ul>
+<li>Process runs in domain of owner (of executable)</li>
+<li>Therefor, it runs with all the rights of the owner</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Example</p>
+<ul>
+<li>Pat has a file “Bil” of bibliography references</li>
+<li>Chris wants to read and add entries</li>
+<li>But, Chris lacks permissions (only Pat can r/w)</li>
+<li>Pat wisher to allow append access (only add entris to the back), but how?</li>
+<li><p>Solution:</p>
+<ul>
+<li>Pat can provide program (e.g., EditBib): only reads/appends</li>
+<li><p>Set permissions</p>
+<ul>
+<li>of program: execute (for Chris), and SETUID on</li>
+<li>of Bib file: read/write only for Pat, not Chris</li>
+</ul>
+</li>
+<li><p>When Chris executes EditBib, runs as Pat (since SETUID on, domain switch to Pat’s domain)</p>
+</li>
+<li>Program only does read/append.</li>
+</ul>
+</li>
+</ul>
 </li>
 </ol>
 ]]></content>
@@ -3544,6 +3544,31 @@
       </tags>
   </entry>
   <entry>
+    <title>常用资源工具整理</title>
+    <url>/2020/04/19/%E5%B8%B8%E7%94%A8%E8%B5%84%E6%BA%90%E5%B7%A5%E5%85%B7%E6%95%B4%E7%90%86/</url>
+    <content><![CDATA[<h2 id="博客-amp-主题配置-（Hexo）"><a href="#博客-amp-主题配置-（Hexo）" class="headerlink" title="博客 &amp; 主题配置 （Hexo）"></a>博客 &amp; 主题配置 （Hexo）</h2><ul>
+<li><p><a href="https://www.bilibili.com/video/BV1Yb411a7ty" target="_blank" rel="noopener">手把手教你从0开始搭建自己的个人博客 |无坑版视频教程| hexo</a><br> 视频讲解建立hexo博客以及部署到github pages上，需要注意下建立博客的过程最好不用root模式，只需要用chown改变npm的权限就可以了，不然后续写博客可能比较麻烦</p>
+</li>
+<li><p><a href="https://www.zyjdn.com/2020/02/05/Hexo-NexT%E4%B8%BB%E9%A2%98/" target="_blank" rel="noopener">Hexo-NexT主题</a><br> 这篇文章和博主的后续几篇主要包括hexo-next主题（目前更新到next版本7.0+）里面的基础配置</p>
+</li>
+<li><p><a href="https://blog.csdn.net/maosidiaoxian/article/details/85220394" target="_blank" rel="noopener">如何在Hexo中对文章md文件分类</a><br> 利用 post 的 permalink 属性和 hexo 的 new_post_name 实现按日期文件夹（按年或者按月）归类文章</p>
+</li>
+<li><p><a href="https://zhuanlan.zhihu.com/p/111614119" target="_blank" rel="noopener">Github + Hexo 搭建个人博客超详细教程</a></p>
+</li>
+<li><p><a href="https://zhuanlan.zhihu.com/p/111796666" target="_blank" rel="noopener">Hexo 双线部署到 Coding 和 GitHub 提升访问速度</a><br> 这两篇主要参考github和coding双线部署以及域名绑定</p>
+</li>
+<li><p><a href="https://yashuning.github.io/2018/06/29/hexo-Next-%E4%B8%BB%E9%A2%98%E6%B7%BB%E5%8A%A0%E8%AF%84%E8%AE%BA%E5%8A%9F%E8%83%BD/" target="_blank" rel="noopener">hexo - Next 主题添加评论功能</a><br> 添加评论功能</p>
+</li>
+</ul>
+]]></content>
+      <categories>
+        <category>tools</category>
+      </categories>
+      <tags>
+        <tag>tool</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>分时系统-timesharing</title>
     <url>/2020/04/19/timesharing/</url>
     <content><![CDATA[<p>本文是我在上UCSD的 <a href="http://cseweb.ucsd.edu/classes/wi20/cse120-a/" target="_blank" rel="noopener">CSE 120: Principles of Operating Systems (Winter 2020)</a> 整理的笔记，第二课主要介绍了分时系统里时间分配的概念，以及内核 (kernel) 和用户 (user) 层面上实现thread的区别以及优缺点。</p>
@@ -3680,31 +3705,6 @@
       <tags>
         <tag>OS</tag>
         <tag>操作系统</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>常用资源工具整理</title>
-    <url>/2020/04/19/%E5%B8%B8%E7%94%A8%E8%B5%84%E6%BA%90%E5%B7%A5%E5%85%B7%E6%95%B4%E7%90%86/</url>
-    <content><![CDATA[<h2 id="博客-amp-主题配置-（Hexo）"><a href="#博客-amp-主题配置-（Hexo）" class="headerlink" title="博客 &amp; 主题配置 （Hexo）"></a>博客 &amp; 主题配置 （Hexo）</h2><ul>
-<li><p><a href="https://www.bilibili.com/video/BV1Yb411a7ty" target="_blank" rel="noopener">手把手教你从0开始搭建自己的个人博客 |无坑版视频教程| hexo</a><br> 视频讲解建立hexo博客以及部署到github pages上，需要注意下建立博客的过程最好不用root模式，只需要用chown改变npm的权限就可以了，不然后续写博客可能比较麻烦</p>
-</li>
-<li><p><a href="https://www.zyjdn.com/2020/02/05/Hexo-NexT%E4%B8%BB%E9%A2%98/" target="_blank" rel="noopener">Hexo-NexT主题</a><br> 这篇文章和博主的后续几篇主要包括hexo-next主题（目前更新到next版本7.0+）里面的基础配置</p>
-</li>
-<li><p><a href="https://blog.csdn.net/maosidiaoxian/article/details/85220394" target="_blank" rel="noopener">如何在Hexo中对文章md文件分类</a><br> 利用 post 的 permalink 属性和 hexo 的 new_post_name 实现按日期文件夹（按年或者按月）归类文章</p>
-</li>
-<li><p><a href="https://zhuanlan.zhihu.com/p/111614119" target="_blank" rel="noopener">Github + Hexo 搭建个人博客超详细教程</a></p>
-</li>
-<li><p><a href="https://zhuanlan.zhihu.com/p/111796666" target="_blank" rel="noopener">Hexo 双线部署到 Coding 和 GitHub 提升访问速度</a><br> 这两篇主要参考github和coding双线部署以及域名绑定</p>
-</li>
-<li><p><a href="https://yashuning.github.io/2018/06/29/hexo-Next-%E4%B8%BB%E9%A2%98%E6%B7%BB%E5%8A%A0%E8%AF%84%E8%AE%BA%E5%8A%9F%E8%83%BD/" target="_blank" rel="noopener">hexo - Next 主题添加评论功能</a><br> 添加评论功能</p>
-</li>
-</ul>
-]]></content>
-      <categories>
-        <category>tools</category>
-      </categories>
-      <tags>
-        <tag>tool</tag>
       </tags>
   </entry>
   <entry>
