@@ -1,225 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
-    <title>输入/输出系统-I/O system</title>
-    <url>/2020/04/19/IO-system/</url>
-    <content><![CDATA[<p>本文是我在上UCSD的 <a href="http://cseweb.ucsd.edu/classes/wi20/cse120-a/" target="_blank" rel="noopener">CSE 120: Principles of Operating Systems (Winter 2020)</a> 整理的笔记，这一课主要介绍了操作系统里面输入系统系统的概念，包括硬件上的组成以及软件的结构。</p>
-<a id="more"></a>
-<h2 id="I-O-basic"><a href="#I-O-basic" class="headerlink" title="I/O basic"></a>I/O basic</h2><ol>
-<li><p>Intro</p>
-<ul>
-<li><p>I/O = Input/Output</p>
-<ul>
-<li>Input from attached device to CPU/memory</li>
-<li>Output from CPU/memory to device</li>
-</ul>
-</li>
-<li><p>Synchronization and transferring data</p>
-</li>
-</ul>
-</li>
-<li><p>Issues</p>
-<ul>
-<li><p>Problems:</p>
-<ul>
-<li>So many different types of I/O devices</li>
-<li>Wide range: speed, operation, data transfer units</li>
-</ul>
-</li>
-<li><p>Questions:</p>
-<ul>
-<li>How does a process initiate I/O?</li>
-<li>How is synchronization achieved?</li>
-<li>How is data transferred?</li>
-</ul>
-</li>
-</ul>
-</li>
-<li><p>Background: I/O Hardware</p>
-<ul>
-<li><p>CPU and device (controller) communicate via</p>
-<ul>
-<li>I/O instructions</li>
-<li>Memory instructuions (memory-mapped)</li>
-</ul>
-</li>
-<li><p>Data transfer: progammed I/O vs. DMA (direct memory access)</p>
-</li>
-<li><p>Synchronization: polling vs. interrupts</p>
-<p>  <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/hardware_io.png" width="500"></p>
-</li>
-</ul>
-</li>
-<li><p>Buffered/Unbuffered I/O</p>
-<ul>
-<li><p>Pros:</p>
-<ul>
-<li>What if pages containing buffer are paged out?</li>
-<li>What if entire process is swapped out?</li>
-<li>Can pin pages, but if too many processes do this?</li>
-</ul>
-</li>
-<li><p>Cons:</p>
-<ul>
-<li>Memory copying is expensive</li>
-<li>Consider effect on caches</li>
-</ul>
-</li>
-</ul>
-</li>
-<li><p>Dealing with Complexity of Devices</p>
-<ul>
-<li><p>Many different types of devices</p>
-<ul>
-<li>Classify by shared characteristics</li>
-<li>Imposes structure: shared code, lower complexity</li>
-</ul>
-</li>
-<li><p>Dimensions</p>
-<ul>
-<li>Varaible vs. fixed size units</li>
-<li>Sequential vs. random-access</li>
-<li>Synchronous vs. asynchronous</li>
-<li>Speed of operation</li>
-</ul>
-</li>
-</ul>
-</li>
-</ol>
-<h2 id="I-O-system"><a href="#I-O-system" class="headerlink" title="I/O system"></a>I/O system</h2><ol>
-<li><p>I/O system Intro</p>
-<ul>
-<li><p>Software that deals with I/O</p>
-<ul>
-<li>Mostly in the kernel</li>
-<li>Also in processes (in form of library, e.g., stdio)</li>
-</ul>
-</li>
-<li><p>Separated into two portions</p>
-<ul>
-<li>Device-dependent</li>
-<li>Device- independent</li>
-</ul>
-</li>
-<li><p>Structure: Layered</p>
-<p>  <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/IO_system_structure.png" width="500"></p>
-</li>
-</ul>
-</li>
-<li><p>Device Dependent: Device Drivers</p>
-<ul>
-<li><p>Encapsulates device-dependent code</p>
-<ul>
-<li>Contains device-specific register reads/write</li>
-</ul>
-</li>
-<li><p>Implements a standard interface</p>
-<ul>
-<li>open(), close(), read(), write()</li>
-</ul>
-</li>
-<li><p>Interrupt handlers</p>
-<ul>
-<li>Executes when I/O completes</li>
-<li>Updates data structure</li>
-<li>Wakes up waiting process</li>
-</ul>
-</li>
-</ul>
-</li>
-<li><p>Device-Independent I/O</p>
-<ul>
-<li>Uniform interfacing for device drivers</li>
-<li>Naming, protection</li>
-<li>Uniform block size</li>
-<li>Buffering, caching</li>
-<li>Storage allocation</li>
-<li>Locking</li>
-<li>Error handling</li>
-</ul>
-</li>
-<li><p>User-space I/O <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/user_space_io.png" width="180" style="float: right;"></p>
-<ul>
-<li><p>Convenient interface</p>
-<ul>
-<li>printf() vs. write()</li>
-</ul>
-</li>
-<li><p>User-level buffering</p>
-<ul>
-<li>Unix: stdio library</li>
-</ul>
-</li>
-<li><p>Spooling daemons</p>
-<ul>
-<li>Printer</li>
-</ul>
-</li>
-</ul>
-</li>
-<li><p>Overall Operation</p>
-<p> <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/io_operation.png" width="350"></p>
-</li>
-</ol>
-<h3 id="Example-UNIX"><a href="#Example-UNIX" class="headerlink" title="Example: UNIX"></a>Example: UNIX</h3><ol>
-<li><p>I/O Model <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/unix_io.png" width="180" style="float: right;"></p>
-<ul>
-<li>Uses file system interface</li>
-<li>stdio.h: C standard I/O library</li>
-<li><p>Block devices (disks, USB cameras, …)</p>
-<ul>
-<li>Fixed-size blocks</li>
-<li>Randomly addressable</li>
-<li>Uses buffer cache</li>
-</ul>
-</li>
-<li><p>Character devices (serial ports, parallel ports, sound cards,…)</p>
-<ul>
-<li>Variable sequence of bytes</li>
-<li>For non-block devices</li>
-</ul>
-</li>
-</ul>
-</li>
-<li><p>I/O System Call Interface</p>
-<ul>
-<li>fd = open(“/dev/devname”, …)</li>
-<li>close(fd)</li>
-<li>nr = read(fd, buf, n)</li>
-<li>nw = write(fd, buf, n)</li>
-<li>ioctl(fd, cmd, buf) //(input/output control)</li>
-</ul>
-</li>
-<li><p>Standard I/O Library</p>
-<ul>
-<li>fopen, fread, fwrite, fprintf, fscanf, fclose, …</li>
-<li>Private buffer kept in user space</li>
-<li>Minimizes the number of I/O system calls</li>
-</ul>
-</li>
-<li><p>Software Block Cache Design</p>
-<ul>
-<li>Has copies of blocks that are also on disk</li>
-<li><p>Upon read or write</p>
-<ul>
-<li>Check if a buffer contains the block</li>
-<li>If not, get from disk</li>
-<li>To make room, remove LRU block</li>
-</ul>
-</li>
-</ul>
-</li>
-</ol>
-]]></content>
-      <categories>
-        <category>Operating Systems</category>
-      </categories>
-      <tags>
-        <tag>OS</tag>
-        <tag>操作系统</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>死锁-deadlock</title>
     <url>/2020/04/19/deadlock/</url>
     <content><![CDATA[<p>本文是我在上UCSD的 <a href="http://cseweb.ucsd.edu/classes/wi20/cse120-a/" target="_blank" rel="noopener">CSE 120: Principles of Operating Systems (Winter 2020)</a> 整理的笔记，这一课主要介绍了操作系统里面死锁概念包括出现的原因，以及避免（防止出现）以及解决办法（出现死锁时最好的方法是重启大法！！）</p>
@@ -475,6 +256,225 @@
       </categories>
       <tags>
         <tag>slam</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>输入/输出系统-I/O system</title>
+    <url>/2020/04/19/IO-system/</url>
+    <content><![CDATA[<p>本文是我在上UCSD的 <a href="http://cseweb.ucsd.edu/classes/wi20/cse120-a/" target="_blank" rel="noopener">CSE 120: Principles of Operating Systems (Winter 2020)</a> 整理的笔记，这一课主要介绍了操作系统里面输入系统系统的概念，包括硬件上的组成以及软件的结构。</p>
+<a id="more"></a>
+<h2 id="I-O-basic"><a href="#I-O-basic" class="headerlink" title="I/O basic"></a>I/O basic</h2><ol>
+<li><p>Intro</p>
+<ul>
+<li><p>I/O = Input/Output</p>
+<ul>
+<li>Input from attached device to CPU/memory</li>
+<li>Output from CPU/memory to device</li>
+</ul>
+</li>
+<li><p>Synchronization and transferring data</p>
+</li>
+</ul>
+</li>
+<li><p>Issues</p>
+<ul>
+<li><p>Problems:</p>
+<ul>
+<li>So many different types of I/O devices</li>
+<li>Wide range: speed, operation, data transfer units</li>
+</ul>
+</li>
+<li><p>Questions:</p>
+<ul>
+<li>How does a process initiate I/O?</li>
+<li>How is synchronization achieved?</li>
+<li>How is data transferred?</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Background: I/O Hardware</p>
+<ul>
+<li><p>CPU and device (controller) communicate via</p>
+<ul>
+<li>I/O instructions</li>
+<li>Memory instructuions (memory-mapped)</li>
+</ul>
+</li>
+<li><p>Data transfer: progammed I/O vs. DMA (direct memory access)</p>
+</li>
+<li><p>Synchronization: polling vs. interrupts</p>
+<p>  <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/hardware_io.png" width="500"></p>
+</li>
+</ul>
+</li>
+<li><p>Buffered/Unbuffered I/O</p>
+<ul>
+<li><p>Pros:</p>
+<ul>
+<li>What if pages containing buffer are paged out?</li>
+<li>What if entire process is swapped out?</li>
+<li>Can pin pages, but if too many processes do this?</li>
+</ul>
+</li>
+<li><p>Cons:</p>
+<ul>
+<li>Memory copying is expensive</li>
+<li>Consider effect on caches</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Dealing with Complexity of Devices</p>
+<ul>
+<li><p>Many different types of devices</p>
+<ul>
+<li>Classify by shared characteristics</li>
+<li>Imposes structure: shared code, lower complexity</li>
+</ul>
+</li>
+<li><p>Dimensions</p>
+<ul>
+<li>Varaible vs. fixed size units</li>
+<li>Sequential vs. random-access</li>
+<li>Synchronous vs. asynchronous</li>
+<li>Speed of operation</li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+<h2 id="I-O-system"><a href="#I-O-system" class="headerlink" title="I/O system"></a>I/O system</h2><ol>
+<li><p>I/O system Intro</p>
+<ul>
+<li><p>Software that deals with I/O</p>
+<ul>
+<li>Mostly in the kernel</li>
+<li>Also in processes (in form of library, e.g., stdio)</li>
+</ul>
+</li>
+<li><p>Separated into two portions</p>
+<ul>
+<li>Device-dependent</li>
+<li>Device- independent</li>
+</ul>
+</li>
+<li><p>Structure: Layered</p>
+<p>  <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/IO_system_structure.png" width="500"></p>
+</li>
+</ul>
+</li>
+<li><p>Device Dependent: Device Drivers</p>
+<ul>
+<li><p>Encapsulates device-dependent code</p>
+<ul>
+<li>Contains device-specific register reads/write</li>
+</ul>
+</li>
+<li><p>Implements a standard interface</p>
+<ul>
+<li>open(), close(), read(), write()</li>
+</ul>
+</li>
+<li><p>Interrupt handlers</p>
+<ul>
+<li>Executes when I/O completes</li>
+<li>Updates data structure</li>
+<li>Wakes up waiting process</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Device-Independent I/O</p>
+<ul>
+<li>Uniform interfacing for device drivers</li>
+<li>Naming, protection</li>
+<li>Uniform block size</li>
+<li>Buffering, caching</li>
+<li>Storage allocation</li>
+<li>Locking</li>
+<li>Error handling</li>
+</ul>
+</li>
+<li><p>User-space I/O <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/user_space_io.png" width="180" style="float: right;"></p>
+<ul>
+<li><p>Convenient interface</p>
+<ul>
+<li>printf() vs. write()</li>
+</ul>
+</li>
+<li><p>User-level buffering</p>
+<ul>
+<li>Unix: stdio library</li>
+</ul>
+</li>
+<li><p>Spooling daemons</p>
+<ul>
+<li>Printer</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Overall Operation</p>
+<p> <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/io_operation.png" width="350"></p>
+</li>
+</ol>
+<h3 id="Example-UNIX"><a href="#Example-UNIX" class="headerlink" title="Example: UNIX"></a>Example: UNIX</h3><ol>
+<li><p>I/O Model <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/unix_io.png" width="180" style="float: right;"></p>
+<ul>
+<li>Uses file system interface</li>
+<li>stdio.h: C standard I/O library</li>
+<li><p>Block devices (disks, USB cameras, …)</p>
+<ul>
+<li>Fixed-size blocks</li>
+<li>Randomly addressable</li>
+<li>Uses buffer cache</li>
+</ul>
+</li>
+<li><p>Character devices (serial ports, parallel ports, sound cards,…)</p>
+<ul>
+<li>Variable sequence of bytes</li>
+<li>For non-block devices</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>I/O System Call Interface</p>
+<ul>
+<li>fd = open(“/dev/devname”, …)</li>
+<li>close(fd)</li>
+<li>nr = read(fd, buf, n)</li>
+<li>nw = write(fd, buf, n)</li>
+<li>ioctl(fd, cmd, buf) //(input/output control)</li>
+</ul>
+</li>
+<li><p>Standard I/O Library</p>
+<ul>
+<li>fopen, fread, fwrite, fprintf, fscanf, fclose, …</li>
+<li>Private buffer kept in user space</li>
+<li>Minimizes the number of I/O system calls</li>
+</ul>
+</li>
+<li><p>Software Block Cache Design</p>
+<ul>
+<li>Has copies of blocks that are also on disk</li>
+<li><p>Upon read or write</p>
+<ul>
+<li>Check if a buffer contains the block</li>
+<li>If not, get from disk</li>
+<li>To make room, remove LRU block</li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+]]></content>
+      <categories>
+        <category>Operating Systems</category>
+      </categories>
+      <tags>
+        <tag>OS</tag>
+        <tag>操作系统</tag>
       </tags>
   </entry>
   <entry>
@@ -799,6 +799,165 @@
 <li>Enter critical section (may get requests, defers)</li>
 <li>Upon exiting, responds (to release) to all deferred</li>
 <li>Use timestamps to order “simultaneous” requests</li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+]]></content>
+      <categories>
+        <category>Operating Systems</category>
+      </categories>
+      <tags>
+        <tag>OS</tag>
+        <tag>操作系统</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>进程间通信-inter process communication(IPC)</title>
+    <url>/2020/04/19/inter_process_communication/</url>
+    <content><![CDATA[<p>本文是我在上UCSD的 <a href="http://cseweb.ucsd.edu/classes/wi20/cse120-a/" target="_blank" rel="noopener">CSE 120: Principles of Operating Systems (Winter 2020)</a> 整理的笔记，这一课主要介绍了操作系统里面不同进程之间通信的算法和实现。</p>
+<a id="more"></a>
+<ol>
+<li><p>Cooperating Processes and IPC</p>
+<ul>
+<li><p>Advantage of Cooperating Processes</p>
+<ul>
+<li>performance: speed<ul>
+<li>Exploit inherent parallelism of computation</li>
+<li>Allow some parts to proceed why other do I/O</li>
+</ul>
+</li>
+<li>Modularity: resuable self-contained programs<ul>
+<li>Each may do a useful task on its own</li>
+<li>May also be useful as a sub-task for others</li>
+</ul>
+</li>
+<li><p>Examples:</p>
+<p> <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/cooperating_processes_example.png" width="350"></p>
+</li>
+</ul>
+</li>
+<li><p>IPC: communication between processes</p>
+</li>
+<li><strong>IPC requires</strong>:<ul>
+<li>data transfer</li>
+<li>synchronization</li>
+</ul>
+</li>
+<li><strong>Three abstraction for IPC</strong><ul>
+<li>shared memory + semaphores</li>
+<li>monitors</li>
+<li>message passing</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>The producer/consumer problem</p>
+<ul>
+<li>Producer produces data, inserts in shared buffer</li>
+<li>Consumer removes data from buffer, consumes it</li>
+<li>Cooperation: Producer feeds Consumer<ul>
+<li>How does data get from producer to consumer?</li>
+<li>How does consumer wait for producer?</li>
+</ul>
+</li>
+<li><p>Example:</p>
+<p><img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/producer_consumer.png" width="350"></p>
+</li>
+</ul>
+</li>
+<li><p>Shared memory + semaphore</p>
+<ul>
+<li><p>implementation:</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line">shared <span class="keyword">int</span> buf[N], in = <span class="number">0</span>, out = <span class="number">0</span>;</span><br><span class="line">sem filledslots = <span class="number">0</span>, emptyslots = N, mutex = <span class="number">1</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Producer1, 2, ...</span></span><br><span class="line"><span class="keyword">while</span> (<span class="literal">true</span>) &#123;</span><br><span class="line">  wait (emptyslots); <span class="comment">// wait for available empty slots</span></span><br><span class="line">  wait (mutex); <span class="comment">// avoid racondition</span></span><br><span class="line">  buf[in] = Produce();</span><br><span class="line">  in = (in + <span class="number">1</span>) % N;</span><br><span class="line">  signal(mutex);</span><br><span class="line">  signal(filledslots); <span class="comment">// increment the number of filled slots</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Consumer1, 2, ...</span></span><br><span class="line"><span class="keyword">while</span> (<span class="literal">true</span>) &#123;</span><br><span class="line">  wait(filledslot);</span><br><span class="line">  wait(mutex);</span><br><span class="line">  Consume(buf[out]);</span><br><span class="line">  out = (out + <span class="number">1</span>) % N;</span><br><span class="line">  signal(mutex);</span><br><span class="line">  signal(emptyslots);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>work for multiple producers and consumer</p>
+</li>
+<li>Not easy to understand(many wait/signal statements), easily leads to bugs</li>
+</ul>
+</li>
+<li><p>monitors</p>
+<ul>
+<li><p>Programming language contruct for IPC</p>
+<ul>
+<li>monitors are variables requiring controlled access</li>
+<li>accessd via procedures</li>
+<li>condition variables<ul>
+<li>wait(cond)</li>
+<li>signal(cond)</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Only one process can be active inside monitor</p>
+</li>
+<li><p>Usage</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="comment">// a possible monitor implementation (provided by programming language)</span></span><br><span class="line">monitor ProducerConsumer &#123;</span><br><span class="line">  <span class="keyword">int</span> buf[N], in = <span class="number">0</span>, out = <span class="number">0</span>, count = <span class="number">0</span>;</span><br><span class="line">  cond slotavail, itemavail;</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">void</span> <span class="title">PutItem</span> <span class="params">(<span class="keyword">int</span> item)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (count == N) wait(slotavail);</span><br><span class="line">    buf[in] = item;</span><br><span class="line">    in = (in + <span class="number">1</span>) % N;</span><br><span class="line">    count++;</span><br><span class="line">    signal(itemavail);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">int</span> <span class="title">GetItem</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">int</span> item;</span><br><span class="line">    <span class="keyword">if</span> (count == <span class="number">0</span>) wait(itemavail);</span><br><span class="line">    item = buf[out];</span><br><span class="line">    out = (out + <span class="number">1</span>) % N;</span><br><span class="line">    count--;</span><br><span class="line">    signal(slotavail);</span><br><span class="line">    <span class="keyword">return</span> (item);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Producer</span></span><br><span class="line"><span class="keyword">while</span> (<span class="literal">true</span>) &#123;</span><br><span class="line">  PutItem(Produce());</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Consumer</span></span><br><span class="line"><span class="keyword">while</span> (<span class="literal">true</span>) &#123;</span><br><span class="line">  Consume(GetItem());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>mechanism</p>
+<p> <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/monitors.png" width="400"></p>
+</li>
+<li><p>more on Monitors</p>
+<ul>
+<li>If one process A siganl condition c while another process B is waiting on c, at that time two process are able to run at the same time, which breaks mutual exclusion. <strong>So each process only signal condition just before returning.</strong></li>
+<li><em>Contition variable have no memory</em><ul>
+<li>It has no value and only indicate whether an event occurs or not</li>
+<li>Signal without someone waiting does nothing</li>
+<li>Signal is “lost”</li>
+</ul>
+</li>
+<li>Monitors bring structure to IPC<ul>
+<li>localizes critical sections and synchronization</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Message Passing</p>
+<ul>
+<li><p>Model:</p>
+<p>  <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/Message_Passing.png" width="400"></p>
+</li>
+<li><p>methods:</p>
+<ul>
+<li>send(destination, &amp;message)</li>
+<li>receive(source, &amp;message)</li>
+</ul>
+</li>
+<li><p>Data transfer: in to and out of kernel message buffer</p>
+</li>
+<li><p>Synchronization: receive blocks to wait for message</p>
+</li>
+<li><p>Usage</p>
+<ul>
+<li><p>basic</p>
+  <figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="comment">/* NO SHARED MEMORY */</span></span><br><span class="line"><span class="comment">// Producer</span></span><br><span class="line"><span class="keyword">int</span> item;</span><br><span class="line"></span><br><span class="line"><span class="keyword">while</span> (<span class="literal">true</span>) &#123;</span><br><span class="line">item = Produce();</span><br><span class="line">send(Consumer, &amp;item);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Consumer</span></span><br><span class="line"><span class="keyword">int</span> item;</span><br><span class="line"></span><br><span class="line"><span class="keyword">while</span> (<span class="literal">true</span>) &#123;</span><br><span class="line">receive(Producer, &amp;item);</span><br><span class="line">Consume(item);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>with Flow Control</p>
+  <figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="comment">// Producer</span></span><br><span class="line"><span class="keyword">int</span> item, empty;</span><br><span class="line"></span><br><span class="line"><span class="keyword">while</span> (<span class="literal">true</span>) &#123;</span><br><span class="line">    item = Produce();</span><br><span class="line">    receive (Consumer,&amp;empty);</span><br><span class="line">    send(Consumer, &amp;item);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Consumer</span></span><br><span class="line"><span class="keyword">int</span> item, empty;</span><br><span class="line"></span><br><span class="line"><span class="keyword">do</span> N times &#123;</span><br><span class="line">    send(Producer, &amp;empty);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">while</span> (<span class="literal">true</span>) &#123;</span><br><span class="line">    receive(Producer, &amp;item);</span><br><span class="line">    send(Producer, &amp;empty);</span><br><span class="line">    Consume(item);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+</li>
+<li><p>more on Message Passing</p>
+<ul>
+<li><p>who should message be addressed to?</p>
+<ul>
+<li>ports(“mailbox”) rather than specific process</li>
+</ul>
+</li>
+<li><p>how to make process recieve from anyone?</p>
+<ul>
+<li>pid = receive(*, &amp;message)?</li>
+</ul>
+</li>
+<li>kernel buffering: outstanding message<ul>
+<li>message sent that haven’t been received yet</li>
+</ul>
+</li>
+<li>Good praradigm for IPC over networks</li>
+<li>Safer than shard memory paradigms</li>
 </ul>
 </li>
 </ul>
@@ -1257,165 +1416,6 @@
 <li>Look at journal entries</li>
 <li>Check if mods properly reflected in file system</li>
 <li>Update appropriately</li>
-</ul>
-</li>
-</ul>
-</li>
-</ol>
-]]></content>
-      <categories>
-        <category>Operating Systems</category>
-      </categories>
-      <tags>
-        <tag>OS</tag>
-        <tag>操作系统</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>进程间通信-inter process communication(IPC)</title>
-    <url>/2020/04/19/inter_process_communication/</url>
-    <content><![CDATA[<p>本文是我在上UCSD的 <a href="http://cseweb.ucsd.edu/classes/wi20/cse120-a/" target="_blank" rel="noopener">CSE 120: Principles of Operating Systems (Winter 2020)</a> 整理的笔记，这一课主要介绍了操作系统里面不同进程之间通信的算法和实现。</p>
-<a id="more"></a>
-<ol>
-<li><p>Cooperating Processes and IPC</p>
-<ul>
-<li><p>Advantage of Cooperating Processes</p>
-<ul>
-<li>performance: speed<ul>
-<li>Exploit inherent parallelism of computation</li>
-<li>Allow some parts to proceed why other do I/O</li>
-</ul>
-</li>
-<li>Modularity: resuable self-contained programs<ul>
-<li>Each may do a useful task on its own</li>
-<li>May also be useful as a sub-task for others</li>
-</ul>
-</li>
-<li><p>Examples:</p>
-<p> <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/cooperating_processes_example.png" width="350"></p>
-</li>
-</ul>
-</li>
-<li><p>IPC: communication between processes</p>
-</li>
-<li><strong>IPC requires</strong>:<ul>
-<li>data transfer</li>
-<li>synchronization</li>
-</ul>
-</li>
-<li><strong>Three abstraction for IPC</strong><ul>
-<li>shared memory + semaphores</li>
-<li>monitors</li>
-<li>message passing</li>
-</ul>
-</li>
-</ul>
-</li>
-<li><p>The producer/consumer problem</p>
-<ul>
-<li>Producer produces data, inserts in shared buffer</li>
-<li>Consumer removes data from buffer, consumes it</li>
-<li>Cooperation: Producer feeds Consumer<ul>
-<li>How does data get from producer to consumer?</li>
-<li>How does consumer wait for producer?</li>
-</ul>
-</li>
-<li><p>Example:</p>
-<p><img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/producer_consumer.png" width="350"></p>
-</li>
-</ul>
-</li>
-<li><p>Shared memory + semaphore</p>
-<ul>
-<li><p>implementation:</p>
-<figure class="highlight c"><table><tr><td class="code"><pre><span class="line">shared <span class="keyword">int</span> buf[N], in = <span class="number">0</span>, out = <span class="number">0</span>;</span><br><span class="line">sem filledslots = <span class="number">0</span>, emptyslots = N, mutex = <span class="number">1</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Producer1, 2, ...</span></span><br><span class="line"><span class="keyword">while</span> (<span class="literal">true</span>) &#123;</span><br><span class="line">  wait (emptyslots); <span class="comment">// wait for available empty slots</span></span><br><span class="line">  wait (mutex); <span class="comment">// avoid racondition</span></span><br><span class="line">  buf[in] = Produce();</span><br><span class="line">  in = (in + <span class="number">1</span>) % N;</span><br><span class="line">  signal(mutex);</span><br><span class="line">  signal(filledslots); <span class="comment">// increment the number of filled slots</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Consumer1, 2, ...</span></span><br><span class="line"><span class="keyword">while</span> (<span class="literal">true</span>) &#123;</span><br><span class="line">  wait(filledslot);</span><br><span class="line">  wait(mutex);</span><br><span class="line">  Consume(buf[out]);</span><br><span class="line">  out = (out + <span class="number">1</span>) % N;</span><br><span class="line">  signal(mutex);</span><br><span class="line">  signal(emptyslots);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-</li>
-<li><p>work for multiple producers and consumer</p>
-</li>
-<li>Not easy to understand(many wait/signal statements), easily leads to bugs</li>
-</ul>
-</li>
-<li><p>monitors</p>
-<ul>
-<li><p>Programming language contruct for IPC</p>
-<ul>
-<li>monitors are variables requiring controlled access</li>
-<li>accessd via procedures</li>
-<li>condition variables<ul>
-<li>wait(cond)</li>
-<li>signal(cond)</li>
-</ul>
-</li>
-</ul>
-</li>
-<li><p>Only one process can be active inside monitor</p>
-</li>
-<li><p>Usage</p>
-<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="comment">// a possible monitor implementation (provided by programming language)</span></span><br><span class="line">monitor ProducerConsumer &#123;</span><br><span class="line">  <span class="keyword">int</span> buf[N], in = <span class="number">0</span>, out = <span class="number">0</span>, count = <span class="number">0</span>;</span><br><span class="line">  cond slotavail, itemavail;</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">void</span> <span class="title">PutItem</span> <span class="params">(<span class="keyword">int</span> item)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (count == N) wait(slotavail);</span><br><span class="line">    buf[in] = item;</span><br><span class="line">    in = (in + <span class="number">1</span>) % N;</span><br><span class="line">    count++;</span><br><span class="line">    signal(itemavail);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">int</span> <span class="title">GetItem</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">int</span> item;</span><br><span class="line">    <span class="keyword">if</span> (count == <span class="number">0</span>) wait(itemavail);</span><br><span class="line">    item = buf[out];</span><br><span class="line">    out = (out + <span class="number">1</span>) % N;</span><br><span class="line">    count--;</span><br><span class="line">    signal(slotavail);</span><br><span class="line">    <span class="keyword">return</span> (item);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Producer</span></span><br><span class="line"><span class="keyword">while</span> (<span class="literal">true</span>) &#123;</span><br><span class="line">  PutItem(Produce());</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Consumer</span></span><br><span class="line"><span class="keyword">while</span> (<span class="literal">true</span>) &#123;</span><br><span class="line">  Consume(GetItem());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-</li>
-<li><p>mechanism</p>
-<p> <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/monitors.png" width="400"></p>
-</li>
-<li><p>more on Monitors</p>
-<ul>
-<li>If one process A siganl condition c while another process B is waiting on c, at that time two process are able to run at the same time, which breaks mutual exclusion. <strong>So each process only signal condition just before returning.</strong></li>
-<li><em>Contition variable have no memory</em><ul>
-<li>It has no value and only indicate whether an event occurs or not</li>
-<li>Signal without someone waiting does nothing</li>
-<li>Signal is “lost”</li>
-</ul>
-</li>
-<li>Monitors bring structure to IPC<ul>
-<li>localizes critical sections and synchronization</li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-</li>
-<li><p>Message Passing</p>
-<ul>
-<li><p>Model:</p>
-<p>  <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/Message_Passing.png" width="400"></p>
-</li>
-<li><p>methods:</p>
-<ul>
-<li>send(destination, &amp;message)</li>
-<li>receive(source, &amp;message)</li>
-</ul>
-</li>
-<li><p>Data transfer: in to and out of kernel message buffer</p>
-</li>
-<li><p>Synchronization: receive blocks to wait for message</p>
-</li>
-<li><p>Usage</p>
-<ul>
-<li><p>basic</p>
-  <figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="comment">/* NO SHARED MEMORY */</span></span><br><span class="line"><span class="comment">// Producer</span></span><br><span class="line"><span class="keyword">int</span> item;</span><br><span class="line"></span><br><span class="line"><span class="keyword">while</span> (<span class="literal">true</span>) &#123;</span><br><span class="line">item = Produce();</span><br><span class="line">send(Consumer, &amp;item);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Consumer</span></span><br><span class="line"><span class="keyword">int</span> item;</span><br><span class="line"></span><br><span class="line"><span class="keyword">while</span> (<span class="literal">true</span>) &#123;</span><br><span class="line">receive(Producer, &amp;item);</span><br><span class="line">Consume(item);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-</li>
-<li><p>with Flow Control</p>
-  <figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="comment">// Producer</span></span><br><span class="line"><span class="keyword">int</span> item, empty;</span><br><span class="line"></span><br><span class="line"><span class="keyword">while</span> (<span class="literal">true</span>) &#123;</span><br><span class="line">    item = Produce();</span><br><span class="line">    receive (Consumer,&amp;empty);</span><br><span class="line">    send(Consumer, &amp;item);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Consumer</span></span><br><span class="line"><span class="keyword">int</span> item, empty;</span><br><span class="line"></span><br><span class="line"><span class="keyword">do</span> N times &#123;</span><br><span class="line">    send(Producer, &amp;empty);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">while</span> (<span class="literal">true</span>) &#123;</span><br><span class="line">    receive(Producer, &amp;item);</span><br><span class="line">    send(Producer, &amp;empty);</span><br><span class="line">    Consume(item);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-</li>
-</ul>
-</li>
-<li><p>more on Message Passing</p>
-<ul>
-<li><p>who should message be addressed to?</p>
-<ul>
-<li>ports(“mailbox”) rather than specific process</li>
-</ul>
-</li>
-<li><p>how to make process recieve from anyone?</p>
-<ul>
-<li>pid = receive(*, &amp;message)?</li>
-</ul>
-</li>
-<li>kernel buffering: outstanding message<ul>
-<li>message sent that haven’t been received yet</li>
-</ul>
-</li>
-<li>Good praradigm for IPC over networks</li>
-<li>Safer than shard memory paradigms</li>
 </ul>
 </li>
 </ul>
@@ -3390,145 +3390,6 @@
       </tags>
   </entry>
   <entry>
-    <title>分时系统-timesharing</title>
-    <url>/2020/04/19/timesharing/</url>
-    <content><![CDATA[<p>本文是我在上UCSD的 <a href="http://cseweb.ucsd.edu/classes/wi20/cse120-a/" target="_blank" rel="noopener">CSE 120: Principles of Operating Systems (Winter 2020)</a> 整理的笔记，第二课主要介绍了分时系统里时间分配的概念，以及内核 (kernel) 和用户 (user) 层面上实现thread的区别以及优缺点。</p>
-<a id="more"></a>
-<ol>
-<li><p>Definition</p>
-<ul>
-<li>Multiple processes share single CPU resources</li>
-<li>Conceptually, each process makes progress over time</li>
-<li>Practically, each perioadcally get quantum of CPU time<ul>
-<li><em>quantum</em> : a basic time unit for CPU to allocate for a cycle</li>
-</ul>
-</li>
-<li>Illusion of parallel progress by rapidly switching CPU</li>
-</ul>
-</li>
-<li><p>Implementation</p>
-<ul>
-<li>Kernel keeps track of progress of each process</li>
-<li>Divided the states (progress) of each process:<ul>
-<li>Running: actually running (making progress), using CPU</li>
-<li>Ready: able to make progress, but not using CPU</li>
-<li>Blocked: unable to make progress (waiting other resources like memory, I/O etc), cannot use CPU</li>
-</ul>
-</li>
-<li>Kernel selects a ready process and let it use CPU</li>
-</ul>
-</li>
-<li><p>Process State Diagram<img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/process_state_diagram.png" width="220" style="float: right;"></p>
-<ul>
-<li>Dispatch: allocated the CPU to a process</li>
-<li>Preempt: take away CPU from process</li>
-<li>Sleep: process gives up CPU to wait for event</li>
-<li>Wakeup: event occurred, make process ready</li>
-</ul>
-</li>
-<li><p>Kernel</p>
-<ul>
-<li>A seperate memory space that store kernel code that support user processes to run<ul>
-<li>systems calls: fork(), exit(), read(), write(), yield(),…</li>
-<li>management: context switching, scheduling,…</li>
-</ul>
-</li>
-<li>Keep track of state of each process<ul>
-<li>each process has a unique ID</li>
-</ul>
-</li>
-<li>Store other info needed<ul>
-<li>areas of memory being used</li>
-<li>contents of CPU contexts</li>
-<li>other…</li>
-</ul>
-</li>
-<li>runs as an extension of current process<ul>
-<li>when system call (process give up control to kernel voluntarily)</li>
-<li>hardware interrupt (preemption)<ul>
-<li>timer</li>
-</ul>
-</li>
-</ul>
-</li>
-<li><p>Has text, data and multiple stack (each for each process/thread)</p>
-<ul>
-<li><p>even if two process share the same code, use seperate memory(text, data, stack) to store state of each process</p>
-<p><img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/multi_process_kernel.png" width="450"></p>
-</li>
-</ul>
-</li>
-</ul>
-</li>
-<li><p>Threads</p>
-<ul>
-<li>It’s a single sequential path of execution</li>
-<li>Abstraction: independent of memory(may have different implementation like user-level and kernel-level)</li>
-<li>A thread is a part of a process<ul>
-<li>Lives in the memory of a process (share global variable)</li>
-<li>Multiple threads may exist in a process</li>
-</ul>
-</li>
-<li>To the user: unit of parallelism</li>
-<li>To the kernel: unit of schedulability</li>
-</ul>
-</li>
-<li><p>User-level threads vs Kernel-level threads</p>
-<ul>
-<li><p>user-level thread:</p>
-<ul>
-<li>Implement stacks for different threads in user space (actually share the stack in kernel)</li>
-<li>Pros:<ul>
-<li>Threads call and management in user level</li>
-<li>Efficient: no need to trapped into kernel (which is heavy)</li>
-<li>No need for kenerl support of threads</li>
-</ul>
-</li>
-<li><p>Cons:</p>
-<ul>
-<li>no true parallelism (kernel see no threads but process)</li>
-<li><p>mulitple CPU cannot let multiple threads in one process run at the same time</p>
-<p>  <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/user_threads.png" width="450"></p>
-</li>
-</ul>
-</li>
-</ul>
-</li>
-<li><p>kernel-level thread:</p>
-<ul>
-<li>Implement stacks for different threads in kernel space</li>
-<li>Pros:<ul>
-<li>can achieve true prallelism</li>
-</ul>
-</li>
-<li><p>Cons:</p>
-<ul>
-<li><p>overhead: thread switch requires kernel call</p>
-<p>  <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/kernel_thread.png" width="450"></p>
-</li>
-</ul>
-</li>
-</ul>
-</li>
-<li><p>Distinguish:</p>
-<ul>
-<li>Where is the thread abstraction supported: kernel code or user code</li>
-<li>Where is the thread running: user space or kernel space</li>
-</ul>
-</li>
-</ul>
-</li>
-</ol>
-]]></content>
-      <categories>
-        <category>Operating Systems</category>
-      </categories>
-      <tags>
-        <tag>OS</tag>
-        <tag>操作系统</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>同步-synchronization</title>
     <url>/2020/04/19/synchronization/</url>
     <content><![CDATA[<p>本文是我在上UCSD的 <a href="http://cseweb.ucsd.edu/classes/wi20/cse120-a/" target="_blank" rel="noopener">CSE 120: Principles of Operating Systems (Winter 2020)</a> 整理的笔记，这一课主要介绍了操作系统里面进程同步的算法，主要是信号量 (Semaphores) 的使用。</p>
@@ -3705,6 +3566,145 @@
       </categories>
       <tags>
         <tag>tool</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>分时系统-timesharing</title>
+    <url>/2020/04/19/timesharing/</url>
+    <content><![CDATA[<p>本文是我在上UCSD的 <a href="http://cseweb.ucsd.edu/classes/wi20/cse120-a/" target="_blank" rel="noopener">CSE 120: Principles of Operating Systems (Winter 2020)</a> 整理的笔记，第二课主要介绍了分时系统里时间分配的概念，以及内核 (kernel) 和用户 (user) 层面上实现thread的区别以及优缺点。</p>
+<a id="more"></a>
+<ol>
+<li><p>Definition</p>
+<ul>
+<li>Multiple processes share single CPU resources</li>
+<li>Conceptually, each process makes progress over time</li>
+<li>Practically, each perioadcally get quantum of CPU time<ul>
+<li><em>quantum</em> : a basic time unit for CPU to allocate for a cycle</li>
+</ul>
+</li>
+<li>Illusion of parallel progress by rapidly switching CPU</li>
+</ul>
+</li>
+<li><p>Implementation</p>
+<ul>
+<li>Kernel keeps track of progress of each process</li>
+<li>Divided the states (progress) of each process:<ul>
+<li>Running: actually running (making progress), using CPU</li>
+<li>Ready: able to make progress, but not using CPU</li>
+<li>Blocked: unable to make progress (waiting other resources like memory, I/O etc), cannot use CPU</li>
+</ul>
+</li>
+<li>Kernel selects a ready process and let it use CPU</li>
+</ul>
+</li>
+<li><p>Process State Diagram<img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/process_state_diagram.png" width="220" style="float: right;"></p>
+<ul>
+<li>Dispatch: allocated the CPU to a process</li>
+<li>Preempt: take away CPU from process</li>
+<li>Sleep: process gives up CPU to wait for event</li>
+<li>Wakeup: event occurred, make process ready</li>
+</ul>
+</li>
+<li><p>Kernel</p>
+<ul>
+<li>A seperate memory space that store kernel code that support user processes to run<ul>
+<li>systems calls: fork(), exit(), read(), write(), yield(),…</li>
+<li>management: context switching, scheduling,…</li>
+</ul>
+</li>
+<li>Keep track of state of each process<ul>
+<li>each process has a unique ID</li>
+</ul>
+</li>
+<li>Store other info needed<ul>
+<li>areas of memory being used</li>
+<li>contents of CPU contexts</li>
+<li>other…</li>
+</ul>
+</li>
+<li>runs as an extension of current process<ul>
+<li>when system call (process give up control to kernel voluntarily)</li>
+<li>hardware interrupt (preemption)<ul>
+<li>timer</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Has text, data and multiple stack (each for each process/thread)</p>
+<ul>
+<li><p>even if two process share the same code, use seperate memory(text, data, stack) to store state of each process</p>
+<p><img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/multi_process_kernel.png" width="450"></p>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Threads</p>
+<ul>
+<li>It’s a single sequential path of execution</li>
+<li>Abstraction: independent of memory(may have different implementation like user-level and kernel-level)</li>
+<li>A thread is a part of a process<ul>
+<li>Lives in the memory of a process (share global variable)</li>
+<li>Multiple threads may exist in a process</li>
+</ul>
+</li>
+<li>To the user: unit of parallelism</li>
+<li>To the kernel: unit of schedulability</li>
+</ul>
+</li>
+<li><p>User-level threads vs Kernel-level threads</p>
+<ul>
+<li><p>user-level thread:</p>
+<ul>
+<li>Implement stacks for different threads in user space (actually share the stack in kernel)</li>
+<li>Pros:<ul>
+<li>Threads call and management in user level</li>
+<li>Efficient: no need to trapped into kernel (which is heavy)</li>
+<li>No need for kenerl support of threads</li>
+</ul>
+</li>
+<li><p>Cons:</p>
+<ul>
+<li>no true parallelism (kernel see no threads but process)</li>
+<li><p>mulitple CPU cannot let multiple threads in one process run at the same time</p>
+<p>  <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/user_threads.png" width="450"></p>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>kernel-level thread:</p>
+<ul>
+<li>Implement stacks for different threads in kernel space</li>
+<li>Pros:<ul>
+<li>can achieve true prallelism</li>
+</ul>
+</li>
+<li><p>Cons:</p>
+<ul>
+<li><p>overhead: thread switch requires kernel call</p>
+<p>  <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/kernel_thread.png" width="450"></p>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Distinguish:</p>
+<ul>
+<li>Where is the thread abstraction supported: kernel code or user code</li>
+<li>Where is the thread running: user space or kernel space</li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+]]></content>
+      <categories>
+        <category>Operating Systems</category>
+      </categories>
+      <tags>
+        <tag>OS</tag>
+        <tag>操作系统</tag>
       </tags>
   </entry>
   <entry>
