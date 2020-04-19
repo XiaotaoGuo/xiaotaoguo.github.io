@@ -18,25 +18,27 @@
 
 <script id="hexo-configurations">
     var NexT = window.NexT || {};
-    var CONFIG = {"hostname":"xiaotaoguo.github.io","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"mac"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+    var CONFIG = {"hostname":"xiaotaoguo.github.io","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
   </script>
 
-  <meta name="description" content="本文是我在学习深蓝学院的激光slam第一课的学习笔记，这一课主要介绍了2d和3d的激光slam的一些基本概念，以及需要的一些数学基础。">
+  <meta name="description" content="本文是我在上UCSD的 CSE 120: Principles of Operating Systems (Winter 2020) 整理的笔记，这一课主要介绍了操作系统里面死锁概念包括出现的原因，以及避免（防止出现）以及解决办法（出现死锁时最好的方法是重启大法！！）">
 <meta property="og:type" content="article">
-<meta property="og:title" content="激光slam介绍及相关数学基础">
-<meta property="og:url" content="https://xiaotaoguo.github.io/2020/04/18/1-intro-math-basics/index.html">
+<meta property="og:title" content="死锁-deadlock">
+<meta property="og:url" content="https://xiaotaoguo.github.io/2020/04/19/deadlock/index.html">
 <meta property="og:site_name" content="Tao&#39;s Blog">
-<meta property="og:description" content="本文是我在学习深蓝学院的激光slam第一课的学习笔记，这一课主要介绍了2d和3d的激光slam的一些基本概念，以及需要的一些数学基础。">
+<meta property="og:description" content="本文是我在上UCSD的 CSE 120: Principles of Operating Systems (Winter 2020) 整理的笔记，这一课主要介绍了操作系统里面死锁概念包括出现的原因，以及避免（防止出现）以及解决办法（出现死锁时最好的方法是重启大法！！）">
 <meta property="og:locale" content="en_US">
-<meta property="og:image" content="https://xiaotaoguo.github.io/2020/04/18/1-intro-math-basics/transformation_matrix.png">
-<meta property="article:published_time" content="2020-04-19T01:37:51.000Z">
-<meta property="article:modified_time" content="2020-04-19T03:11:43.977Z">
+<meta property="og:image" content="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/deadlock.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/banker_algorithm.png">
+<meta property="article:published_time" content="2020-04-19T17:39:56.000Z">
+<meta property="article:modified_time" content="2020-04-19T17:44:06.525Z">
 <meta property="article:author" content="Xiaotao Guo">
-<meta property="article:tag" content="slam">
+<meta property="article:tag" content="OS">
+<meta property="article:tag" content="操作系统">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://xiaotaoguo.github.io/2020/04/18/1-intro-math-basics/transformation_matrix.png">
+<meta name="twitter:image" content="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/deadlock.png">
 
-<link rel="canonical" href="https://xiaotaoguo.github.io/2020/04/18/1-intro-math-basics/">
+<link rel="canonical" href="https://xiaotaoguo.github.io/2020/04/19/deadlock/">
 
 
 <script id="page-configurations">
@@ -49,7 +51,7 @@
   };
 </script>
 
-  <title>激光slam介绍及相关数学基础 | Tao's Blog</title>
+  <title>死锁-deadlock | Tao's Blog</title>
   
 
 
@@ -129,17 +131,17 @@
   </li>
         <li class="menu-item menu-item-tags">
 
-    <a href="/tags/" rel="section"><i class="tags fa-fw"></i>Tags<span class="badge">1</span></a>
+    <a href="/tags/" rel="section"><i class="tags fa-fw"></i>Tags<span class="badge">4</span></a>
 
   </li>
         <li class="menu-item menu-item-categories">
 
-    <a href="/categories/" rel="section"><i class="th fa-fw"></i>Categories<span class="badge">1</span></a>
+    <a href="/categories/" rel="section"><i class="th fa-fw"></i>Categories<span class="badge">3</span></a>
 
   </li>
         <li class="menu-item menu-item-archives">
 
-    <a href="/archives/" rel="section"><i class="archive fa-fw"></i>Archives<span class="badge">2</span></a>
+    <a href="/archives/" rel="section"><i class="archive fa-fw"></i>Archives<span class="badge">18</span></a>
 
   </li>
       <li class="menu-item menu-item-search">
@@ -197,7 +199,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="https://xiaotaoguo.github.io/2020/04/18/1-intro-math-basics/">
+    <link itemprop="mainEntityOfPage" href="https://xiaotaoguo.github.io/2020/04/19/deadlock/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="https://avatars3.githubusercontent.com/u/45047478?s=460&u=3be5d506be9a30bd6eadfd29cd36c61e30833bb2&v=4">
@@ -210,7 +212,7 @@
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
-          激光slam介绍及相关数学基础
+          死锁-deadlock
         </h1>
 
         <div class="post-meta">
@@ -221,7 +223,7 @@
               <span class="post-meta-item-text">Posted on</span>
               
 
-              <time title="Created: 2020-04-18 21:37:51 / Modified: 23:11:43" itemprop="dateCreated datePublished" datetime="2020-04-18T21:37:51-04:00">2020-04-18</time>
+              <time title="Created: 2020-04-19 13:39:56 / Modified: 13:44:06" itemprop="dateCreated datePublished" datetime="2020-04-19T13:39:56-04:00">2020-04-19</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -229,7 +231,7 @@
               </span>
               <span class="post-meta-item-text">In</span>
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E6%BF%80%E5%85%89slam/" itemprop="url" rel="index"><span itemprop="name">激光slam</span></a>
+                  <a href="/categories/Operating-Systems/" itemprop="url" rel="index"><span itemprop="name">Operating Systems</span></a>
                 </span>
             </span>
 
@@ -246,7 +248,7 @@
               <span class="post-meta-item-icon">
                 <i class="far fa-file-word"></i>
               </span>
-              <span>1.9k</span>
+              <span>2k</span>
             </span>
             <span class="post-meta-item" title="Reading time">
               <span class="post-meta-item-icon">
@@ -264,102 +266,139 @@
     <div class="post-body" itemprop="articleBody">
 
       
-        <p>本文是我在学习深蓝学院的激光slam第一课的学习笔记，这一课主要介绍了2d和3d的激光slam的一些基本概念，以及需要的一些数学基础。</p>
+        <p>本文是我在上UCSD的 <a href="http://cseweb.ucsd.edu/classes/wi20/cse120-a/" target="_blank" rel="noopener">CSE 120: Principles of Operating Systems (Winter 2020)</a> 整理的笔记，这一课主要介绍了操作系统里面死锁概念包括出现的原因，以及避免（防止出现）以及解决办法（出现死锁时最好的方法是重启大法！！）</p>
 <a id="more"></a>
-<h2 id="激光slam介绍"><a href="#激光slam介绍" class="headerlink" title="激光slam介绍"></a>激光slam介绍</h2><h3 id="基本方法"><a href="#基本方法" class="headerlink" title="基本方法"></a>基本方法</h3><ol>
-<li><p>输入</p>
+<h2 id="Basic"><a href="#Basic" class="headerlink" title="Basic"></a>Basic</h2><ol>
+<li><p>Definition</p>
 <ul>
-<li>里程计数据（odometry）：正常来说都会有，因为slam一般配备在移动机器人、无人车，在一些特殊场景可能没有（手持设备）</li>
-<li>2d/3d激光雷达扫描结果：必须要有，在2dslam的情况下一般是单线的</li>
-<li>IMU： 一般是可选的，可以没有</li>
+<li>Set of processes are permanently blocked<ul>
+<li>Unblocking of one relies on progress of another, but none can make progress</li>
 </ul>
 </li>
-<li><p>输出</p>
+<li><p>Example</p>
 <ul>
-<li>3d点云地图：3dslam输出，在导航的时候会转成覆盖栅格地图进行导航</li>
-<li>覆盖栅格地图（occupancy-grid map）：将环境分割成对栅格并输出每个栅格是否可通行</li>
-<li>轨迹(trajectory) 或姿态（pose graph）</li>
+<li>Process A holding resource X, waiting for resource Y</li>
+<li>Process B holding Y, waiting for X</li>
+<li><p>these two process will not be able to make any progress</p>
+<p>  <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/deadlock.png" width="200"></p>
+</li>
 </ul>
 </li>
-<li><p>帧间匹配方法（2d）</p>
+<li><p>Another example: memory</p>
 <ul>
-<li>PL-ICP(Point-to-line ICP)：利用<strong>点到线</strong>的距离做误差计算，相对于点到点的方法更加符合室内结构化场景，但比较依靠初始解</li>
-<li>CSM(Correlation Scan Match)：<strong>暴力枚举</strong>所有可能的状态进行匹配相关性计算，取最优结果，（通过一定优化可以减少计算时间）</li>
-<li>Optimization-Based：将地图空间看成解空间，依赖<strong>地图状态的梯度</strong>通过迭代求解，能方便引入额外约束，同样依赖初始解</li>
-<li>实际常用 CSM + 梯度优化的方法，（也可以用 CSM + PL-ICP, 但是需要实际场景中有比较多结构化线段）</li>
+<li>Total memory = 200MB</li>
+<li>P1 holds 80MB, requests 60MB</li>
+<li>P2 holds 70MB, requests 80MB</li>
 </ul>
 </li>
-<li><p>帧间匹配方法（3d）</p>
-<ul>
-<li>Point-to-Plane ICP：用点到面的距离作误差匹配</li>
-<li>Plane-to-Place ICP (GCIP): 面到面的距离</li>
-<li>NDT：划分网格拟合高斯分布，因为计算速度快所以在3d场景用得多一点</li>
-<li>NICP：在icp的基础上引入法向量信息（normal），角度精度较高</li>
-<li>IMLS-ICP：对点云进行局部曲面拟合</li>
-<li>Feature-based Method：参考视觉slam，提取特征点和描述子进行特征匹配，3d激光扫描结果信息量较多，所以可以使用</li>
 </ul>
 </li>
-<li><p>回环检测方法</p>
+<li><p><strong><strong>Four conditions for Deadlock</strong></strong></p>
 <ul>
-<li>Scan-to-Map</li>
-<li>Map-to-Map</li>
-<li>Branch and Bound &amp; Lazy Decision (延迟检测)：由于2d 激光slam对环境数据量太少，很容易造成不同场景结果相似，导致出现错误的回环，延迟检测的方法是只有在检测到<strong>多个回环</strong>的情况下并且回环都一致的时候才认为出现回环</li>
+<li>Mutual Exclusion<ul>
+<li>Only one process may use a resouce at a time</li>
 </ul>
 </li>
-</ol>
-<h3 id="发展"><a href="#发展" class="headerlink" title="发展"></a>发展</h3><ol>
-<li><p>Filtered-based (滤波方法，目前在2d激光slam（主要是建图）已经很少使用，因为滤波方法更关注当前状态（位置），对历史信息不修正（没有回环的概念），所以不利于利用全局数据进行建图，在定位（VO，VIO等）用的较多)</p>
-<ul>
-<li>EKF-SLAM (1990s): 随环境增大状态量会急剧增大</li>
-<li>FastSLAM (02~03)：粒子滤波，每个粒子携带一个地图</li>
-<li>Gmapping (07): FastSLAM的升级版本</li>
-<li>Optimal RBPF (10)：Gmapping的基础上进一步优化</li>
+<li>Hold-and-Wait<ul>
+<li>Process holds resouce while waiting for another</li>
 </ul>
 </li>
-<li><p>Graph-based (图优化方法)</p>
-<ul>
-<li>Karto-SLAM (10)：基于优化的方案（CSM + SPA）</li>
-<li>Cartographer (16)：原理和Karto一样，用ceres实现，相对更完整</li>
+<li>No Preemption<ul>
+<li>Can’t take a resource away from a process</li>
 </ul>
 </li>
-</ol>
-<h3 id="实际应用中注意的问题"><a href="#实际应用中注意的问题" class="headerlink" title="实际应用中注意的问题"></a>实际应用中注意的问题</h3><ol>
-<li><p><strong>数据预处理 (Preprocess)</strong></p>
-<ul>
-<li>轮式里程计标定，最好能到0.3%左右</li>
-<li>激光雷达运动畸变（扫描过程中雷达的位置变化）</li>
-<li>不同系统之间的时间同步（当每个传感器连接到不同处理器（cpu）上的时候系统时间可能会不一致，这个时候需要考虑时间同步获得统一时间戳）</li>
+<li>Circular Wait<ul>
+<li>The waiting process form a cycle</li>
 </ul>
 </li>
-<li><p>实际环境的问题（大部分可以通过和视觉融合来解决）</p>
-<ul>
-<li><p>动态物体、环境变化</p>
-<ul>
-<li>高动态：移动中的人，车</li>
-<li>低动态：物体被移动（椅子，箱子），频率低</li>
 </ul>
 </li>
-<li><p>几何结构相似环境：走廊等，容易发生状态退化，在3d的情况下则是比较空旷的区域，大部分点云无效导致环境退化</p>
+<li><p>Attack the Deadlock Problem</p>
+<ul>
+<li>Deadlock prevention<ul>
+<li>Make deadlock impossible by removing one (or more)condition</li>
+</ul>
 </li>
-<li>建图的操作复杂</li>
-<li>全局定位</li>
-<li>地面材质变化、地面凹凸不平、机器人载重变化：会造成里程计数据误差（间接改变了轮子直径）</li>
+<li>Deadlock Avoidance<ul>
+<li>Avoid getting into situations that lead to deadlock</li>
+</ul>
+</li>
+<li>Deadlock Detection<ul>
+<li>Don’t try to stop deadlocks</li>
+<li>If they happen, detect and resolve</li>
+</ul>
+</li>
 </ul>
 </li>
 </ol>
-<h2 id="数学基础"><a href="#数学基础" class="headerlink" title="数学基础"></a>数学基础</h2><ol>
-<li><p>位姿和转换矩阵（pose &amp; transformation matrix）</p>
+<h2 id="Attck-the-deadlock"><a href="#Attck-the-deadlock" class="headerlink" title="Attck the deadlock"></a>Attck the deadlock</h2><ol>
+<li><p>Deadlock prevention</p>
 <ul>
-<li>假设机器人B在坐标系O中的坐标表示为 $(x, y, \theta)$</li>
-<li><p>则坐标系B到坐标系O的转换矩阵为：</p>
-<script type="math/tex; mode=display">T_{OB} = \begin{bmatrix}\cos{\theta} & -\sin{\theta} & x \\ \sin{\theta} & \cos{\theta} & y\\ 0 & 0 & 1 \end{bmatrix} = \begin{bmatrix}R & t \\ 0 & 1 \end{bmatrix}</script> <img src="/2020/04/18/1-intro-math-basics/transformation_matrix.png" class="" title="1-intro-math-basics&#x2F;transformation_matrix.png">
+<li>Mutual exclusion -&gt; relax where sharing is possible</li>
+<li>Hold-and-Wait -&gt; Get all resources simultaneously (wait until all free)</li>
+<li>No preemption -&gt; allow resources to be taken away</li>
+<li>Circular wait -&gt; order all the resources, force ordered acquisition</li>
+</ul>
+</li>
+<li><p>Deadlock Avoidance</p>
+<ul>
+<li>Avoid getting into situations that lead to deadlock<ul>
+<li>Selective prevention</li>
+<li>Remove condition only when deadlock is possible</li>
+</ul>
+</li>
+<li>Works with incremental resource requests<ul>
+<li>Resources are asked for in increments</li>
+<li>Do not grant request than can lead to a deadlock</li>
+</ul>
+</li>
+<li>Need maximum resource requirements</li>
+<li><p><strong>Banker’s Algorithm</strong></p>
+<ul>
+<li>Fixed number of processes and resources</li>
+<li>System state: either safe or unsafe<ul>
+<li>Depends on allocation of resources to processes</li>
+</ul>
+</li>
+<li>Safe: deadlock is absolutely avoidable<ul>
+<li>Can avoid deadlock by certain order of execution</li>
+</ul>
+</li>
+<li>Unsafe: deadlock is possible(but not certain)<ul>
+<li>May not be able to avoid deadlock</li>
+</ul>
+</li>
+<li><p>Diagram</p>
+<p>  <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/banker_algorithm.png" width="200"></p>
 </li>
 </ul>
 </li>
-<li><p>不同机器人坐标系转换</p>
+</ul>
+</li>
+<li><p>Deadlock Detection (<em>mostly used!</em>)</p>
 <ul>
-<li><p>机器人A和机器人B的坐标转换</p>
-<script type="math/tex; mode=display">T_{AB} = T_{AO}T_{OB} = T_{OA}^{-1}T_{OB}</script></li>
+<li><p>Method</p>
+<ul>
+<li>Periodically try to detect if a deadlock occurred</li>
+<li>Do something (or nothing) about it</li>
+</ul>
+</li>
+<li><p>Resoning</p>
+<ul>
+<li>Deadlocks rarely happen</li>
+<li>Cost of prevention or avoidance not worth it</li>
+<li>Deal with them in special way (may costly)</li>
+</ul>
+</li>
+<li><p>Recovery from deadlock</p>
+<ul>
+<li>Terminate all deadlocked process (reboot)</li>
+</ul>
+</li>
+<li>Terminate deadlocked processed one at a time<ul>
+<li>need to detect</li>
+</ul>
+</li>
 </ul>
 </li>
 </ol>
@@ -378,7 +417,7 @@
   </li>
   <li class="post-copyright-link">
     <strong>Post link: </strong>
-    <a href="https://xiaotaoguo.github.io/2020/04/18/1-intro-math-basics/" title="激光slam介绍及相关数学基础">https://xiaotaoguo.github.io/2020/04/18/1-intro-math-basics/</a>
+    <a href="https://xiaotaoguo.github.io/2020/04/19/deadlock/" title="死锁-deadlock">https://xiaotaoguo.github.io/2020/04/19/deadlock/</a>
   </li>
   <li class="post-copyright-license">
     <strong>Copyright Notice:  </strong>All articles in this blog are licensed under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> unless stating additionally.
@@ -390,7 +429,8 @@
       <footer class="post-footer">
           
           <div class="post-tags">
-              <a href="/tags/slam/" rel="tag"><i class="fa fa-tag"></i> slam</a>
+              <a href="/tags/OS/" rel="tag"><i class="fa fa-tag"></i> OS</a>
+              <a href="/tags/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/" rel="tag"><i class="fa fa-tag"></i> 操作系统</a>
           </div>
 
         
@@ -398,10 +438,13 @@
 
         
     <div class="post-nav">
-      <div class="post-nav-item"></div>
       <div class="post-nav-item">
-    <a href="/2020/04/18/2-wheel-odometry-model-calibration/" rel="next" title="轮式里程计运动模型及标定">
-      轮式里程计运动模型及标定 <i class="fa fa-chevron-right"></i>
+    <a href="/2020/04/19/inter_process_communication/" rel="prev" title="进程间通信-inter process communication(IPC)">
+      <i class="fa fa-chevron-left"></i> 进程间通信-inter process communication(IPC)
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/04/19/memory_management/" rel="next" title="内存管理-memory_management">
+      内存管理-memory_management <i class="fa fa-chevron-right"></i>
     </a></div>
     </div>
       </footer>
@@ -461,7 +504,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#激光slam介绍"><span class="nav-number">1.</span> <span class="nav-text">激光slam介绍</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#基本方法"><span class="nav-number">1.1.</span> <span class="nav-text">基本方法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#发展"><span class="nav-number">1.2.</span> <span class="nav-text">发展</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#实际应用中注意的问题"><span class="nav-number">1.3.</span> <span class="nav-text">实际应用中注意的问题</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#数学基础"><span class="nav-number">2.</span> <span class="nav-text">数学基础</span></a></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Basic"><span class="nav-number">1.</span> <span class="nav-text">Basic</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Attck-the-deadlock"><span class="nav-number">2.</span> <span class="nav-text">Attck the deadlock</span></a></li></ol></div>
       </div>
       <!--/noindex-->
 
@@ -477,33 +520,33 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">2</span>
+          <span class="site-state-item-count">18</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
             <a href="/categories/">
           
-        <span class="site-state-item-count">1</span>
+        <span class="site-state-item-count">3</span>
         <span class="site-state-item-name">categories</span></a>
       </div>
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">1</span>
+        <span class="site-state-item-count">4</span>
         <span class="site-state-item-name">tags</span></a>
       </div>
   </nav>
 </div>
   <div class="links-of-author motion-element">
       <span class="links-of-author-item">
-        <a href="https://github.com/XiaotaoGuo" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;XiaotaoGuo" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+        <a href="https://github.com/XiaotaoGuo" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;XiaotaoGuo" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
       </span>
       <span class="links-of-author-item">
-        <a href="https://www.linkedin.com/in/xiaotaoguo/" title="LinkedIn → https:&#x2F;&#x2F;www.linkedin.com&#x2F;in&#x2F;xiaotaoguo&#x2F;" rel="noopener" target="_blank"><i class="fab fa-linkedin fa-fw"></i></a>
+        <a href="https://www.linkedin.com/in/xiaotaoguo/" title="LinkedIn → https:&#x2F;&#x2F;www.linkedin.com&#x2F;in&#x2F;xiaotaoguo&#x2F;" rel="noopener" target="_blank"><i class="fab fa-linkedin fa-fw"></i>LinkedIn</a>
       </span>
       <span class="links-of-author-item">
-        <a href="mailto:guoxiaotao0819@gmail.com" title="E-Mail → mailto:guoxiaotao0819@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+        <a href="mailto:guoxiaotao0819@gmail.com" title="E-Mail → mailto:guoxiaotao0819@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
       </span>
   </div>
 
@@ -519,11 +562,23 @@
         
         
           <li>
-            <a href="/2020/04/18/2-wheel-odometry-model-calibration/" title="轮式里程计运动模型及标定" target="_blank">轮式里程计运动模型及标定</a>
+            <a href="/2020/04/19/distributed-system/" title="分布式系统-distributed system" target="_blank">分布式系统-distributed system</a>
           </li>
         
           <li>
-            <a href="/2020/04/18/1-intro-math-basics/" title="激光slam介绍及相关数学基础" target="_blank">激光slam介绍及相关数学基础</a>
+            <a href="/2020/04/19/networks/" title="网络-networks" target="_blank">网络-networks</a>
+          </li>
+        
+          <li>
+            <a href="/2020/04/19/security/" title="安全机制-security" target="_blank">安全机制-security</a>
+          </li>
+        
+          <li>
+            <a href="/2020/04/19/protection/" title="保护-protection" target="_blank">保护-protection</a>
+          </li>
+        
+          <li>
+            <a href="/2020/04/19/IO-system/" title="输入/输出系统-I/O system" target="_blank">输入/输出系统-I/O system</a>
           </li>
         
       </ul>
@@ -551,7 +606,7 @@
   &copy; 
   <span itemprop="copyrightYear">2020</span>
   <span class="with-love">
-    <i class="heart"></i>
+    <i class="fa fa-heart"></i>
   </span>
   <span class="author" itemprop="copyrightHolder">Xiaotao Guo</span>
 </div>
@@ -634,59 +689,6 @@
   
 
   
-      
-
-<script>
-  if (typeof MathJax === 'undefined') {
-    window.MathJax = {
-      loader: {
-        source: {
-          '[tex]/amsCd': '[tex]/amscd',
-          '[tex]/AMScd': '[tex]/amscd'
-        }
-      },
-      tex: {
-        inlineMath: {'[+]': [['$', '$']]},
-        tags: 'ams'
-      },
-      options: {
-        renderActions: {
-          findScript: [10, doc => {
-            document.querySelectorAll('script[type^="math/tex"]').forEach(node => {
-              const display = !!node.type.match(/; *mode=display/);
-              const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
-              const text = document.createTextNode('');
-              node.parentNode.replaceChild(text, node);
-              math.start = {node: text, delim: '', n: 0};
-              math.end = {node: text, delim: '', n: 0};
-              doc.math.push(math);
-            });
-          }, '', false],
-          insertedScript: [200, () => {
-            document.querySelectorAll('mjx-container').forEach(node => {
-              let target = node.parentNode;
-              if (target.nodeName.toLowerCase() === 'li') {
-                target.parentNode.classList.add('has-jax');
-              }
-            });
-          }, '', false]
-        }
-      }
-    };
-    (function () {
-      var script = document.createElement('script');
-      script.src = '//cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
-      script.defer = true;
-      document.head.appendChild(script);
-    })();
-  } else {
-    MathJax.startup.document.state(0);
-    MathJax.texReset();
-    MathJax.typeset();
-  }
-</script>
-
-    
 
   
 

@@ -21,17 +21,26 @@
     var CONFIG = {"hostname":"xiaotaoguo.github.io","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
   </script>
 
-  <meta name="description" content="Stay hungry, stay foolish">
-<meta property="og:type" content="website">
-<meta property="og:title" content="Tao&#39;s Blog">
-<meta property="og:url" content="https://xiaotaoguo.github.io/categories/%E6%BF%80%E5%85%89slam/index.html">
+  <meta name="description" content="本文是我在上UCSD的 CSE 120: Principles of Operating Systems (Winter 2020) 整理的笔记，第二课主要介绍了分时系统里时间分配的概念，以及内核 (kernel) 和用户 (user) 层面上实现thread的区别以及优缺点。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="分时系统-timesharing">
+<meta property="og:url" content="https://xiaotaoguo.github.io/2020/04/19/timesharing/index.html">
 <meta property="og:site_name" content="Tao&#39;s Blog">
-<meta property="og:description" content="Stay hungry, stay foolish">
+<meta property="og:description" content="本文是我在上UCSD的 CSE 120: Principles of Operating Systems (Winter 2020) 整理的笔记，第二课主要介绍了分时系统里时间分配的概念，以及内核 (kernel) 和用户 (user) 层面上实现thread的区别以及优缺点。">
 <meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/process_state_diagram.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/multi_process_kernel.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/user_threads.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/kernel_thread.png">
+<meta property="article:published_time" content="2020-04-19T17:18:22.000Z">
+<meta property="article:modified_time" content="2020-04-19T17:25:51.765Z">
 <meta property="article:author" content="Xiaotao Guo">
+<meta property="article:tag" content="OS">
+<meta property="article:tag" content="操作系统">
 <meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/process_state_diagram.png">
 
-<link rel="canonical" href="https://xiaotaoguo.github.io/categories/%E6%BF%80%E5%85%89slam/">
+<link rel="canonical" href="https://xiaotaoguo.github.io/2020/04/19/timesharing/">
 
 
 <script id="page-configurations">
@@ -39,12 +48,12 @@
   CONFIG.page = {
     sidebar: "",
     isHome : false,
-    isPost : false,
+    isPost : true,
     lang   : 'en'
   };
 </script>
 
-  <title>Category: 激光slam | Tao's Blog</title>
+  <title>分时系统-timesharing | Tao's Blog</title>
   
 
 
@@ -185,71 +194,257 @@
         <div class="content-wrap">
           
 
-          <div class="content category">
+          <div class="content post posts-expand">
             
 
+    
   
   
-  
-  <div class="post-block">
-    <div class="posts-collapse">
-      <div class="collection-title">
-        <h2 class="collection-header">激光slam
-          <small>Category</small>
-        </h2>
-      </div>
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://xiaotaoguo.github.io/2020/04/19/timesharing/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://avatars3.githubusercontent.com/u/45047478?s=460&u=3be5d506be9a30bd6eadfd29cd36c61e30833bb2&v=4">
+      <meta itemprop="name" content="Xiaotao Guo">
+      <meta itemprop="description" content="Stay hungry, stay foolish">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Tao's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          分时系统-timesharing
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2020-04-19 13:18:22 / Modified: 13:25:51" itemprop="dateCreated datePublished" datetime="2020-04-19T13:18:22-04:00">2020-04-19</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Operating-Systems/" itemprop="url" rel="index"><span itemprop="name">Operating Systems</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="Views" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="eye"></i>
+              </span>
+              <span class="post-meta-item-text">Views: </span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span>
+<br>
+            <span class="post-meta-item" title="Symbols count in article">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+              <span>2.3k</span>
+            </span>
+            <span class="post-meta-item" title="Reading time">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+              <span>2 mins.</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
 
       
-    <div class="collection-year">
-      <span class="collection-header">2020</span>
+        <p>本文是我在上UCSD的 <a href="http://cseweb.ucsd.edu/classes/wi20/cse120-a/" target="_blank" rel="noopener">CSE 120: Principles of Operating Systems (Winter 2020)</a> 整理的笔记，第二课主要介绍了分时系统里时间分配的概念，以及内核 (kernel) 和用户 (user) 层面上实现thread的区别以及优缺点。</p>
+<a id="more"></a>
+<ol>
+<li><p>Definition</p>
+<ul>
+<li>Multiple processes share single CPU resources</li>
+<li>Conceptually, each process makes progress over time</li>
+<li>Practically, each perioadcally get quantum of CPU time<ul>
+<li><em>quantum</em> : a basic time unit for CPU to allocate for a cycle</li>
+</ul>
+</li>
+<li>Illusion of parallel progress by rapidly switching CPU</li>
+</ul>
+</li>
+<li><p>Implementation</p>
+<ul>
+<li>Kernel keeps track of progress of each process</li>
+<li>Divided the states (progress) of each process:<ul>
+<li>Running: actually running (making progress), using CPU</li>
+<li>Ready: able to make progress, but not using CPU</li>
+<li>Blocked: unable to make progress (waiting other resources like memory, I/O etc), cannot use CPU</li>
+</ul>
+</li>
+<li>Kernel selects a ready process and let it use CPU</li>
+</ul>
+</li>
+<li><p>Process State Diagram<img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/process_state_diagram.png" width="220" style="float: right;"></p>
+<ul>
+<li>Dispatch: allocated the CPU to a process</li>
+<li>Preempt: take away CPU from process</li>
+<li>Sleep: process gives up CPU to wait for event</li>
+<li>Wakeup: event occurred, make process ready</li>
+</ul>
+</li>
+<li><p>Kernel</p>
+<ul>
+<li>A seperate memory space that store kernel code that support user processes to run<ul>
+<li>systems calls: fork(), exit(), read(), write(), yield(),…</li>
+<li>management: context switching, scheduling,…</li>
+</ul>
+</li>
+<li>Keep track of state of each process<ul>
+<li>each process has a unique ID</li>
+</ul>
+</li>
+<li>Store other info needed<ul>
+<li>areas of memory being used</li>
+<li>contents of CPU contexts</li>
+<li>other…</li>
+</ul>
+</li>
+<li>runs as an extension of current process<ul>
+<li>when system call (process give up control to kernel voluntarily)</li>
+<li>hardware interrupt (preemption)<ul>
+<li>timer</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Has text, data and multiple stack (each for each process/thread)</p>
+<ul>
+<li><p>even if two process share the same code, use seperate memory(text, data, stack) to store state of each process</p>
+<p><img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/multi_process_kernel.png" width="450"></p>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Threads</p>
+<ul>
+<li>It’s a single sequential path of execution</li>
+<li>Abstraction: independent of memory(may have different implementation like user-level and kernel-level)</li>
+<li>A thread is a part of a process<ul>
+<li>Lives in the memory of a process (share global variable)</li>
+<li>Multiple threads may exist in a process</li>
+</ul>
+</li>
+<li>To the user: unit of parallelism</li>
+<li>To the kernel: unit of schedulability</li>
+</ul>
+</li>
+<li><p>User-level threads vs Kernel-level threads</p>
+<ul>
+<li><p>user-level thread:</p>
+<ul>
+<li>Implement stacks for different threads in user space (actually share the stack in kernel)</li>
+<li>Pros:<ul>
+<li>Threads call and management in user level</li>
+<li>Efficient: no need to trapped into kernel (which is heavy)</li>
+<li>No need for kenerl support of threads</li>
+</ul>
+</li>
+<li><p>Cons:</p>
+<ul>
+<li>no true parallelism (kernel see no threads but process)</li>
+<li><p>mulitple CPU cannot let multiple threads in one process run at the same time</p>
+<p>  <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/user_threads.png" width="450"></p>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>kernel-level thread:</p>
+<ul>
+<li>Implement stacks for different threads in kernel space</li>
+<li>Pros:<ul>
+<li>can achieve true prallelism</li>
+</ul>
+</li>
+<li><p>Cons:</p>
+<ul>
+<li><p>overhead: thread switch requires kernel call</p>
+<p>  <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/kernel_thread.png" width="450"></p>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Distinguish:</p>
+<ul>
+<li>Where is the thread abstraction supported: kernel code or user code</li>
+<li>Where is the thread running: user space or kernel space</li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+
     </div>
 
-  <article itemscope itemtype="http://schema.org/Article">
-    <header class="post-header">
+    
+    
+    
+        
 
-      <div class="post-meta">
-        <time itemprop="dateCreated"
-              datetime="2020-04-18T21:38:13-04:00"
-              content="2020-04-18">
-          04-18
-        </time>
-      </div>
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>Post author:  </strong>Xiaotao Guo
+  </li>
+  <li class="post-copyright-link">
+    <strong>Post link: </strong>
+    <a href="https://xiaotaoguo.github.io/2020/04/19/timesharing/" title="分时系统-timesharing">https://xiaotaoguo.github.io/2020/04/19/timesharing/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>Copyright Notice:  </strong>All articles in this blog are licensed under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> unless stating additionally.
+  </li>
+</ul>
+</div>
 
-      <div class="post-title">
-          <a class="post-title-link" href="/2020/04/18/%E8%BD%AE%E5%BC%8F%E9%87%8C%E7%A8%8B%E8%AE%A1%E8%BF%90%E5%8A%A8%E6%A8%A1%E5%9E%8B%E5%8F%8A%E6%A0%87%E5%AE%9A/" itemprop="url">
-            <span itemprop="name">轮式里程计运动模型及标定</span>
-          </a>
-      </div>
 
-    </header>
-  </article>
+      <footer class="post-footer">
+          
+          <div class="post-tags">
+              <a href="/tags/OS/" rel="tag"><i class="fa fa-tag"></i> OS</a>
+              <a href="/tags/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/" rel="tag"><i class="fa fa-tag"></i> 操作系统</a>
+          </div>
 
-  <article itemscope itemtype="http://schema.org/Article">
-    <header class="post-header">
+        
 
-      <div class="post-meta">
-        <time itemprop="dateCreated"
-              datetime="2020-04-18T21:37:51-04:00"
-              content="2020-04-18">
-          04-18
-        </time>
-      </div>
 
-      <div class="post-title">
-          <a class="post-title-link" href="/2020/04/18/%E6%BF%80%E5%85%89slam%E4%BB%8B%E7%BB%8D%E5%8F%8A%E7%9B%B8%E5%85%B3%E6%95%B0%E5%AD%A6%E5%9F%BA%E7%A1%80/" itemprop="url">
-            <span itemprop="name">激光slam介绍及相关数学基础</span>
-          </a>
-      </div>
-
-    </header>
-  </article>
-
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/04/19/process/" rel="prev" title="进程-process">
+      <i class="fa fa-chevron-left"></i> 进程-process
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/04/19/scheduling/" rel="next" title="进程调度-scheduling">
+      进程调度-scheduling <i class="fa fa-chevron-right"></i>
+    </a></div>
     </div>
-  </div>
+      </footer>
+    
+  </article>
   
   
-  
-
   
 
 

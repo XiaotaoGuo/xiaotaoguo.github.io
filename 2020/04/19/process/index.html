@@ -21,17 +21,24 @@
     var CONFIG = {"hostname":"xiaotaoguo.github.io","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
   </script>
 
-  <meta name="description" content="Stay hungry, stay foolish">
-<meta property="og:type" content="website">
-<meta property="og:title" content="Tao&#39;s Blog">
-<meta property="og:url" content="https://xiaotaoguo.github.io/categories/%E6%BF%80%E5%85%89slam/index.html">
+  <meta name="description" content="本文是我在上UCSD的 CSE 120: Principles of Operating Systems (Winter 2020) 整理的笔记，第一课主要介绍了操作系统以及进程的一些基本概念。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="进程-process">
+<meta property="og:url" content="https://xiaotaoguo.github.io/2020/04/19/process/index.html">
 <meta property="og:site_name" content="Tao&#39;s Blog">
-<meta property="og:description" content="Stay hungry, stay foolish">
+<meta property="og:description" content="本文是我在上UCSD的 CSE 120: Principles of Operating Systems (Winter 2020) 整理的笔记，第一课主要介绍了操作系统以及进程的一些基本概念。">
 <meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/process%20memory.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/process%20stack.png">
+<meta property="article:published_time" content="2020-04-19T16:55:06.000Z">
+<meta property="article:modified_time" content="2020-04-19T17:25:57.409Z">
 <meta property="article:author" content="Xiaotao Guo">
+<meta property="article:tag" content="OS">
+<meta property="article:tag" content="操作系统">
 <meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/process%20memory.png">
 
-<link rel="canonical" href="https://xiaotaoguo.github.io/categories/%E6%BF%80%E5%85%89slam/">
+<link rel="canonical" href="https://xiaotaoguo.github.io/2020/04/19/process/">
 
 
 <script id="page-configurations">
@@ -39,12 +46,12 @@
   CONFIG.page = {
     sidebar: "",
     isHome : false,
-    isPost : false,
+    isPost : true,
     lang   : 'en'
   };
 </script>
 
-  <title>Category: 激光slam | Tao's Blog</title>
+  <title>进程-process | Tao's Blog</title>
   
 
 
@@ -185,71 +192,228 @@
         <div class="content-wrap">
           
 
-          <div class="content category">
+          <div class="content post posts-expand">
             
 
+    
   
   
-  
-  <div class="post-block">
-    <div class="posts-collapse">
-      <div class="collection-title">
-        <h2 class="collection-header">激光slam
-          <small>Category</small>
-        </h2>
-      </div>
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://xiaotaoguo.github.io/2020/04/19/process/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://avatars3.githubusercontent.com/u/45047478?s=460&u=3be5d506be9a30bd6eadfd29cd36c61e30833bb2&v=4">
+      <meta itemprop="name" content="Xiaotao Guo">
+      <meta itemprop="description" content="Stay hungry, stay foolish">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Tao's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          进程-process
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2020-04-19 12:55:06 / Modified: 13:25:57" itemprop="dateCreated datePublished" datetime="2020-04-19T12:55:06-04:00">2020-04-19</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Operating-Systems/" itemprop="url" rel="index"><span itemprop="name">Operating Systems</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="Views" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="eye"></i>
+              </span>
+              <span class="post-meta-item-text">Views: </span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span>
+<br>
+            <span class="post-meta-item" title="Symbols count in article">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+              <span>1.2k</span>
+            </span>
+            <span class="post-meta-item" title="Reading time">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+              <span>1 mins.</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
 
       
-    <div class="collection-year">
-      <span class="collection-header">2020</span>
+        <p>本文是我在上UCSD的 <a href="http://cseweb.ucsd.edu/classes/wi20/cse120-a/" target="_blank" rel="noopener">CSE 120: Principles of Operating Systems (Winter 2020)</a> 整理的笔记，第一课主要介绍了操作系统以及进程的一些基本概念。</p>
+<a id="more"></a>
+<ol>
+<li><p>Definition</p>
+<ul>
+<li>Abstraction of a running program (<em>dynamic</em>)</li>
+<li>While program is just static code</li>
+</ul>
+</li>
+<li><p>Resources</p>
+<ul>
+<li>CPU<ul>
+<li>Processing cycles (CPU time)</li>
+<li>Execute intstructions</li>
+</ul>
+</li>
+<li>Memory<ul>
+<li>Bytes or words</li>
+<li>maintain state</li>
+</ul>
+</li>
+<li>Other resources (I/O)</li>
+</ul>
+</li>
+<li><p><strong>Context of a Process (machine and kernel-related state)</strong></p>
+<ul>
+<li>CPU context<ul>
+<li>PC (program counter)</li>
+<li>SP (stack pointer)</li>
+<li>FP (frame pointer)</li>
+<li>GP (general pointer)</li>
+</ul>
+</li>
+<li>Memory context<ul>
+<li>program code</li>
+<li>static variables(init, uninit)</li>
+<li>heap</li>
+<li>shared memory</li>
+<li>stack of activation records</li>
+</ul>
+</li>
+<li>Other (kernel-related state, …)</li>
+</ul>
+</li>
+<li><p>Process memory structure <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/process%20memory.png" width="120" style="float: right;"></p>
+<ul>
+<li>Text area: code (program instruction)</li>
+<li>Data<ul>
+<li>Global variable</li>
+<li>Static variable (local and global)</li>
+<li>Heap</li>
+</ul>
+</li>
+<li>Stack<ul>
+<li>Activation records</li>
+<li>Automatic growth/shrinkage</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Process stack <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/process%20stack.png" width="180" style="float: right;"></p>
+<ul>
+<li>Stack of activation records</li>
+<li>An activation records stores:<ul>
+<li>return address</li>
+<li>link to previous record</li>
+<li>local varibale</li>
+<li>other</li>
+</ul>
+</li>
+<li>Stack pointer points to top</li>
+</ul>
+</li>
+<li><p>Multi-Processes</p>
+<ul>
+<li>Goal: support several processes running “simultaneously” or let one process intentionally yield to another process</li>
+<li>Method: Context switching<ul>
+<li>Switch process A (running) to process B (waiting) while store context (state) of process A (since it’s not finished)</li>
+<li>process<ul>
+<li>save context of current process<ul>
+<li>save GP</li>
+<li>save SP</li>
+<li>save PC</li>
+</ul>
+</li>
+<li>load context of next process<ul>
+<li>load GP</li>
+<li>load SP</li>
+<li><strong>load PC (must be last, once PC is loaded, the process B begins to run (PC indicates instruction execution))</strong></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+
     </div>
 
-  <article itemscope itemtype="http://schema.org/Article">
-    <header class="post-header">
+    
+    
+    
+        
 
-      <div class="post-meta">
-        <time itemprop="dateCreated"
-              datetime="2020-04-18T21:38:13-04:00"
-              content="2020-04-18">
-          04-18
-        </time>
-      </div>
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>Post author:  </strong>Xiaotao Guo
+  </li>
+  <li class="post-copyright-link">
+    <strong>Post link: </strong>
+    <a href="https://xiaotaoguo.github.io/2020/04/19/process/" title="进程-process">https://xiaotaoguo.github.io/2020/04/19/process/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>Copyright Notice:  </strong>All articles in this blog are licensed under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> unless stating additionally.
+  </li>
+</ul>
+</div>
 
-      <div class="post-title">
-          <a class="post-title-link" href="/2020/04/18/%E8%BD%AE%E5%BC%8F%E9%87%8C%E7%A8%8B%E8%AE%A1%E8%BF%90%E5%8A%A8%E6%A8%A1%E5%9E%8B%E5%8F%8A%E6%A0%87%E5%AE%9A/" itemprop="url">
-            <span itemprop="name">轮式里程计运动模型及标定</span>
-          </a>
-      </div>
 
-    </header>
-  </article>
+      <footer class="post-footer">
+          
+          <div class="post-tags">
+              <a href="/tags/OS/" rel="tag"><i class="fa fa-tag"></i> OS</a>
+              <a href="/tags/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/" rel="tag"><i class="fa fa-tag"></i> 操作系统</a>
+          </div>
 
-  <article itemscope itemtype="http://schema.org/Article">
-    <header class="post-header">
+        
 
-      <div class="post-meta">
-        <time itemprop="dateCreated"
-              datetime="2020-04-18T21:37:51-04:00"
-              content="2020-04-18">
-          04-18
-        </time>
-      </div>
 
-      <div class="post-title">
-          <a class="post-title-link" href="/2020/04/18/%E6%BF%80%E5%85%89slam%E4%BB%8B%E7%BB%8D%E5%8F%8A%E7%9B%B8%E5%85%B3%E6%95%B0%E5%AD%A6%E5%9F%BA%E7%A1%80/" itemprop="url">
-            <span itemprop="name">激光slam介绍及相关数学基础</span>
-          </a>
-      </div>
-
-    </header>
-  </article>
-
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/04/19/%E5%B8%B8%E7%94%A8%E8%B5%84%E6%BA%90%E5%B7%A5%E5%85%B7%E6%95%B4%E7%90%86/" rel="prev" title="常用资源工具整理">
+      <i class="fa fa-chevron-left"></i> 常用资源工具整理
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/04/19/timesharing/" rel="next" title="分时系统-timesharing">
+      分时系统-timesharing <i class="fa fa-chevron-right"></i>
+    </a></div>
     </div>
-  </div>
+      </footer>
+    
+  </article>
   
   
-  
-
   
 
 

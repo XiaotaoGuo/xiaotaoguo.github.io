@@ -1,118 +1,3763 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
-    <title>激光slam介绍及相关数学基础</title>
-    <url>/2020/04/18/1-intro-math-basics/</url>
-    <content><![CDATA[<p>本文是我在学习深蓝学院的激光slam第一课的学习笔记，这一课主要介绍了2d和3d的激光slam的一些基本概念，以及需要的一些数学基础。</p>
+    <title>分布式系统-distributed system</title>
+    <url>/2020/04/19/distributed-system/</url>
+    <content><![CDATA[<p>本文是我在上UCSD的 <a href="http://cseweb.ucsd.edu/classes/wi20/cse120-a/" target="_blank" rel="noopener">CSE 120: Principles of Operating Systems (Winter 2020)</a> 整理的笔记，这一课主要介绍了分布式系统中最基础的一些概念的方法。</p>
 <a id="more"></a>
-<h2 id="激光slam介绍"><a href="#激光slam介绍" class="headerlink" title="激光slam介绍"></a>激光slam介绍</h2><h3 id="基本方法"><a href="#基本方法" class="headerlink" title="基本方法"></a>基本方法</h3><ol>
-<li><p>输入</p>
+<h2 id="Basic"><a href="#Basic" class="headerlink" title="Basic"></a>Basic</h2><ol>
+<li><p>What is a distributed system?</p>
+<p> <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/distributed_system.png" width="300"></p>
 <ul>
-<li>里程计数据（odometry）：正常来说都会有，因为slam一般配备在移动机器人、无人车，在一些特殊场景可能没有（手持设备）</li>
-<li>2d/3d激光雷达扫描结果：必须要有，在2dslam的情况下一般是单线的</li>
-<li>IMU： 一般是可选的，可以没有</li>
+<li>Cooperating processes in a computer network</li>
+<li><p>Degree of integration</p>
+<ul>
+<li>Loose: Internet applications, email, web browsing</li>
+<li>Medium: remote execution, remote file systems</li>
+<li>Tight: process migration, distributed file systems</li>
 </ul>
 </li>
-<li><p>输出</p>
+<li><p>Advantage</p>
 <ul>
-<li>3d点云地图：3dslam输出，在导航的时候会转成覆盖栅格地图进行导航</li>
-<li>覆盖栅格地图（occupancy-grid map）：将环境分割成对栅格并输出每个栅格是否可通行</li>
-<li>轨迹(trajectory) 或姿态（pose graph）</li>
+<li>Speed: parallelism, less contention</li>
+<li>Reliability: redundancy, fault tolerance, “NSPF”</li>
+<li>Scalability: incremental growth, economy of scale</li>
+<li>Geographic distribution: low latency, reliability</li>
 </ul>
 </li>
-<li><p>帧间匹配方法（2d）</p>
+<li><p>Disadvantages</p>
 <ul>
-<li>PL-ICP(Point-to-line ICP)：利用<strong>点到线</strong>的距离做误差计算，相对于点到点的方法更加符合室内结构化场景，但比较依靠初始解</li>
-<li>CSM(Correlation Scan Match)：<strong>暴力枚举</strong>所有可能的状态进行匹配相关性计算，取最优结果，（通过一定优化可以减少计算时间）</li>
-<li>Optimization-Based：将地图空间看成解空间，依赖<strong>地图状态的梯度</strong>通过迭代求解，能方便引入额外约束，同样依赖初始解</li>
-<li>实际常用 CSM + 梯度优化的方法，（也可以用 CSM + PL-ICP, 但是需要实际场景中有比较多结构化线段）</li>
+<li><p><em>Fundamental problems</em> of decentralized control</p>
+<ul>
+<li>State uncertainty: no shared memory or clock</li>
+<li>Action uncertainty: matually conflicting decisions</li>
 </ul>
 </li>
-<li><p>帧间匹配方法（3d）</p>
-<ul>
-<li>Point-to-Plane ICP：用点到面的距离作误差匹配</li>
-<li>Plane-to-Place ICP (GCIP): 面到面的距离</li>
-<li>NDT：划分网格拟合高斯分布，因为计算速度快所以在3d场景用得多一点</li>
-<li>NICP：在icp的基础上引入法向量信息（normal），角度精度较高</li>
-<li>IMLS-ICP：对点云进行局部曲面拟合</li>
-<li>Feature-based Method：参考视觉slam，提取特征点和描述子进行特征匹配，3d激光扫描结果信息量较多，所以可以使用</li>
+<li><p>Distributed algorithms are complex</p>
+</li>
 </ul>
 </li>
-<li><p>回环检测方法</p>
-<ul>
-<li>Scan-to-Map</li>
-<li>Map-to-Map</li>
-<li>Branch and Bound &amp; Lazy Decision (延迟检测)：由于2d 激光slam对环境数据量太少，很容易造成不同场景结果相似，导致出现错误的回环，延迟检测的方法是只有在检测到<strong>多个回环</strong>的情况下并且回环都一致的时候才认为出现回环</li>
 </ul>
 </li>
-</ol>
-<h3 id="发展"><a href="#发展" class="headerlink" title="发展"></a>发展</h3><ol>
-<li><p>Filtered-based (滤波方法，目前在2d激光slam（主要是建图）已经很少使用，因为滤波方法更关注当前状态（位置），对历史信息不修正（没有回环的概念），所以不利于利用全局数据进行建图，在定位（VO，VIO等）用的较多)</p>
+<li><p>Is distribution better? <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/distributed_system2.png" width="180" style="float: right;"></p>
 <ul>
-<li>EKF-SLAM (1990s): 随环境增大状态量会急剧增大</li>
-<li>FastSLAM (02~03)：粒子滤波，每个粒子携带一个地图</li>
-<li>Gmapping (07): FastSLAM的升级版本</li>
-<li>Optimal RBPF (10)：Gmapping的基础上进一步优化</li>
+<li>Single fast server with single queue</li>
+<li><p>Multiple slower servers with separate queues</p>
+<ul>
+<li>Typically better than the first one</li>
 </ul>
 </li>
-<li><p>Graph-based (图优化方法)</p>
+<li><p>Multiple slower servers, single queue</p>
 <ul>
-<li>Karto-SLAM (10)：基于优化的方案（CSM + SPA）</li>
-<li>Cartographer (16)：原理和Karto一样，用ceres实现，相对更完整</li>
+<li>Better than the first two</li>
 </ul>
 </li>
-</ol>
-<h3 id="实际应用中注意的问题"><a href="#实际应用中注意的问题" class="headerlink" title="实际应用中注意的问题"></a>实际应用中注意的问题</h3><ol>
-<li><p><strong>数据预处理 (Preprocess)</strong></p>
+<li><p>Little’s Law: $N = \lambda W$</p>
 <ul>
-<li>轮式里程计标定，最好能到0.3%左右</li>
-<li>激光雷达运动畸变（扫描过程中雷达的位置变化）</li>
-<li>不同系统之间的时间同步（当每个传感器连接到不同处理器（cpu）上的时候系统时间可能会不一致，这个时候需要考虑时间同步获得统一时间戳）</li>
+<li>Use to calculate processing time (assuming stable)</li>
 </ul>
 </li>
-<li><p>实际环境的问题（大部分可以通过和视觉融合来解决）</p>
-<ul>
-<li><p>动态物体、环境变化</p>
-<ul>
-<li>高动态：移动中的人，车</li>
-<li>低动态：物体被移动（椅子，箱子），频率低</li>
-</ul>
-</li>
-<li><p>几何结构相似环境：走廊等，容易发生状态退化，在3d的情况下则是比较空旷的区域，大部分点云无效导致环境退化</p>
-</li>
-<li>建图的操作复杂</li>
-<li>全局定位</li>
-<li>地面材质变化、地面凹凸不平、机器人载重变化：会造成里程计数据误差（间接改变了轮子直径）</li>
 </ul>
 </li>
 </ol>
-<h2 id="数学基础"><a href="#数学基础" class="headerlink" title="数学基础"></a>数学基础</h2><ol>
-<li><p>位姿和转换矩阵（pose &amp; transformation matrix）</p>
+<h2 id="Models-used-in-cooperating-system"><a href="#Models-used-in-cooperating-system" class="headerlink" title="Models used in cooperating system"></a>Models used in cooperating system</h2><ol>
+<li><p>The Client/Server Model</p>
 <ul>
-<li>假设机器人B在坐标系O中的坐标表示为 $(x, y, \theta)$</li>
-<li><p>则坐标系B到坐标系O的转换矩阵为：</p>
-<script type="math/tex; mode=display">T_{OB} = \begin{bmatrix}\cos{\theta} & -\sin{\theta} & x \\ \sin{\theta} & \cos{\theta} & y\\ 0 & 0 & 1 \end{bmatrix} = \begin{bmatrix}R & t \\ 0 & 1 \end{bmatrix}</script> <img src="/2020/04/18/1-intro-math-basics/transformation_matrix.png" class="" title="1-intro-math-basics&#x2F;transformation_matrix.png">
+<li><p>Client</p>
+<ul>
+<li>Short-lived process that makes requests</li>
+<li>“User-side” of application</li>
+</ul>
+</li>
+<li><p>Server</p>
+<ul>
+<li>Exports well-defined requests/response interface</li>
+<li>Long-lived process that waits for requests</li>
+<li>Upon receiving request, carries it out (may spawn)</li>
+</ul>
 </li>
 </ul>
 </li>
-<li><p>不同机器人坐标系转换</p>
+<li><p>Peer-to-Peer</p>
 <ul>
-<li><p>机器人A和机器人B的坐标转换</p>
-<script type="math/tex; mode=display">T_{AB} = T_{AO}T_{OB} = T_{OA}^{-1}T_{OB}</script></li>
+<li><p>A peer talks directly with another peer</p>
+<ul>
+<li>No intermediary (e.g., central servel) involved</li>
+<li>Symmetric (unlike asymmetric client/server)</li>
+</ul>
+</li>
+<li><p><em>In actuality, may be dynamic client/server</em></p>
+<ul>
+<li>A requests file from B; A acts as client, B as server</li>
+<li>C can now request file from A; A acts as server</li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+<h3 id="Distributed-Algorithms"><a href="#Distributed-Algorithms" class="headerlink" title="Distributed Algorithms"></a>Distributed Algorithms</h3><ol>
+<li><p>Event ordering</p>
+<ul>
+<li>Order events given no shared clock/memory</li>
+<li><p>Happened-before relations: $\rightarrow$</p>
+<ul>
+<li>A, B events in same process and A before B: $A\rightarrow B$</li>
+<li>A is a send event, B is a receive event: $A\rightarrow B$</li>
+<li>If $A\rightarrow B$ and $B\rightarrow C$, then $A\rightarrow C$</li>
+</ul>
+</li>
+<li><p>Implementation</p>
+<ul>
+<li>Timestamp all events based on local clock</li>
+<li>Upon receiving a message, advance local clock</li>
+<li>Resolve ties by ordering machines</li>
+</ul>
+</li>
+<li><p>Example</p>
+<ul>
+<li><p>Example 1 (When timing conflicting, follow rules above):</p>
+<p>  <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/event_ordering_example3.png" width="300"></p>
+<p>  <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/event_ordering_example1.png" width="300"></p>
+</li>
+<li><p>Example 2:</p>
+<p>  <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/event_ordering_example4.png" width="300"></p>
+<p>  <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/event_ordering_example5.png" width="300"></p>
+<p>  <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/event_ordering_example2.png" width="300"></p>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Leader election</p>
+<ul>
+<li>Many distributed algorithms rely on leader</li>
+<li>Need to determine if leader exists; if not elect</li>
+<li><p>Bully algorithm (elect leader L)</p>
+<ul>
+<li>Every process is numbered (priority): P1, P2, …</li>
+<li>$P_j$ sends request to L, no reply; tries to elect itself</li>
+<li>$P_j$ sends “Can I be leader?” to all $P_{k&gt;j}$</li>
+<li>No replies, $P_j$ sends to all $P_{i&lt;j}$, “I am leader”, done</li>
+<li>If some $P_{k&gt;j}$ replies, $P_j$ let $P_k$ try to elect itself</li>
+<li>If no message from $P_k$, $P_j$ tries to elect itself again</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Mutual exclusion</p>
+<ul>
+<li><p>Centralized approach</p>
+<ul>
+<li>Single process acts as coordinator server</li>
+<li>Request, reply (to allow entrance), release</li>
+</ul>
+</li>
+<li><p>Distributed approach</p>
+<ul>
+<li>Process sends time-stamped request to all others</li>
+<li>Waits until it receives replies from all (ok to other)</li>
+<li>Enter critical section (may get requests, defers)</li>
+<li>Upon exiting, responds (to release) to all deferred</li>
+<li>Use timestamps to order “simultaneous” requests</li>
+</ul>
+</li>
 </ul>
 </li>
 </ol>
 ]]></content>
       <categories>
-        <category>激光slam</category>
+        <category>Operating Systems</category>
       </categories>
       <tags>
-        <tag>slam</tag>
+        <tag>OS</tag>
+        <tag>操作系统</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>网络-networks</title>
+    <url>/2020/04/19/networks/</url>
+    <content><![CDATA[<p>本文是我在上UCSD的 <a href="http://cseweb.ucsd.edu/classes/wi20/cse120-a/" target="_blank" rel="noopener">CSE 120: Principles of Operating Systems (Winter 2020)</a> 整理的笔记，这一课主要介绍了网络的概念，包括网络的类型和协议的概念。并且简单介绍了一下OSI7层模型，包括addressing和routing的过程。</p>
+<a id="more"></a>
+<h2 id="Basics"><a href="#Basics" class="headerlink" title="Basics"></a>Basics</h2><ol>
+<li><p>What is a Network?</p>
+<ul>
+<li><p>Network</p>
+<ul>
+<li>Set of computing nodes</li>
+<li>Connected by communication links</li>
+<li>Allow data transfer by a sender to a receiver</li>
+</ul>
+</li>
+<li><p>Internetwork: a network of networks</p>
+<ul>
+<li>The “Internet” is a global internetwork</li>
+<li>Nodes communicate using IP (Internet Protocol)</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Types of Networks</p>
+<ul>
+<li><p>By topology: ring, star, bus, graph</p>
+<p>  <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/type_of_network.png" width="280"></p>
+</li>
+<li><p>By geographic coverage</p>
+<ul>
+<li>LAN: local area network (spanning floor, building)</li>
+<li>WAN: wide area network (spanning state, country)</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Circuit-switch vs. Packet switching</p>
+<ul>
+<li><p>Circuit switching: establish path, send data</p>
+<ul>
+<li>Reserve resources provide performance control</li>
+<li><p>Example: telephone system</p>
+<p>  <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/circuit_switching.png" width="280"></p>
+</li>
+</ul>
+</li>
+<li><p>Packet switching: forward packets hop to hop</p>
+<ul>
+<li>Fair sharing despite burst, statistical multiplexing</li>
+<li><p>Example: postal system</p>
+<p>  <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/packet_switching.png" width="280"></p>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+<h2 id="Protocol"><a href="#Protocol" class="headerlink" title="Protocol"></a>Protocol</h2><ol>
+<li><p>What is protocol?</p>
+<ul>
+<li>Goal: get message from sender to receiver</li>
+<li><p>Protocol</p>
+<ul>
+<li>agreed message format and transfer procedure</li>
+</ul>
+</li>
+<li><p>Multiparty, so no central thread of control</p>
+<ul>
+<li>Sender and reciver are separate processes</li>
+</ul>
+</li>
+<li><p>Expectations of operation</p>
+<ul>
+<li>first you do x, then I do y, then you do z,…</li>
+<li>If you do q, I’ll do p</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Message</p>
+<ul>
+<li><p>Message: contains header and data</p>
+<ul>
+<li>Similar terms: packet, datagram, frame</li>
+</ul>
+</li>
+<li><p>Data: what sender wants to receiver to know</p>
+</li>
+<li><p>Header: information to support protocol</p>
+<ul>
+<li>Source and destination addresses</li>
+<li>State of protocol operation</li>
+<li>Error control (to check intergity of received data)</li>
+</ul>
+</li>
+<li><p>Example:</p>
+<ul>
+<li><p>Assume: Ann sends message to Bob locally (same city)</p>
+<ul>
+<li>Message format: (from, to), message contents</li>
+<li><p>Transfer procedure: post on refrigerator</p>
+<p>  <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/message1.png" width="280"></p>
+</li>
+</ul>
+</li>
+<li><p>What if Ann sends message to Bob in different cities</p>
+<ul>
+<li>Message format: address(es) on envelope, letter</li>
+<li><p>Transfer procedure: postal system</p>
+<p>  <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/message2.png" width="280"></p>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Summary (<em>Layering: Separation of Functions</em>)</p>
+<ul>
+<li><p>Ann and Bob</p>
+<ul>
+<li>Don’t have to know about delivery</li>
+<li>However, aid postal system by providing addresses</li>
+</ul>
+</li>
+<li><p>Postal System</p>
+<ul>
+<li>Only has to know addresses and how to deliver</li>
+<li>Doesn’t care about “data”: Ann, Bob, letter</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+<h2 id="7-Layers-of-OSI-Open-Systems-Interconnection-Refernce-Model"><a href="#7-Layers-of-OSI-Open-Systems-Interconnection-Refernce-Model" class="headerlink" title="7 Layers of OSI (Open Systems Interconnection) Refernce Model"></a>7 Layers of OSI (Open Systems Interconnection) Refernce Model</h2><div class="table-container">
+<table>
+<thead>
+<tr>
+<th style="text-align:left">layer</th>
+<th style="text-align:left">name</th>
+<th style="text-align:left">function</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">7</td>
+<td style="text-align:left">Application</td>
+<td style="text-align:left">application protocol, e.g., HTTP</td>
+</tr>
+<tr>
+<td style="text-align:left">6</td>
+<td style="text-align:left">Presentation</td>
+<td style="text-align:left">syntax, network format</td>
+</tr>
+<tr>
+<td style="text-align:left">5</td>
+<td style="text-align:left">Session</td>
+<td style="text-align:left">start/stop/manage connections</td>
+</tr>
+<tr>
+<td style="text-align:left">4</td>
+<td style="text-align:left">Transport</td>
+<td style="text-align:left">segment, reliability, flow control</td>
+</tr>
+<tr>
+<td style="text-align:left">3</td>
+<td style="text-align:left">Network</td>
+<td style="text-align:left">logical addressing, routing</td>
+</tr>
+<tr>
+<td style="text-align:left">2</td>
+<td style="text-align:left">Link</td>
+<td style="text-align:left">physical addressing, framing</td>
+</tr>
+<tr>
+<td style="text-align:left">1</td>
+<td style="text-align:left">Physical</td>
+<td style="text-align:left">0’s and 1’s over a wire</td>
+</tr>
+</tbody>
+</table>
+</div>
+<ol>
+<li><p>Internet Protocol Stack</p>
+<ul>
+<li>“Hourglass” design</li>
+<li>Application: Email, Web</li>
+<li>Session: sockets</li>
+<li>Transport: TCP, UDP, …</li>
+<li>Network: IP (Only one kind of protocol in this layer, which makes Internet Internet!)</li>
+<li>Link: Ethernet, ATM, …</li>
+<li>Physical</li>
+</ul>
+</li>
+<li><p>Encapsulation</p>
+<ul>
+<li>Higher level n with lower level n - 1</li>
+<li>Can also have level within a level: tunneling</li>
+<li>Multiplexing and de-multiplexing</li>
+</ul>
+</li>
+<li><p>Addresses</p>
+<ul>
+<li><p>Generally, three levels of addresses</p>
+<ul>
+<li>Domain names: cs.ucsd.edu</li>
+<li>Logical addresses (IP): 128.53.27.92</li>
+<li>Physical addresses (Ethernet): 0x27A5BB17019D</li>
+</ul>
+</li>
+<li><p>Address resolution</p>
+<ul>
+<li>Mapping higher level name to lower level name</li>
+<li>Techniques: table lookup, formula, protocol</li>
+</ul>
+</li>
+<li><p>Sizes of address spaces</p>
+<ul>
+<li><p>IPv4 (version 4, current/past)</p>
+<ul>
+<li>32 bit addresses</li>
+<li>$2^{32}$ = 4 billion addresses</li>
+</ul>
+</li>
+<li><p>IPv6 (version 6, future/current)</p>
+<ul>
+<li>128 bit addresses</li>
+<li>$2^{128} = 2^8\times (2^{10})^{12} = 256 \times (10^3)^{12} = 2.56 \times 10^{38}$</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Routing</p>
+<ul>
+<li><p>Routing: how to get packet from A to B</p>
+<ul>
+<li><p>A forwards to X; X to Y; Y to Z; Z to B</p>
+<p>  <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/routing_example.png" width="300"></p>
+</li>
+</ul>
+</li>
+<li><p>Each intermediate node can be a decision point</p>
+<ul>
+<li>Static: always make the same decision</li>
+<li>Dynamic: decision can change (e.g., based on state)</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Scalability</p>
+<ul>
+<li><p>How well does system grow</p>
+<ul>
+<li>in terms of performance, reliability, etc</li>
+</ul>
+</li>
+<li><p>Ramifications of adding node or link</p>
+<ul>
+<li>Local effects vs. global effects</li>
+</ul>
+</li>
+<li><p>Information growth: import to reduce</p>
+<ul>
+<li>Amount stored at nodes</li>
+<li>Amount exchanged between nodes</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Error Control</p>
+<ul>
+<li>Parity: even, odd, two-dimesional</li>
+<li>CRC (cyclic redundance code)</li>
+<li>Checksum</li>
+<li>Automatic repeat request (ARQ)</li>
+</ul>
+</li>
+<li><p><a href="https://www.wikiwand.com/en/Two_Generals%27_Problem" target="_blank" rel="noopener">The two general’s problem</a></p>
+</li>
+</ol>
+]]></content>
+      <categories>
+        <category>Operating Systems</category>
+      </categories>
+      <tags>
+        <tag>OS</tag>
+        <tag>操作系统</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>安全机制-security</title>
+    <url>/2020/04/19/security/</url>
+    <content><![CDATA[<p>本文是我在上UCSD的 <a href="http://cseweb.ucsd.edu/classes/wi20/cse120-a/" target="_blank" rel="noopener">CSE 120: Principles of Operating Systems (Winter 2020)</a> 整理的笔记，这一课主要介绍了操作系统里面的不同环境以及系统之间的威胁，包括病毒等，除此之外还介绍了一些安全机制，包括公钥和私钥的方法。</p>
+<a id="more"></a>
+<h2 id="Basic"><a href="#Basic" class="headerlink" title="Basic"></a>Basic</h2><ol>
+<li><p>What is Computer Security?</p>
+<ul>
+<li><p>How to protect computer systems</p>
+<ul>
+<li>System contents: data, software, hardware</li>
+<li>System operation: performance, reliability</li>
+<li>System service: what the user sees and expects</li>
+</ul>
+</li>
+<li><p>From various threats</p>
+<ul>
+<li>Theft</li>
+<li>Damage</li>
+<li>Disruption</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Aspects of Security</p>
+<ul>
+<li><p>Confidentiality</p>
+<ul>
+<li>keeping a secret secret; for authorized eyes only</li>
+</ul>
+</li>
+<li><p>Integrity</p>
+<ul>
+<li>maintaining accuracy; only authorized changes</li>
+</ul>
+</li>
+<li><p>Authenticity</p>
+<ul>
+<li>Is it really who/what it claims to be?</li>
+</ul>
+</li>
+<li><p>Availablity</p>
+<ul>
+<li>access to info/resources you need, when needed</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Security Threats</p>
+<ul>
+<li><p>Interception</p>
+<ul>
+<li>eavesdropping</li>
+</ul>
+</li>
+<li><p>Interruption</p>
+<ul>
+<li>destroying, denial of service</li>
+</ul>
+</li>
+<li><p>Modification</p>
+<ul>
+<li>tampering with data or programs</li>
+</ul>
+</li>
+<li><p>Fabrication</p>
+<ul>
+<li>new data/programs, replaying message</li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+<h2 id="User-Authentication"><a href="#User-Authentication" class="headerlink" title="User Authentication"></a>User Authentication</h2><ol>
+<li><p>Password</p>
+<ul>
+<li><p>Passwords are most common method</p>
+<ul>
+<li>User and computer know secret</li>
+<li>User proves knowledge of secret</li>
+<li>Computer checks</li>
+</ul>
+</li>
+<li><p>Encrypted passwords</p>
+<ul>
+<li>Computer stores only encrypted passwords</li>
+<li>User provides password</li>
+<li>Computer encrypts, checks</li>
+</ul>
+</li>
+<li><p>Problem with passwords</p>
+<ul>
+<li><p>Assume 100 possible characters for passwords</p>
+<p>  | # chars| # passwords | 100G/s machine | 100T/s machine |<br>  | :—-: | :—-: | :—-: | :—-: |<br>  | 6 | $100^6$ | 10 sec | 10 msec |<br>  | 7 | $100^7$ | 17 min | 10 msec |<br>  | 8 | $100^8$ | 1.2 days | 1.7min |<br>  | 9 | $100^9$ | 116 days | 2.8 hr|</p>
+</li>
+<li><p>But most characters are uncommon, hard to remember</p>
+</li>
+<li>Using dictionary words (~250,000): only 2.5 usec!</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Challenge/Response Protocol</p>
+<ul>
+<li><p>Challenge/response, algorithm passwords</p>
+<ul>
+<li>User and system know secret algorithm</li>
+<li>System challenge user’s knowledge, user responds</li>
+</ul>
+</li>
+<li><p>Example: say secret algorithm is $f(x) = x^2$</p>
+<ul>
+<li>System challenges user: sends system 9</li>
+<li>User computes $f(x) = 9$, sends system 9</li>
+<li>System concludes user must know secret algorithm</li>
+<li>Next time, system can provide different challenge</li>
+</ul>
+</li>
+<li><p>Secret is never sent, only challenge/response</p>
+</li>
+</ul>
+</li>
+</ol>
+<h2 id="Threats"><a href="#Threats" class="headerlink" title="Threats"></a>Threats</h2><ol>
+<li><p>Trojan Horse</p>
+<ul>
+<li>Greeks invaded Troy in hollow wooden horse</li>
+<li><p>Program that contains hidden malicious code</p>
+<ul>
+<li>User thinks program does something useful</li>
+<li>In actuality, it (also) does something harmful</li>
+</ul>
+</li>
+<li><p>Program runs as process in user’s domain</p>
+<ul>
+<li>Can do harm to user’s environment</li>
+<li>Can do harm under that user’s name</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Trap Door</p>
+<ul>
+<li>Secret access point in program</li>
+<li>Designer develops program for someone else</li>
+<li>Once loaded in system, designer can access</li>
+<li><p>Consider if trap door is added by compiler</p>
+<ul>
+<li>Compiler adds trap doors to programs</li>
+<li>Designer of compiler can then access</li>
+<li>Can’t tell from program source code</li>
+<li>Even if new compiler written, must be compiled!</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Virus</p>
+<ul>
+<li>Code attached to legitimate program</li>
+<li><p>When program runs, the virus runs</p>
+<ul>
+<li>causes damage</li>
+<li>spreads, attaching itself to other programs</li>
+</ul>
+</li>
+<li><p>Disinfectants</p>
+<ul>
+<li>Check that programs look normal (modified)</li>
+<li>Check for known virus patterns in programs</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Internet Worm</p>
+<ul>
+<li>Worm: program that copies itself over network by email, finger, rsh attack</li>
+</ul>
+</li>
+<li><p>Denial of Service</p>
+<ul>
+<li><p>Preventing others from using system</p>
+<ul>
+<li>by using lots of resources</li>
+<li>by bombarding with network requests or traffic</li>
+</ul>
+</li>
+<li><p>Example</p>
+<ul>
+<li>Repeatly request TCP connection</li>
+<li>Don’t answer responses; system times them out</li>
+<li>Eventually, no TCP ports left available</li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+<h2 id="Approach-to-clear-prevent-threats"><a href="#Approach-to-clear-prevent-threats" class="headerlink" title="Approach to clear (prevent) threats"></a>Approach to clear (prevent) threats</h2><h3 id="Intrusion-Detection"><a href="#Intrusion-Detection" class="headerlink" title="Intrusion Detection"></a>Intrusion Detection</h3><ol>
+<li><p>Intrusion Detection</p>
+<ul>
+<li>Detecting if there is an intruder, or an attack</li>
+<li><p>Signature-based</p>
+<ul>
+<li>Look for specific patterns of attack behavior</li>
+<li>Example: repeated login attempts</li>
+</ul>
+</li>
+<li><p>Anomaly-based</p>
+<ul>
+<li>Look for unusual behavior</li>
+<li>Example: unusual command/system call patterns</li>
+</ul>
+</li>
+<li><p>Solution: create audit trail (log), then analyze it</p>
+</li>
+</ul>
+</li>
+</ol>
+<h3 id="Crytography"><a href="#Crytography" class="headerlink" title="Crytography"></a>Crytography</h3><ol>
+<li><p>Basics</p>
+<ul>
+<li><p>Encoding messages to</p>
+<ul>
+<li>limit who can view the original message</li>
+<li><p>determine who sent a message</p>
+<p>  <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/crytography.png" width="350"></p>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Secret Key Encryption</p>
+<ul>
+<li><p>Secret key (symmetric)</p>
+<ul>
+<li>Same key K is used to encrypt and decrypt</li>
+<li>Sender encrypts $E_k(P)$, Receiver decrypts $D_k(E_k(P))$</li>
+</ul>
+</li>
+<li><p>DES: Data Encryption Standard (1997)</p>
+<ul>
+<li>Weak due to 56-bit keys</li>
+</ul>
+</li>
+<li><p>AES: Advanced Encryption Standard (2001)</p>
+<ul>
+<li>128, 192, 256-bit keys</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Public Key Encryption</p>
+<ul>
+<li><p>Public key (asymetric)</p>
+<ul>
+<li>Different keys to encrpyt and decrypt</li>
+<li>Each user has two keys: one public, one private</li>
+</ul>
+</li>
+<li><p>If A wants to send to B</p>
+<ul>
+<li>A encrypts using B’s public key</li>
+<li>B decrypts using its private key</li>
+</ul>
+</li>
+<li><p>RSA (Rivest, Shamir and Adelman)</p>
+</li>
+</ul>
+</li>
+<li><p>Public key vs. Secret key</p>
+<ul>
+<li><p>Secret key</p>
+<ul>
+<li>Operates fast</li>
+<li>Difficult to distribute keys</li>
+</ul>
+</li>
+<li><p>Public key</p>
+<ul>
+<li>Time-consuming operation (generating random/prime number, see example below)</li>
+<li>Conveninet for key distribution</li>
+</ul>
+</li>
+<li><p>Example: Alice chats with Bob</p>
+</li>
+<li><p>Bob authenticates Alice</p>
+<p>  <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/b2a.png" width="350"></p>
+</li>
+<li><p>Alice authenticates Bob</p>
+<p>  <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/a2b.png" width="350"></p>
+</li>
+<li><p>Authentication using public key</p>
+<ul>
+<li>Alice: sends $K_{B,pub}(A, R_A)$ to Bob (uses Bob’s public key)</li>
+<li><p>Bob:</p>
+<ul>
+<li>Decrypts: $K_{B,priv}(K_{B,pub}(A, R_A))\rightarrow (A, R_A)$</li>
+<li>Encrypts and sends $K_{A,pub}(R_A, R_B, K)$ to Alice</li>
+</ul>
+</li>
+<li><p>Alice:</p>
+<ul>
+<li>Decrypts: $K_{A,priv}(K_{A,pub}(R_A, R_B, K))\rightarrow$ “It’s Bob”</li>
+<li>Encrypts and sends $K(R_B)$ to Bob</li>
+</ul>
+</li>
+<li><p>Bob: Decrypts $K(K(R_B)) = R_B \rightarrow$ “it’s Alice”</p>
+</li>
+<li><p>whole process:</p>
+<p>  <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/b2a2b.png" width="350"></p>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Digitial Signatures</p>
+<ul>
+<li><p>If Alice wants to digitially sign message to Bob</p>
+<ul>
+<li><p>Encrypt M using $K_{A,priv}$ and send $K_{A,priv}(M)$ to Bob</p>
+<p>  <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/digital_signature_1.png" width="350"></p>
+</li>
+</ul>
+</li>
+<li><p>When Bob receives, decrypts using $K_{A, pub}$</p>
+<ul>
+<li>can decrypt only if from Alice</li>
+</ul>
+</li>
+<li><p>To sign and keep private</p>
+<ul>
+<li>Alice sends $K_{B,pub}(M, K_{A, pirv}(M))$ to Bob</li>
+<li>Only Bob can decryptL $K_{B,priv}(K_{B,pub}(M, K_{A,priv}(M))$</li>
+<li><p>Decrypts using $K_{A,pub}$ proving Alice signed it</p>
+<p>  <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/digital_signature_2.png" width="350"></p>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+]]></content>
+      <categories>
+        <category>Operating Systems</category>
+      </categories>
+      <tags>
+        <tag>OS</tag>
+        <tag>操作系统</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>保护-protection</title>
+    <url>/2020/04/19/protection/</url>
+    <content><![CDATA[<p>本文是我在上UCSD的 <a href="http://cseweb.ucsd.edu/classes/wi20/cse120-a/" target="_blank" rel="noopener">CSE 120: Principles of Operating Systems (Winter 2020)</a> 整理的笔记，这一课主要介绍了操作系统里面对文件和进程资源的保护方法，包括用户权限和用户组管理。</p>
+<a id="more"></a>
+<h2 id="Basics"><a href="#Basics" class="headerlink" title="Basics"></a>Basics</h2><ol>
+<li><p>Introduction</p>
+<ul>
+<li>Process access resources</li>
+<li><p>Resources are shared, need to be protected</p>
+<ul>
+<li>from process without permission</li>
+<li>from improper access by a process</li>
+</ul>
+</li>
+<li><p>What is the right protection model?</p>
+</li>
+<li>What are the mechanism?</li>
+</ul>
+</li>
+<li><p>The kernel enforces protection</p>
+<ul>
+<li>To pretect resources, have kernel “own” them, then kernel can allow access temporairily</li>
+<li>To access a resource, a process must ask for it, then kernel can test whether access should be given</li>
+<li><p>One a process is given access</p>
+<ul>
+<li>kernel can prevent others for gaining access</li>
+<li>kernel may/may not be able to take away access</li>
+</ul>
+</li>
+<li><p>This assumes kernel operates correctly</p>
+</li>
+</ul>
+</li>
+<li><p>Protecting the kernel</p>
+<ul>
+<li>The kernel itself must be protected</li>
+<li><p>Mechanism</p>
+<ul>
+<li>Memory protecion</li>
+<li>Protected mode of operation: kernel vs. user</li>
+<li>Clock interrupt, so kernel eventually gets control</li>
+</ul>
+</li>
+<li><p>Notice, mechanisms are hardware supported</p>
+</li>
+<li>Protected kernel can protect other resources</li>
+</ul>
+</li>
+<li><p>Goals supported by kernel</p>
+<ul>
+<li>Allow range of permissions</li>
+<li>Allow user to set/get them</li>
+<li>Be fast/simple for common use</li>
+<li>Support user expressing complex permissions</li>
+</ul>
+</li>
+</ol>
+<h2 id="Implementation"><a href="#Implementation" class="headerlink" title="Implementation"></a>Implementation</h2><h3 id="Simple-model"><a href="#Simple-model" class="headerlink" title="Simple model"></a>Simple model</h3><ol>
+<li><p>A formal model of protection</p>
+<ul>
+<li>Protection: how to limit access to a resource</li>
+<li>Resource: object that requires protection</li>
+<li>Domain: set of (resource, permission) pairs</li>
+<li>Process: accesses resources within domain</li>
+</ul>
+</li>
+<li><p>Protection Matrix</p>
+<ul>
+<li><p>Example: (X, Y: Resources A,B: Domains)</p>
+<p>  |   |  X  |  Y  | A | B |<br>  |—-|—-  | —- |—-|—-|<br>  | A | r,w | r,w |   |   |<br>  | B | w   | r   |   |   |</p>
+</li>
+<li><p>Can describe all domains as a matrix</p>
+<ul>
+<li>Rows are domains</li>
+<li>Columns are resources</li>
+<li>Matrix entry [d, r] contains permissions/rights</li>
+</ul>
+</li>
+<li><p>Access Control Lists (For resource)</p>
+<ul>
+<li>For each resource, list (domain, permissions) pairs</li>
+<li>ACL is associated with resource</li>
+<li>Like a registry: if name is on list, ok to access</li>
+<li>Can be inefficient: must lookup on each access</li>
+<li>Revocation is easy; just remove from list</li>
+</ul>
+</li>
+<li><p>Capability Lists (For domain)</p>
+<ul>
+<li>For each domain, list (resource, permissions pairs)</li>
+<li>Capability list associated with each domain</li>
+<li>Like key/ticker: if you have it, you get access</li>
+<li>Efficient: on access, just produce capability</li>
+<li>Hard to revoke</li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+<h3 id="UNIX-Protecion"><a href="#UNIX-Protecion" class="headerlink" title="UNIX Protecion"></a>UNIX Protecion</h3><ol>
+<li><p>Basic</p>
+<ul>
+<li><p>Associated with each file is set of permissions</p>
+<ul>
+<li>Permission bits r/w/x for owner, group, world</li>
+<li>Limited form of access control list</li>
+</ul>
+</li>
+<li><p>Protection domain: UID (user account ID) + …</p>
+<ul>
+<li>A process is always in some domain</li>
+</ul>
+</li>
+<li><p>When process opens file, check permission</p>
+</li>
+<li><p>If ok, provide process with a capability</p>
+<ul>
+<li>Future operations then carried out efficiently</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>More</p>
+<ul>
+<li>For common case, r/w/x for o/g/w adequate</li>
+<li>For special cases, can extend via user program</li>
+<li>SETUID mechanism: causes domain switch</li>
+<li><p>If executable file has SETUID bit set</p>
+<ul>
+<li>Process runs in domain of owner (of executable)</li>
+<li>Therefor, it runs with all the rights of the owner</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Example</p>
+<ul>
+<li>Pat has a file “Bil” of bibliography references</li>
+<li>Chris wants to read and add entries</li>
+<li>But, Chris lacks permissions (only Pat can r/w)</li>
+<li>Pat wisher to allow append access (only add entris to the back), but how?</li>
+<li><p>Solution:</p>
+<ul>
+<li>Pat can provide program (e.g., EditBib): only reads/appends</li>
+<li><p>Set permissions</p>
+<ul>
+<li>of program: execute (for Chris), and SETUID on</li>
+<li>of Bib file: read/write only for Pat, not Chris</li>
+</ul>
+</li>
+<li><p>When Chris executes EditBib, runs as Pat (since SETUID on, domain switch to Pat’s domain)</p>
+</li>
+<li>Program only does read/append.</li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+]]></content>
+      <categories>
+        <category>Operating Systems</category>
+      </categories>
+      <tags>
+        <tag>OS</tag>
+        <tag>操作系统</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>输入/输出系统-I/O system</title>
+    <url>/2020/04/19/IO-system/</url>
+    <content><![CDATA[<p>本文是我在上UCSD的 <a href="http://cseweb.ucsd.edu/classes/wi20/cse120-a/" target="_blank" rel="noopener">CSE 120: Principles of Operating Systems (Winter 2020)</a> 整理的笔记，这一课主要介绍了操作系统里面输入系统系统的概念，包括硬件上的组成以及软件的结构。</p>
+<a id="more"></a>
+<h2 id="I-O-basic"><a href="#I-O-basic" class="headerlink" title="I/O basic"></a>I/O basic</h2><ol>
+<li><p>Intro</p>
+<ul>
+<li><p>I/O = Input/Output</p>
+<ul>
+<li>Input from attached device to CPU/memory</li>
+<li>Output from CPU/memory to device</li>
+</ul>
+</li>
+<li><p>Synchronization and transferring data</p>
+</li>
+</ul>
+</li>
+<li><p>Issues</p>
+<ul>
+<li><p>Problems:</p>
+<ul>
+<li>So many different types of I/O devices</li>
+<li>Wide range: speed, operation, data transfer units</li>
+</ul>
+</li>
+<li><p>Questions:</p>
+<ul>
+<li>How does a process initiate I/O?</li>
+<li>How is synchronization achieved?</li>
+<li>How is data transferred?</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Background: I/O Hardware</p>
+<ul>
+<li><p>CPU and device (controller) communicate via</p>
+<ul>
+<li>I/O instructions</li>
+<li>Memory instructuions (memory-mapped)</li>
+</ul>
+</li>
+<li><p>Data transfer: progammed I/O vs. DMA (direct memory access)</p>
+</li>
+<li><p>Synchronization: polling vs. interrupts</p>
+<p>  <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/hardware_io.png" width="500"></p>
+</li>
+</ul>
+</li>
+<li><p>Buffered/Unbuffered I/O</p>
+<ul>
+<li><p>Pros:</p>
+<ul>
+<li>What if pages containing buffer are paged out?</li>
+<li>What if entire process is swapped out?</li>
+<li>Can pin pages, but if too many processes do this?</li>
+</ul>
+</li>
+<li><p>Cons:</p>
+<ul>
+<li>Memory copying is expensive</li>
+<li>Consider effect on caches</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Dealing with Complexity of Devices</p>
+<ul>
+<li><p>Many different types of devices</p>
+<ul>
+<li>Classify by shared characteristics</li>
+<li>Imposes structure: shared code, lower complexity</li>
+</ul>
+</li>
+<li><p>Dimensions</p>
+<ul>
+<li>Varaible vs. fixed size units</li>
+<li>Sequential vs. random-access</li>
+<li>Synchronous vs. asynchronous</li>
+<li>Speed of operation</li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+<h2 id="I-O-system"><a href="#I-O-system" class="headerlink" title="I/O system"></a>I/O system</h2><ol>
+<li><p>I/O system Intro</p>
+<ul>
+<li><p>Software that deals with I/O</p>
+<ul>
+<li>Mostly in the kernel</li>
+<li>Also in processes (in form of library, e.g., stdio)</li>
+</ul>
+</li>
+<li><p>Separated into two portions</p>
+<ul>
+<li>Device-dependent</li>
+<li>Device- independent</li>
+</ul>
+</li>
+<li><p>Structure: Layered</p>
+<p>  <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/IO_system_structure.png" width="500"></p>
+</li>
+</ul>
+</li>
+<li><p>Device Dependent: Device Drivers</p>
+<ul>
+<li><p>Encapsulates device-dependent code</p>
+<ul>
+<li>Contains device-specific register reads/write</li>
+</ul>
+</li>
+<li><p>Implements a standard interface</p>
+<ul>
+<li>open(), close(), read(), write()</li>
+</ul>
+</li>
+<li><p>Interrupt handlers</p>
+<ul>
+<li>Executes when I/O completes</li>
+<li>Updates data structure</li>
+<li>Wakes up waiting process</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Device-Independent I/O</p>
+<ul>
+<li>Uniform interfacing for device drivers</li>
+<li>Naming, protection</li>
+<li>Uniform block size</li>
+<li>Buffering, caching</li>
+<li>Storage allocation</li>
+<li>Locking</li>
+<li>Error handling</li>
+</ul>
+</li>
+<li><p>User-space I/O <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/user_space_io.png" width="180" style="float: right;"></p>
+<ul>
+<li><p>Convenient interface</p>
+<ul>
+<li>printf() vs. write()</li>
+</ul>
+</li>
+<li><p>User-level buffering</p>
+<ul>
+<li>Unix: stdio library</li>
+</ul>
+</li>
+<li><p>Spooling daemons</p>
+<ul>
+<li>Printer</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Overall Operation</p>
+<p> <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/io_operation.png" width="350"></p>
+</li>
+</ol>
+<h3 id="Example-UNIX"><a href="#Example-UNIX" class="headerlink" title="Example: UNIX"></a>Example: UNIX</h3><ol>
+<li><p>I/O Model <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/unix_io.png" width="180" style="float: right;"></p>
+<ul>
+<li>Uses file system interface</li>
+<li>stdio.h: C standard I/O library</li>
+<li><p>Block devices (disks, USB cameras, …)</p>
+<ul>
+<li>Fixed-size blocks</li>
+<li>Randomly addressable</li>
+<li>Uses buffer cache</li>
+</ul>
+</li>
+<li><p>Character devices (serial ports, parallel ports, sound cards,…)</p>
+<ul>
+<li>Variable sequence of bytes</li>
+<li>For non-block devices</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>I/O System Call Interface</p>
+<ul>
+<li>fd = open(“/dev/devname”, …)</li>
+<li>close(fd)</li>
+<li>nr = read(fd, buf, n)</li>
+<li>nw = write(fd, buf, n)</li>
+<li>ioctl(fd, cmd, buf) //(input/output control)</li>
+</ul>
+</li>
+<li><p>Standard I/O Library</p>
+<ul>
+<li>fopen, fread, fwrite, fprintf, fscanf, fclose, …</li>
+<li>Private buffer kept in user space</li>
+<li>Minimizes the number of I/O system calls</li>
+</ul>
+</li>
+<li><p>Software Block Cache Design</p>
+<ul>
+<li>Has copies of blocks that are also on disk</li>
+<li><p>Upon read or write</p>
+<ul>
+<li>Check if a buffer contains the block</li>
+<li>If not, get from disk</li>
+<li>To make room, remove LRU block</li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+]]></content>
+      <categories>
+        <category>Operating Systems</category>
+      </categories>
+      <tags>
+        <tag>OS</tag>
+        <tag>操作系统</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>文件系统-filesystem</title>
+    <url>/2020/04/19/file-system/</url>
+    <content><![CDATA[<p>本文是我在上UCSD的 <a href="http://cseweb.ucsd.edu/classes/wi20/cse120-a/" target="_blank" rel="noopener">CSE 120: Principles of Operating Systems (Winter 2020)</a> 整理的笔记，这一课主要介绍了操作系统里面文件系统以及文件的概念，包括文件系统的组成以及访问具体文件/文件夹的方法。</p>
+<a id="more"></a>
+<h2 id="Basic"><a href="#Basic" class="headerlink" title="Basic"></a>Basic</h2><ol>
+<li><p>Preview</p>
+<ul>
+<li><p>File: logical unit of storage, container of data</p>
+<ul>
+<li>Accessed by (name, region within file)</li>
+</ul>
+</li>
+<li><p>File System: a structured collection of files</p>
+<ul>
+<li>Access control, name space, persistent storage</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>File System Abstraction</p>
+<ul>
+<li><p>Repository of objects</p>
+<ul>
+<li>Objects are data, programs for system and users</li>
+<li>Objects referenced by name, to be read/written</li>
+</ul>
+</li>
+<li><p>More than a repository</p>
+<ul>
+<li>Objects can be r/w, protected, shared, locked</li>
+<li>Contains I/O devices: disk, keyboard, display</li>
+<li>Processes: memory</li>
+</ul>
+</li>
+<li><p>Pesistent: remains “forever”</p>
+</li>
+<li>Large: “unlimited” size</li>
+<li>Sharing: controlled access</li>
+<li>Security: protecting information</li>
+</ul>
+</li>
+<li><p>Hierarchical File Name Space</p>
+<ul>
+<li><p>Name space is organized as a tree</p>
+<ul>
+<li>Name has components, branches start from root</li>
+<li>No size restrictions</li>
+<li>Intuitive for users</li>
+</ul>
+</li>
+<li><p>Example: UNIX “Pathnames”</p>
+<ul>
+<li>Absolute: /a/b/c</li>
+<li>Relative: b/c relative to /a</li>
+<li>Not strictly a tree: links</li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+<h2 id="File"><a href="#File" class="headerlink" title="File"></a>File</h2><ol>
+<li><p>Attributes</p>
+<ul>
+<li>Type (recognized by system or users)</li>
+<li>Times: creation, accessed, modified</li>
+<li>Sizes: current size, (maximum size)</li>
+<li>Access control (permissions)</li>
+</ul>
+</li>
+<li><p>Operations</p>
+<ul>
+<li>Creation: create, delete</li>
+<li>Prepare for access: open, close, mmap</li>
+<li>Access: read, write</li>
+<li>Search: move to location</li>
+<li>Attributes: get, set(e.g., permissions)</li>
+<li>Mutual exclusion: lock, unlock</li>
+<li>Name management: rename</li>
+</ul>
+</li>
+<li><p>Read/Write model</p>
+<ul>
+<li>(file descriptor)fd = open(fname, usage)</li>
+<li>nr = read(fd, buf, size)</li>
+<li>nw = write(fd, buf, size)</li>
+<li><p>close</p>
+<p>  <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/read_write.png" width="300"></p>
+</li>
+</ul>
+</li>
+<li><p>Memory-mapped model</p>
+<ul>
+<li><p>Map file into address space</p>
+<ul>
+<li>mmap(addr, n, …, fd, …)</li>
+<li>addr = mmap(NULL, n, …, fd, …)</li>
+</ul>
+</li>
+<li><p>Use memory ops</p>
+<ul>
+<li>x = addr[5]</li>
+<li>strcpy(addr, “hello”)</li>
+</ul>
+</li>
+<li><p>Issues</p>
+<ul>
+<li>Efficient for multiple process sharing memory</li>
+<li>If memory is written, how is file actually updated?</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Access Control</p>
+<ul>
+<li>Who can access file</li>
+<li>What operations are allowed</li>
+<li>User interface must be simple and intuitive</li>
+<li><p>Example: Unix</p>
+<ul>
+<li>r/w/x permissions for owner, group and everyone</li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+<h2 id="File-System-Implementation"><a href="#File-System-Implementation" class="headerlink" title="File System Implementation"></a>File System Implementation</h2><ol>
+<li><p>Goals</p>
+<ul>
+<li><p>Archival storage</p>
+<ul>
+<li>Keep forever, including previous versions</li>
+</ul>
+</li>
+<li><p>Support various storage technologies</p>
+<ul>
+<li>Disks (different types), remote disks, …</li>
+</ul>
+</li>
+<li><p>How to best achieve and balance:</p>
+<ul>
+<li>Performance</li>
+<li>Reliability</li>
+<li>Security</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Storage Abstraction</p>
+<ul>
+<li><p>Hide complexity of device</p>
+<ul>
+<li>Model as array of blocks of data</li>
+<li>Randomly addressable by block number</li>
+<li><p>Typical block size: 1KB (also 4KB ~ 64KB)</p>
+<ul>
+<li>Generally multiple of disk sector size: 512B</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Simple interface</p>
+<ul>
+<li>read(block_num, mem_addr)</li>
+<li>write(block_num, mem_addr)</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p><strong>Typical Implementation Structure</strong></p>
+<ul>
+<li>Three major regions: Sequence of blocks for each one</li>
+<li><p>Region 1: File System Metadata</p>
+<ul>
+<li>Information about file system</li>
+<li><p>Sizes</p>
+<ul>
+<li>Files in use, free entries</li>
+<li>Data blocks in use, free entries</li>
+</ul>
+</li>
+<li><p>Free lists (or bitmaps)</p>
+<ul>
+<li>File control blocks</li>
+<li>Data blocks</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Region 2: File Metadata (File Control Blocks)</p>
+<ul>
+<li>Information about a file</li>
+<li>Referenced by number/index</li>
+<li><p>Contains</p>
+<ul>
+<li>Attributes: type, size, permissions,…</li>
+<li>References to data blocks: disk block map</li>
+</ul>
+</li>
+<li><p>Note: many file control blocks may fit in single storage block</p>
+</li>
+<li><p>Example:</p>
+<ul>
+<li>Number: 88 (index in file control block array)</li>
+<li>Size: 4096 bytes</li>
+<li>Permissions: rw-r—r—</li>
+<li>Data blocks: set of indexes into storage array, may not be contiguous (such as 567, 7076, 9201)</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Region 3: Data Blocks</p>
+<ul>
+<li>File contents</li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+<h3 id="File-control-blocks"><a href="#File-control-blocks" class="headerlink" title="File control blocks"></a>File control blocks</h3><ol>
+<li><p>Keeping track of allocated blocks</p>
+<ul>
+<li><p>Contiguous blocks</p>
+<ul>
+<li>Single sequence of blocks</li>
+</ul>
+</li>
+<li><p>Extents</p>
+<ul>
+<li>Groups of contiguous blocks</li>
+</ul>
+</li>
+<li><p>Non-contiguous blocks</p>
+<ul>
+<li>Blocks individually named</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Keeping track of free blocks</p>
+<ul>
+<li><p>Free Block Map</p>
+<ul>
+<li>Compact if lots of free regions of space</li>
+</ul>
+</li>
+<li><p>Doubly Linked List</p>
+<ul>
+<li>Easy to keep ordered due to fast inserts and deletes</li>
+</ul>
+</li>
+<li><p>Bit Map</p>
+<ul>
+<li>Fixed size regardless of fragmentation</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>File Name to File Control Block</p>
+<ul>
+<li>Users access files using file names</li>
+<li><p>Problem: how to translate</p>
+<ul>
+<li>from file name: “/sports/baseball/Padres”</li>
+<li>to file control block number: 88</li>
+</ul>
+</li>
+<li><p>Must parse file name</p>
+</li>
+<li>Each branch corresponds to a directory/folder</li>
+<li>Each directory/folder may itself be a file</li>
+</ul>
+</li>
+</ol>
+<h3 id="Example-UNIX-v-7-Block-Map"><a href="#Example-UNIX-v-7-Block-Map" class="headerlink" title="Example: UNIX v.7 Block Map"></a>Example: UNIX v.7 Block Map</h3><ol>
+<li><p>Block Map UNIX v.7</p>
+<ul>
+<li>Array of pointers to data blocks</li>
+<li><p>13 Pointers</p>
+<ul>
+<li>10 direct: references 10 data blocks</li>
+<li>1 singly-indirect: references $n$ data blocks</li>
+<li>1 doubly-indirect: reference $n^2$ data blocks</li>
+<li>1 triply-indirect: reference $n^3$ data blocks</li>
+</ul>
+</li>
+<li><p>$n$ depends on how many pointers fit in a block</p>
+<ul>
+<li><p>Example: 256 4-byte pointers will fit in 1KB block</p>
+<p>  <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/unix.v7.png" width="400"></p>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Implementing UNIX Directories</p>
+<ul>
+<li><p>Table where each entry contains</p>
+<ul>
+<li>name and attributes</li>
+<li>name and pointer to file control structure</li>
+</ul>
+</li>
+<li><p>Unix (name and pointer) - pre-BSD</p>
+<ul>
+<li>Each entry: branch name (14), i-node number (2)</li>
+<li>Berkeley Unix uses a more complex scheme to support long names</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Example of parsing names in UNIX</p>
+<ul>
+<li><p>Given pathname: /sports/baseball/Padres</p>
+<ul>
+<li>Inode 0 block map points to data block(s) of root directory</li>
+<li>Look up “sports” in root directory to get inode 22</li>
+<li>Inode 22 blocks map points to data block(s) of sports directory</li>
+<li>Look up “baseball” in sports directory to get inode 15</li>
+<li><p>…</p>
+<p>  <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/unix_exp.png" width="400"></p>
+<p>  <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/unix_exp2.png" width="500"></p>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+<h3 id="Storage"><a href="#Storage" class="headerlink" title="Storage"></a>Storage</h3><ol>
+<li><p>File Systems use disks for storage</p>
+<p> <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/disk.png" width="500"></p>
+<ul>
+<li>pros: persistent, random access, cheap</li>
+<li>cons: slow (mechanical)</li>
+<li><p>Performance</p>
+<ul>
+<li><p>Accesses are time expensive: 5 ~ 20 msec</p>
+<ul>
+<li>Rotational latency: 2 ~ 6 msec (5200 ~ 15000 RPM)</li>
+<li>Seek time: 3 ~ 13 msec</li>
+<li>Transfer rate: 100+ MB/sec</li>
+</ul>
+</li>
+<li><p>Reduced accesses by</p>
+<ul>
+<li>reading multiple blocks in one access (read ahead)</li>
+<li>maintaining a block cache</li>
+</ul>
+</li>
+<li><p>Cluster related blocks to reduce seek time</p>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Solid State Drives (SSD)</p>
+</li>
+</ol>
+<ul>
+<li>NAND-based flash memory, non-volatile</li>
+<li>Unaffected by shock, magnetic fields; no noise</li>
+<li>Limited number of writes, wears out with age</li>
+</ul>
+<h3 id="Performance"><a href="#Performance" class="headerlink" title="Performance"></a>Performance</h3><ol>
+<li><p>Caching</p>
+<ul>
+<li>Data blocks of files</li>
+<li>File system metadata (keep in memory)</li>
+<li><p>File metadata</p>
+<ul>
+<li>Currently active file</li>
+<li>Recently used</li>
+</ul>
+</li>
+<li><p>Block maps</p>
+</li>
+<li><p>File names</p>
+<ul>
+<li>Name to file metadata translations</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Clustering</p>
+<ul>
+<li><p>Blocks that exhibit locality of reference</p>
+<ul>
+<li>Directory, and files within that directory</li>
+<li>The inodes of the directory and files</li>
+</ul>
+</li>
+<li><p>Strategy</p>
+<ul>
+<li>Place related blocks close to each other: clustering</li>
+<li>Reduces disk head movement and seek time</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Block size</p>
+<ul>
+<li><p>trade off</p>
+<ul>
+<li>the larger the block, the better the throughput</li>
+<li>The smaller the block, the less wasted space</li>
+</ul>
+</li>
+<li><p>technology trend</p>
+<ul>
+<li>Disk density is increasing faster than disk speed</li>
+<li>Make disk blocks larger: 1KB $\rightarrow$ 8KB, 64KB, 1MB</li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+<h3 id="Reliability"><a href="#Reliability" class="headerlink" title="Reliability"></a>Reliability</h3><ol>
+<li><p>Consistency</p>
+<ul>
+<li>Buffer cache reduces disk access</li>
+<li>If system crashes, block modifications lost</li>
+<li><p>To improve file system consistency</p>
+<ul>
+<li>write out modified blocks periodically</li>
+<li>write out critical blocks</li>
+</ul>
+</li>
+<li><p>Critical blocks: file system meta-data</p>
+<ul>
+<li>Directories, i-nodes, free block lists</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Journaling</p>
+<ul>
+<li>Journal: log of file (or file system) updates</li>
+<li>For every update, create log entry</li>
+<li>Write log entry out to disk (part of journal)</li>
+<li><p>If crash occurs:</p>
+<ul>
+<li>Look at journal entries</li>
+<li>Check if mods properly reflected in file system</li>
+<li>Update appropriately</li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+]]></content>
+      <categories>
+        <category>Operating Systems</category>
+      </categories>
+      <tags>
+        <tag>OS</tag>
+        <tag>操作系统</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>虚拟内存-virtual memory</title>
+    <url>/2020/04/19/virtual_memory/</url>
+    <content><![CDATA[<p>本文是我在上UCSD的 <a href="http://cseweb.ucsd.edu/classes/wi20/cse120-a/" target="_blank" rel="noopener">CSE 120: Principles of Operating Systems (Winter 2020)</a> 整理的笔记，这一课主要介绍了操作系统里面虚拟内存的概念，主要是对上一节课的逻辑内存的一部分补充，关于segment和page的概念可以参考上一篇笔记。</p>
+<a id="more"></a>
+<h2 id="Review"><a href="#Review" class="headerlink" title="Review"></a>Review</h2><ol>
+<li><p>Segments and Pages</p>
+<ul>
+<li><p>Structuring memory as segements/pages allows:</p>
+<ul>
+<li>partitioning memory for convenient allocation</li>
+<li>reorganizing memory for convenient usage</li>
+</ul>
+</li>
+<li><p>Approaches</p>
+<ul>
+<li>Relocation via address translation</li>
+<li>Protection via matching operations with objects</li>
+</ul>
+</li>
+<li><p>Result: a logically organized memory</p>
+</li>
+</ul>
+</li>
+<li><p>Optimization</p>
+<ul>
+<li><p>Not all pieces need to be in memory</p>
+<ul>
+<li>Need only piece being referenced</li>
+<li>Other pieces can be on disk</li>
+<li>Bring pieces in only when needed</li>
+</ul>
+</li>
+<li><p>Illusion: there is much more memory</p>
+</li>
+<li><p>Needed:</p>
+<ul>
+<li>A way to identify whether a piece is in memory</li>
+<li>A way to bring in a piece (from where to where?)</li>
+<li>Relocation (address translation)</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>From logical to virtual memory</p>
+<ul>
+<li><p>Logical memory becomes virtual memory</p>
+<ul>
+<li>Still logical (seperate organization from physical)</li>
+<li>Virtual: memory seems to exist, regardless of how (memory or disk)</li>
+</ul>
+</li>
+<li><p>Virtual memory: illusion of large memory</p>
+<ul>
+<li>Keep only portion of logical memory in physical</li>
+<li>Rest is kept on disk (larger, slower, cheaper)</li>
+<li>Unit of memory is segment or page (or both)</li>
+</ul>
+</li>
+<li><p>Logical address space $\rightarrow$ virtual address space</p>
+</li>
+</ul>
+</li>
+</ol>
+<h2 id="Virtual-memory-based-on-paging"><a href="#Virtual-memory-based-on-paging" class="headerlink" title="Virtual memory based on paging"></a>Virtual memory based on paging</h2><ol>
+<li><p>Paged virtual memory</p>
+<ul>
+<li>All of pages reside on disk</li>
+<li>Some also reside in physical memory (which ones?)</li>
+</ul>
+</li>
+<li><p>Contents of page table entry</p>
+<ul>
+<li>Valid: is entry valid (page in physical memory or not)</li>
+<li>Ref: has this page been referenced yet?</li>
+<li>Mod: has this page been modified?</li>
+<li>Frame: what frame is this page in?</li>
+<li>Prot: what are the allowable operations?</li>
+</ul>
+</li>
+<li><p>Address Translation</p>
+<ul>
+<li><p>Process:</p>
+<ul>
+<li>Get entry: index page table with page number</li>
+<li><p>If valid bit is off, which cause a page fualt, then trap into kernel</p>
+<ul>
+<li>Find page on disk</li>
+<li><p>Read it into a free frame</p>
+<ul>
+<li>may need to make room if there is no available frame: page replacement</li>
+</ul>
+</li>
+<li><p>Record frame number in page table entry</p>
+</li>
+<li>Set valid bit and other fields</li>
+</ul>
+</li>
+<li><p>Retry instruction (return from page-fault trap)</p>
+</li>
+</ul>
+</li>
+<li><p>Possible faults under segmentation/paging</p>
+<ul>
+<li><p>two kinds of address:</p>
+<ul>
+<li>Virtual address: (segment s, page p, offset i)</li>
+<li>Physical address: (frame f, offset i)</li>
+</ul>
+</li>
+<li><p>[ ] Use s to index segment table (to get page table)</p>
+<ul>
+<li>may get a segment fualt</li>
+</ul>
+</li>
+<li><p>[ ] Check bound (Is p &lt; bound?)</p>
+<ul>
+<li>may get a segmentation violation</li>
+</ul>
+</li>
+<li><p>[ ] Use p to index page table (to get frame f)</p>
+<ul>
+<li>may get a page fault</li>
+</ul>
+</li>
+<li><p>[ ] Physical address: concatenate f and i</p>
+</li>
+</ul>
+</li>
+<li><p>Cost of page faults is high</p>
+<ul>
+<li>Disk: 5 ~ 6 orders magnitude slower than RAM</li>
+<li><p>Example:</p>
+<ul>
+<li>RAM access time: 100 nsec</li>
+<li>Disk access time: 10 msec</li>
+<li>p = page fault probability</li>
+<li>Effective access time: 100 + p * 10,000,000 nsec</li>
+<li>if p = 0.1%, effective access time = 10,100 nsec (100 times slower!)</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+<h2 id="Possible-implementation"><a href="#Possible-implementation" class="headerlink" title="Possible implementation"></a>Possible implementation</h2><ol>
+<li><p>Principle of Locality</p>
+<ul>
+<li><p>Not all pieces referenced uniformly over time</p>
+<ul>
+<li>Make sure most referenced pieces in memory</li>
+<li>If not, thrashing: constant fetching of pieces</li>
+</ul>
+</li>
+<li><p>References cluster in time/space</p>
+<ul>
+<li>Will be same or neighboring areas</li>
+<li>Allows prediction based on past</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Page replacement policy</p>
+<ul>
+<li>Goal: remove page not in locality of reference</li>
+<li><p>Page replacement is about:</p>
+<ul>
+<li>which page(s) to remove</li>
+<li>when to remove them</li>
+</ul>
+</li>
+<li><p>How to do it in cheapest way possible, with:</p>
+<ul>
+<li>least amount of additional hardware</li>
+<li>least amount of software overhead</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p><em>Basic Page Replacement Algorithms</em></p>
+<ul>
+<li><p>FIFO: select page that is oldest</p>
+<ul>
+<li>Simple: keep pointer to next frame after last loaded</li>
+<li>Doesn’t perform well (oldest may be popular)</li>
+</ul>
+</li>
+<li><p>OPT: Optimal Page Replacement</p>
+<ul>
+<li>Optimal: replace page that will be accessed furthest in future</li>
+<li><p>Not realistic:</p>
+<ul>
+<li>Requires predicting the future</li>
+<li>Useful as a benchmark</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p><strong>LRU: Least Recently Used</strong></p>
+<ul>
+<li><p>Replace page that was least recently used</p>
+<ul>
+<li>LRU means used furthest in the past</li>
+</ul>
+</li>
+<li><p>Takes advantage of locality of reference</p>
+</li>
+<li>Must have some way of tracking frame with LRU page : requires hardware support</li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+<h2 id="Others"><a href="#Others" class="headerlink" title="Others"></a>Others</h2><ol>
+<li><p><strong>Approximating LRU: Clock Algorithm</strong></p>
+<ul>
+<li><p>Select page that is old and not recently used</p>
+<ul>
+<li>Clock (second chance) is approximation of LRU</li>
+</ul>
+</li>
+<li><p>Hardware support: reference bit</p>
+<ul>
+<li>Associated with each frame is a reference bit</li>
+<li>Reference bit is in page table entry</li>
+</ul>
+</li>
+<li><p>How reference bit is used</p>
+<ul>
+<li>When frame filled with page, set bit to 0 (by OS)</li>
+<li>If frame is accessed, set bit to 1 (by hardware)</li>
+</ul>
+</li>
+<li><p><em>Working process</em></p>
+<ul>
+<li>Arrange all frames in circle (clock)</li>
+<li>Clock hand: next frame to consider</li>
+<li><p>Page fault: find frame</p>
+<ul>
+<li>If ref bit 0, select frame</li>
+<li>Else, set ref bit to 0</li>
+<li>Advance clock hand</li>
+<li>If frame found, break out of loop, else repeat</li>
+</ul>
+</li>
+<li><p>If frame had modified page, must write it to disk</p>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Resident Set Management</p>
+<ul>
+<li><p>Resident set: process’s pages in physical memory</p>
+<ul>
+<li>One set per process</li>
+<li>How big should resident set be? Which pages?</li>
+<li>Who provides frame (same process or another)?</li>
+</ul>
+</li>
+<li><p>Local: limit frame selection to request process</p>
+<ul>
+<li>Isolates effects of page behavior on processes</li>
+<li>Inefficient: some processes have unused frames</li>
+</ul>
+</li>
+<li><p>Global: select any frame (from any process)</p>
+<ul>
+<li>Efficient: resident sets grow/shrink accordingly</li>
+<li>No isolation: process can negatively affect another (by replacing other process’s important pages)</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Multiprogramming Level</p>
+<ul>
+<li>Multiprogramming level: number of processes in physical memory (non-empty resident sets)</li>
+<li>Goal: increase multiprogramming level - how?</li>
+<li>However, beyond certain point: thrashing (make processor utilization pretty low since many processes may not be working)</li>
+<li>Resident set should contain the working set</li>
+</ul>
+</li>
+<li><p>Denning’s Working Set Model</p>
+<ul>
+<li><p>Introduction</p>
+<ul>
+<li><p>Working set: $W(t, \Delta)$</p>
+<ul>
+<li>Pages referenced during last delta (process time)</li>
+</ul>
+</li>
+<li><p>Process given frames to hold working set</p>
+</li>
+<li>Add/remove pages according to $W(t, \Delta)$</li>
+<li>If working set doesn’t fit, swap process out</li>
+</ul>
+</li>
+<li><p>Working set is a local replacement policy</p>
+<ul>
+<li>Process’s page fault behavior doesn’t affect others</li>
+</ul>
+</li>
+<li><p>Problem: difficult to implement</p>
+<ul>
+<li>Must timestamp pages in working set</li>
+<li>Must determine if timestamp older than $t - \Delta$</li>
+<li>How should $\Delta$ be determined?</li>
+</ul>
+</li>
+<li><p>Contrast to Clock</p>
+<ul>
+<li>Clock: simple, easy to implement, global policy</li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+]]></content>
+      <categories>
+        <category>Operating Systems</category>
+      </categories>
+      <tags>
+        <tag>OS</tag>
+        <tag>操作系统</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>逻辑内存-logicalmemory</title>
+    <url>/2020/04/19/logical_memory/</url>
+    <content><![CDATA[<p>本文是我在上UCSD的 <a href="http://cseweb.ucsd.edu/classes/wi20/cse120-a/" target="_blank" rel="noopener">CSE 120: Principles of Operating Systems (Winter 2020)</a> 整理的笔记，这一课主要介绍了操作系统里面逻辑内存的概念，包括页(page)和段(segment)的概念和实现。</p>
+<a id="more"></a>
+<h2 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h2><ol>
+<li><p>Definition</p>
+<ul>
+<li>Logical memory = a process’s memory</li>
+<li>As viewed (referenced) by a process</li>
+<li>Allocated without regard to physical memory</li>
+</ul>
+</li>
+<li><p>Problems with sharing memory</p>
+<ul>
+<li><p>The addressing problem</p>
+<ul>
+<li>Compiler generates memory reference</li>
+<li>Unknown where process will be located</li>
+</ul>
+</li>
+<li><p>The protection problem</p>
+<ul>
+<li>Modifying another process’s memory</li>
+</ul>
+</li>
+<li><p>The space problem</p>
+<ul>
+<li>The more processes there are, the less memory each individually can have</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Logical vs. Physical Addressing <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/logical_physical.png" width="150" style="float: right;"></p>
+<ul>
+<li><p>Logical addresses</p>
+<ul>
+<li>Assumes seperate memory starting at 0</li>
+<li>Compiler generated</li>
+<li>Independent of location in physical memory</li>
+</ul>
+</li>
+<li><p>Convert logical to physical</p>
+<ul>
+<li>Via software: at load time</li>
+<li>Via hardware: at access time</li>
+</ul>
+</li>
+<li><p>Hardware for Logical addressing <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/memory_protection.png" width="180" style="float: right;"></p>
+<ul>
+<li>Base register filled with start address</li>
+<li>To translate logical address, add base</li>
+<li>Achieves relocation</li>
+<li>To more process: change base</li>
+</ul>
+</li>
+<li><p>Protection</p>
+<ul>
+<li>Bound register works with base register</li>
+<li><p>Is address &lt; bound</p>
+<ul>
+<li>Yes: add to base</li>
+<li>No: invalid address, TRAP</li>
+</ul>
+</li>
+<li><p>Achieves protection</p>
+</li>
+</ul>
+</li>
+<li><p>Memory Registers are part of context</p>
+<ul>
+<li><p>On every context switch</p>
+<ul>
+<li>Load base/bound register for selected process</li>
+<li>Only kernel does loading of these register</li>
+<li>Kernel must be proetced from all processes</li>
+</ul>
+</li>
+<li><p>Benefit</p>
+<ul>
+<li>Allows each proces to be seperated located</li>
+<li>Protecs each process from all others</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Process mempory allocation</p>
+<ul>
+<li><p>Process address space</p>
+<ul>
+<li><p>Text: program instruction</p>
+<ul>
+<li>excute-only, fixed size</li>
+</ul>
+</li>
+<li><p>Data: varaible (static, heap)</p>
+<ul>
+<li>read/write, variable size</li>
+<li>dynamic allocation by request</li>
+</ul>
+</li>
+<li><p>Stack: activation records, local variable</p>
+<ul>
+<li>read/write, varibale size</li>
+<li>Automatic growth/shrinkage</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Fitting process into memory</p>
+<ul>
+<li>Must find large enough hole</li>
+<li>May not succeed even if enought fragment space</li>
+<li>Even successul, it’s inefficient since space must be allocated for potential growth area</li>
+</ul>
+</li>
+<li><p>Solution: break process into pieces</p>
+<ul>
+<li>Distribute into available holes</li>
+<li>Two approaches: Segment and Page</li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+<h2 id="Segementation"><a href="#Segementation" class="headerlink" title="Segementation"></a>Segementation</h2><ol>
+<li><p>Segemented Address Space</p>
+<ul>
+<li>Address space is a set of segments</li>
+<li><p>Segment: a linearly addressed memory</p>
+<ul>
+<li>Typically contains logically-related information</li>
+<li>Examples: program code, data, stack</li>
+</ul>
+</li>
+<li><p>Each segment has an identifier s, and a size N</p>
+<ul>
+<li>s between 0 and S-1, S = max number of segments</li>
+</ul>
+</li>
+<li><p><em>Logical addresses are of the form (s, i)</em></p>
+<ul>
+<li>offset i within segment s, i must be less than N</li>
+</ul>
+</li>
+<li><p>Example</p>
+<p>  <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/segment_example.png" width="400"></p>
+</li>
+</ul>
+</li>
+<li><p>Segment-based address translation</p>
+<ul>
+<li>Problem: how to translate a logical address (s, i) into physical address a?</li>
+<li><p>Solution: use a segment (translate) table (ST)</p>
+<ul>
+<li>to segment s into base physical address b = ST(s)</li>
+<li>then add b and i</li>
+</ul>
+</li>
+<li><p>physical address a = ST(s) + i</p>
+</li>
+</ul>
+</li>
+<li><p><em>Segment Table</em> <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/ST.png" width="180" style="float: right;"></p>
+<ul>
+<li>One table per process (typically)</li>
+<li><p>Table entry elements</p>
+<ul>
+<li>V: valid bit</li>
+<li>Base: segment location</li>
+<li>Bound: segment size</li>
+<li>Perm: permissions</li>
+</ul>
+</li>
+<li><p>Location in memory given by</p>
+<ul>
+<li>Segment table base register(hardware)</li>
+<li>Segment table size register(hardware)</li>
+</ul>
+</li>
+<li><p>Address translation</p>
+<ul>
+<li>physical address a = base of s + i</li>
+<li><p>do a series of checks</p>
+<ul>
+<li>s &lt; STSR? -&gt; is segment identifier valid or not?</li>
+<li>V == 1? -&gt; the corresponding entry is valid?</li>
+<li>i &lt; Bound? -&gt; logical address is out of bound?</li>
+<li>Perm(op) -&gt; that block has required operation(r/w/x)?</li>
+<li><p>Then access that physical address</p>
+<p>  <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/physical_address_check.png" width="300"></p>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p><strong>Sizing the segment table</strong></p>
+<ul>
+<li><p>Given 32 bit logical, 1 GB physical memory (max)</p>
+<ul>
+<li>5 bit segment number, 27 bit offset</li>
+</ul>
+</li>
+<li><p>Logical address</p>
+<ul>
+<li><p>Segement s: number of bits n specifies maxsize of table, where number of entries = $2^n$</p>
+<ul>
+<li>if 32 entries, n = 5</li>
+</ul>
+</li>
+<li><p>Offset i: number of bits n specifies maxsize of segment</p>
+<ul>
+<li>27 bits needed to size up to 128MB</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>segment table</p>
+<ul>
+<li>V: 1 bit</li>
+<li><p>Base: number of bits needed to address physical memory</p>
+<ul>
+<li>30 bits needed to address 1GB</li>
+</ul>
+</li>
+<li><p>Bound: number of bits needed to specify max segment size</p>
+<ul>
+<li>27 bits needed to size up to 128MB</li>
+</ul>
+</li>
+<li><p>Perm: assume 3 bit (r/w/x)</p>
+</li>
+<li><p>one entry: $1 + 30 + 27 + 3 + … = 61$+ bits $\approx$ 8 bytes</p>
+</li>
+<li>whole table: 32 * 8 = 256 bytes</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Pros and Cons</p>
+<ul>
+<li><p>Pros: Each segment can be</p>
+<ul>
+<li>located independently</li>
+<li>seperately protected</li>
+<li>grown/shrunk independently</li>
+<li>Segments can be shared by processes (via segment table)</li>
+</ul>
+</li>
+<li><p>Cons: Variable-size allocation</p>
+<ul>
+<li>Difficult to find holes in physical memory</li>
+<li>External fragmentation</li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+<h2 id="Paging"><a href="#Paging" class="headerlink" title="Paging"></a>Paging</h2><ol>
+<li><p>Paged Address Space <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/Paging.png" width="180" style="float: right;"></p>
+<ul>
+<li><p>Logical (process) memory</p>
+<ul>
+<li>Linear sequence of pages</li>
+</ul>
+</li>
+<li><p>Physical memory</p>
+<ul>
+<li>Linear sequence of frames</li>
+</ul>
+</li>
+<li><p>Pages and frames</p>
+<ul>
+<li>Frame: a physical unit of information</li>
+<li>A page fits exactly into a frame</li>
+<li>Fixed size, all pages/frames same size</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Page-based Logical Addressing</p>
+<ul>
+<li><p>Form of logical address: (p, i)</p>
+<ul>
+<li>p is page number, 0 to N - 1</li>
+<li>i is offset within page, since page size is fixed, i is guaranteed to be less than page size, no need to check</li>
+</ul>
+</li>
+<li><p>Size of logical address space</p>
+<ul>
+<li>$N_L$ = max number of pages</li>
+<li>$N_L \times$ page size = size of logical address space</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Frame-based Physical Addressing</p>
+<ul>
+<li><p>Form of physical address: (f, i)</p>
+<ul>
+<li>f is frame number, 0 to N - 1</li>
+<li>i is offset within frame, less than frame size</li>
+</ul>
+</li>
+<li><p>Size of physical address space</p>
+<ul>
+<li>$N_p$ = max number of frames</li>
+<li>$N_p \times$ frame size = size of physical address space</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Page-based address translation</p>
+<ul>
+<li>Problem: how to translate logical address (p, i) into physical address (f, i)</li>
+<li><p>Solution: use a page (translation) table PT</p>
+<ul>
+<li>translate page p into frame f = PT(p)</li>
+<li>then concatenate f and i</li>
+</ul>
+</li>
+<li><p>Physical address (f, i) = PT(p) || i = (PT(p), i)</p>
+</li>
+</ul>
+</li>
+<li><p><strong>Page table</strong></p>
+<ul>
+<li>Each page of logical memory correspondings to entry in page table</li>
+<li>Page table maps logical page into frame of physical memory</li>
+<li>One table per process (typically)</li>
+<li><p>Table entry elements</p>
+<ul>
+<li>V: valid bit</li>
+<li>DPB: demand paging bits</li>
+<li>Frame: page location</li>
+</ul>
+</li>
+<li><p>Location in memory given by</p>
+<ul>
+<li>Page table base register(PTBR) (hardware)</li>
+<li>Page table size register(PTSR) (hardware)</li>
+</ul>
+</li>
+<li><p>Address translation</p>
+<ul>
+<li>Physical address = frame of p || offset i</li>
+<li><p>Do a series of checks (similar to segmenatation)</p>
+<ul>
+<li>p &lt; PTSR?</li>
+<li>V == 1?</li>
+<li>Perm(op)?</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p><strong>Sizing the page table</strong></p>
+<ul>
+<li><p>Given 32 bit logical, 1 GB physical memory (max)</p>
+<ul>
+<li>20 bit page number, 12 bit offset</li>
+</ul>
+</li>
+<li><p>Logical address</p>
+<ul>
+<li>page p: 20 bits to address $2^{20} =$ 1M entries</li>
+<li>offset i: 12 bits, page size = frame size = $2^{12} =$ 4096 bytes.</li>
+</ul>
+</li>
+<li><p>Page table</p>
+<ul>
+<li>V: 1 bit</li>
+<li>DPB: 3 bits</li>
+<li>Frame: 18 bits to address $2^{30}/2^{12}$ frames</li>
+<li>Perm: 3bits</li>
+<li>One entry: $1+3+18+3+…= 25$+ bits $\approx$ 4 bytes</li>
+<li>Whole table size = 1M * 4 = 4 MB</li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+<h2 id="Address-translation"><a href="#Address-translation" class="headerlink" title="Address translation"></a>Address translation</h2><ol>
+<li><p>Segments vs. Pages</p>
+<ul>
+<li><p>Segment is good “logical” unit of information</p>
+<ul>
+<li>Can be sized to fit any contents</li>
+<li>Makes sense to share (e.g., code, data)</li>
+<li>Can be protected according to contents</li>
+</ul>
+</li>
+<li><p>Page is good “physical” unit of information</p>
+<ul>
+<li>Simple memory management</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Combining segments and pages <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/segment_page.png" width="250" style="float: right;"></p>
+<ul>
+<li><p>Logical memory</p>
+<ul>
+<li>composed of segments</li>
+</ul>
+</li>
+<li><p>Each segment</p>
+<ul>
+<li>composed of pages</li>
+</ul>
+</li>
+<li><p>Segment table</p>
+<ul>
+<li>Maps each segment to a page table</li>
+</ul>
+</li>
+<li><p>Page tables</p>
+<ul>
+<li>Maps each page to physical page frames</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Address Translation</p>
+<ul>
+<li>Logical address: [segment s, page p, offset i]</li>
+<li><p>Do various checks</p>
+<ul>
+<li>s &lt; STSR, V == 1, p &lt; bound, perm(op)</li>
+<li>May get a segmentation violation</li>
+</ul>
+</li>
+<li><p>Use s to index segment table to get page table</p>
+</li>
+<li>Use p to index page table to get frame f</li>
+<li><p>Physical address = concatenate (f, i)</p>
+<p>  <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/Segment_Page_Address.png" width="300"></p>
+</li>
+</ul>
+</li>
+</ol>
+<h2 id="More-on-addressing"><a href="#More-on-addressing" class="headerlink" title="More on addressing"></a>More on addressing</h2><ol>
+<li><p>Cost of translation</p>
+<ul>
+<li><p>Each lookup costs another memory reference</p>
+<ul>
+<li>For each reference, additional references required</li>
+<li>Slows machine down by factor of 2 or more</li>
+</ul>
+</li>
+<li><p>Take advantage of locality of reference</p>
+<ul>
+<li>Most references are to a small number of pages</li>
+<li>Keep translation of these in high-speed memory</li>
+</ul>
+</li>
+<li><p>Problem: don’t know which pages till accessed</p>
+</li>
+</ul>
+</li>
+<li><p><strong>Translation Look-aside Buffer (TLB)</strong></p>
+<ul>
+<li>Fast memory keeps most recent translations</li>
+<li>If key matches, get frame number</li>
+<li><p>else wait for normal translation (in parallel)</p>
+<p>  <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/TLB.png" width="400"></p>
+</li>
+</ul>
+</li>
+<li><p>Translation Cost with TLB</p>
+<ul>
+<li><p>Cost is determined by</p>
+<ul>
+<li>Speed of memory: ~100 nsec</li>
+<li>Speed of TLB: ~5 nsec</li>
+<li>Hit ratio: fraction of refs satisfied by TLB, ~99%</li>
+</ul>
+</li>
+<li><p>Speed with no address translation: 100 nsec</p>
+</li>
+<li><p>Speed with address translation</p>
+<ul>
+<li>TLB miss: 200 nsec (100% slowdown)</li>
+<li>TLB hit: 105 nsec (5% slowdown)</li>
+<li>Average: 105 x 0.99 + 200 x 0.01 ~ 106 nsec</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>TLB Design Issues</p>
+<ul>
+<li><p>The larger the TLB</p>
+<ul>
+<li>the higher the hit rate</li>
+<li>the slower the reponse</li>
+<li>the greater the expense</li>
+</ul>
+</li>
+<li><p>TLB has a major effect on performance!</p>
+<ul>
+<li>Must be flushed on context switched</li>
+<li>Alternative: tagging entries with PIDs</li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+]]></content>
+      <categories>
+        <category>Operating Systems</category>
+      </categories>
+      <tags>
+        <tag>OS</tag>
+        <tag>操作系统</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>内存管理-memory_management</title>
+    <url>/2020/04/19/memory_management/</url>
+    <content><![CDATA[<p>本文是我在上UCSD的 <a href="http://cseweb.ucsd.edu/classes/wi20/cse120-a/" target="_blank" rel="noopener">CSE 120: Principles of Operating Systems (Winter 2020)</a> 整理的笔记，这一课主要介绍了操作系统里面对内存的分配以及管理方式</p>
+<a id="more"></a>
+<h2 id="Basic"><a href="#Basic" class="headerlink" title="Basic"></a>Basic</h2><ol>
+<li><p>Allocation of memory occurs when</p>
+<ul>
+<li>new process is created</li>
+<li>process requests more memory</li>
+</ul>
+</li>
+<li><p>Freeing of memory occurs when</p>
+<ul>
+<li>process exits</li>
+<li>process no longer needs memory it requested</li>
+</ul>
+</li>
+<li><p>Memory overview</p>
+<ul>
+<li><p>Porcess memory store:</p>
+<ul>
+<li>Text: code of program</li>
+<li>Data: static varibales, heap</li>
+<li>Stack: automatic variables, activation records</li>
+<li>Other: shared memory regions</li>
+</ul>
+</li>
+<li><p>Process memory address space <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/process_mem.png" width="120" style="float: right;"></p>
+<ul>
+<li><p>Address space</p>
+<ul>
+<li>set of addresses to access memory</li>
+<li>Typically, linear and sequential</li>
+<li>0 to N-1</li>
+</ul>
+</li>
+<li><p>Example (right):</p>
+<ul>
+<li>Text of size X at 0 ~ X-1</li>
+<li>Data of size Y at X ~ X+Y-1</li>
+<li>Stack of size Z at N-Z ~ N-1(grow reversely)</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Compiler’s model of memory</p>
+<ul>
+<li><p>Compiler generates memory address</p>
+<ul>
+<li>Address ranges of text, data, stack</li>
+<li>allow data and stack to grow</li>
+</ul>
+</li>
+<li><p>What is not known in compiler</p>
+<ul>
+<li>Physical memory size</li>
+<li>Allocated region of physical memory</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Memory characteristics</p>
+<ul>
+<li>Size, fixed or variable (max size)</li>
+<li>Permission: r, w, x</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Goal: support multiple processes</p>
+<ul>
+<li><p>Support programs running “simultaneously”</p>
+<ul>
+<li>implement process abstraction</li>
+<li>Multiplex CPU time over all runnable processes</li>
+<li>Disk r/w speed is low: must keep multiple processes in memory</li>
+</ul>
+</li>
+<li><p>Process requires more than CPU time: memory</p>
+</li>
+</ul>
+</li>
+<li><p>Memory issues and topics</p>
+<ul>
+<li>Where should process memories be placed? -&gt; Memory Management</li>
+<li>How does the compiler model memory? -&gt; Logical memory model, segmentation</li>
+<li>How to deal with limited physical memory? -&gt; Virtual memory, paging</li>
+<li>Machanism and Policies</li>
+</ul>
+</li>
+</ol>
+<h2 id="Memory-Managemeng-Implementation"><a href="#Memory-Managemeng-Implementation" class="headerlink" title="Memory Managemeng Implementation"></a>Memory Managemeng Implementation</h2><ol>
+<li><p>example process <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/memory_allocate.png" width="150" style="float: right;"></p>
+<ul>
+<li>Phsical memory starts as one empty “hole”</li>
+<li>When processes are created, areas get allocated</li>
+<li><p>To allocate memory</p>
+<ul>
+<li>find large enough hole</li>
+<li>allocate region within hole</li>
+<li>mostly leaves smaller hole (when the hole size does not exactly match the size of process memory)</li>
+<li>when process exit (or memeory no longer needed), release that area, which create a new hole, coaleasce with adjacent</li>
+</ul>
+</li>
+<li><p>problem: if there are multiple holes, which to select?</p>
+<ul>
+<li><p><em>First fit: simple, fast</em></p>
+<ul>
+<li>consider tradeoff: fit vs. search time</li>
+<li>memory is cheap, time is expensive</li>
+</ul>
+</li>
+<li><p>Best fit: optimal, must check every hole, leaves very small fragments</p>
+</li>
+<li>Worst fit: leaves large fragments, must check every hole</li>
+</ul>
+</li>
+<li><p>complication: is region fixed or variable size?</p>
+</li>
+</ul>
+</li>
+<li><p>Fragmentation</p>
+<ul>
+<li>Over time, memory becomes fragmented, there may be signficant unused space (fragmented)</li>
+<li><p>Internal fragmentation</p>
+<ul>
+<li>Unused space within (allocated) block</li>
+<li>Cannot be allocated to others</li>
+<li>Can come in handy for growth (for stack or heap)</li>
+</ul>
+</li>
+<li><p>External fragmentation</p>
+<ul>
+<li>Unused space outside any blocks (holes)</li>
+<li>Can be allocated (too small/not useful)</li>
+</ul>
+</li>
+<li><p>Approaches</p>
+<ul>
+<li><p>Compaction</p>
+<ul>
+<li>Simple idea</li>
+<li>Very time consuming</li>
+</ul>
+</li>
+<li><p>Break block (to be allocated) into sub-blocks</p>
+<ul>
+<li>Easier to fit</li>
+<li>But complex</li>
+</ul>
+</li>
+<li><p>Use pre-sized holes</p>
+<ul>
+<li><p>Same-sized holes:</p>
+<ul>
+<li>all holes same, easy allocation</li>
+<li>may be too small which is inflexible</li>
+</ul>
+</li>
+<li><p>Varaiety of sizes (small, medium, large)</p>
+<ul>
+<li>more flexible</li>
+<li>complex</li>
+<li>what should sizes be? how to determine</li>
+</ul>
+</li>
+<li><p>Not adaptable, cause internel fragmentation</p>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Some rules</p>
+<ul>
+<li><p>50% Rule: m = n / 2</p>
+<ul>
+<li>Block: an allocated block</li>
+<li>Hole: free space between blocks</li>
+<li>m = number of holes</li>
+<li>n = number of blocks</li>
+</ul>
+</li>
+<li><p><strong>Unused Memory Rule: f = k / (k + 2)</strong></p>
+<ul>
+<li>Given average size of blocks and holes are known</li>
+<li>b = average size of blocks</li>
+<li>h = average size of holes</li>
+<li>k = h / b, ratio of average hole-to-block size</li>
+<li>f = k / (k + 2) is fraction space lost to holes</li>
+</ul>
+</li>
+<li><p>Usage:</p>
+<ul>
+<li>k = 1, f = 1/3 -&gt; avg hole size = avg block size, 33% waste</li>
+<li>k = 2, f = 1/2 -&gt; avg hole size = 2 * avg block size, 50% waste</li>
+<li>k = 8, f = 4/5 -&gt; avg hole size = 8 * avg block size, 80% waste</li>
+</ul>
+</li>
+<li><p>Limits</p>
+<ul>
+<li><p>In general, f increases with increasing k</p>
+<ul>
+<li>as $k \rightarrow \infty, f \rightarrow 1$</li>
+</ul>
+</li>
+<li><p>Alternatively, f decreases with decreasing k</p>
+<ul>
+<li>as $k \rightarrow 0, f \rightarrow 0$</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p><strong>The Buddy System</strong></p>
+<ul>
+<li>Partition into power-of-2 size chunks</li>
+<li><p>Allocation: given request for size r</p>
+  <figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">find chunk larger than r (else return failure)</span><br><span class="line">while (r &lt; sizeof(chunk) &#x2F; 2)</span><br><span class="line">    divide chunk into buddies (each 1&#x2F;2 size)</span><br><span class="line">allocate the chunk</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>Free: free the chunk and coalesce with buddy</p>
+  <figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">free the chunk</span><br><span class="line">while (buddy is also free)</span><br><span class="line">    coalesce</span><br></pre></td></tr></table></figure>
+</li>
+<li><p><a href="https://opendsa-server.cs.vt.edu/ODSA/Books/Everything/html/Buddy.html" target="_blank" rel="noopener">visualization</a></p>
+</li>
+<li><p>Data structure for buddy-system -&gt; binary tree</p>
+</li>
+</ul>
+</li>
+</ol>
+]]></content>
+      <categories>
+        <category>Operating Systems</category>
+      </categories>
+      <tags>
+        <tag>OS</tag>
+        <tag>操作系统</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>死锁-deadlock</title>
+    <url>/2020/04/19/deadlock/</url>
+    <content><![CDATA[<p>本文是我在上UCSD的 <a href="http://cseweb.ucsd.edu/classes/wi20/cse120-a/" target="_blank" rel="noopener">CSE 120: Principles of Operating Systems (Winter 2020)</a> 整理的笔记，这一课主要介绍了操作系统里面死锁概念包括出现的原因，以及避免（防止出现）以及解决办法（出现死锁时最好的方法是重启大法！！）</p>
+<a id="more"></a>
+<h2 id="Basic"><a href="#Basic" class="headerlink" title="Basic"></a>Basic</h2><ol>
+<li><p>Definition</p>
+<ul>
+<li>Set of processes are permanently blocked<ul>
+<li>Unblocking of one relies on progress of another, but none can make progress</li>
+</ul>
+</li>
+<li><p>Example</p>
+<ul>
+<li>Process A holding resource X, waiting for resource Y</li>
+<li>Process B holding Y, waiting for X</li>
+<li><p>these two process will not be able to make any progress</p>
+<p>  <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/deadlock.png" width="200"></p>
+</li>
+</ul>
+</li>
+<li><p>Another example: memory</p>
+<ul>
+<li>Total memory = 200MB</li>
+<li>P1 holds 80MB, requests 60MB</li>
+<li>P2 holds 70MB, requests 80MB</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p><strong><strong>Four conditions for Deadlock</strong></strong></p>
+<ul>
+<li>Mutual Exclusion<ul>
+<li>Only one process may use a resouce at a time</li>
+</ul>
+</li>
+<li>Hold-and-Wait<ul>
+<li>Process holds resouce while waiting for another</li>
+</ul>
+</li>
+<li>No Preemption<ul>
+<li>Can’t take a resource away from a process</li>
+</ul>
+</li>
+<li>Circular Wait<ul>
+<li>The waiting process form a cycle</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Attack the Deadlock Problem</p>
+<ul>
+<li>Deadlock prevention<ul>
+<li>Make deadlock impossible by removing one (or more)condition</li>
+</ul>
+</li>
+<li>Deadlock Avoidance<ul>
+<li>Avoid getting into situations that lead to deadlock</li>
+</ul>
+</li>
+<li>Deadlock Detection<ul>
+<li>Don’t try to stop deadlocks</li>
+<li>If they happen, detect and resolve</li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+<h2 id="Attck-the-deadlock"><a href="#Attck-the-deadlock" class="headerlink" title="Attck the deadlock"></a>Attck the deadlock</h2><ol>
+<li><p>Deadlock prevention</p>
+<ul>
+<li>Mutual exclusion -&gt; relax where sharing is possible</li>
+<li>Hold-and-Wait -&gt; Get all resources simultaneously (wait until all free)</li>
+<li>No preemption -&gt; allow resources to be taken away</li>
+<li>Circular wait -&gt; order all the resources, force ordered acquisition</li>
+</ul>
+</li>
+<li><p>Deadlock Avoidance</p>
+<ul>
+<li>Avoid getting into situations that lead to deadlock<ul>
+<li>Selective prevention</li>
+<li>Remove condition only when deadlock is possible</li>
+</ul>
+</li>
+<li>Works with incremental resource requests<ul>
+<li>Resources are asked for in increments</li>
+<li>Do not grant request than can lead to a deadlock</li>
+</ul>
+</li>
+<li>Need maximum resource requirements</li>
+<li><p><strong>Banker’s Algorithm</strong></p>
+<ul>
+<li>Fixed number of processes and resources</li>
+<li>System state: either safe or unsafe<ul>
+<li>Depends on allocation of resources to processes</li>
+</ul>
+</li>
+<li>Safe: deadlock is absolutely avoidable<ul>
+<li>Can avoid deadlock by certain order of execution</li>
+</ul>
+</li>
+<li>Unsafe: deadlock is possible(but not certain)<ul>
+<li>May not be able to avoid deadlock</li>
+</ul>
+</li>
+<li><p>Diagram</p>
+<p>  <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/banker_algorithm.png" width="200"></p>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Deadlock Detection (<em>mostly used!</em>)</p>
+<ul>
+<li><p>Method</p>
+<ul>
+<li>Periodically try to detect if a deadlock occurred</li>
+<li>Do something (or nothing) about it</li>
+</ul>
+</li>
+<li><p>Resoning</p>
+<ul>
+<li>Deadlocks rarely happen</li>
+<li>Cost of prevention or avoidance not worth it</li>
+<li>Deal with them in special way (may costly)</li>
+</ul>
+</li>
+<li><p>Recovery from deadlock</p>
+<ul>
+<li>Terminate all deadlocked process (reboot)</li>
+</ul>
+</li>
+<li>Terminate deadlocked processed one at a time<ul>
+<li>need to detect</li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+]]></content>
+      <categories>
+        <category>Operating Systems</category>
+      </categories>
+      <tags>
+        <tag>OS</tag>
+        <tag>操作系统</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>进程间通信-inter process communication(IPC)</title>
+    <url>/2020/04/19/inter_process_communication/</url>
+    <content><![CDATA[<p>本文是我在上UCSD的 <a href="http://cseweb.ucsd.edu/classes/wi20/cse120-a/" target="_blank" rel="noopener">CSE 120: Principles of Operating Systems (Winter 2020)</a> 整理的笔记，这一课主要介绍了操作系统里面不同进程之间通信的算法和实现。</p>
+<a id="more"></a>
+<ol>
+<li><p>Cooperating Processes and IPC</p>
+<ul>
+<li><p>Advantage of Cooperating Processes</p>
+<ul>
+<li>performance: speed<ul>
+<li>Exploit inherent parallelism of computation</li>
+<li>Allow some parts to proceed why other do I/O</li>
+</ul>
+</li>
+<li>Modularity: resuable self-contained programs<ul>
+<li>Each may do a useful task on its own</li>
+<li>May also be useful as a sub-task for others</li>
+</ul>
+</li>
+<li><p>Examples:</p>
+<p> <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/cooperating_processes_example.png" width="350"></p>
+</li>
+</ul>
+</li>
+<li><p>IPC: communication between processes</p>
+</li>
+<li><strong>IPC requires</strong>:<ul>
+<li>data transfer</li>
+<li>synchronization</li>
+</ul>
+</li>
+<li><strong>Three abstraction for IPC</strong><ul>
+<li>shared memory + semaphores</li>
+<li>monitors</li>
+<li>message passing</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>The producer/consumer problem</p>
+<ul>
+<li>Producer produces data, inserts in shared buffer</li>
+<li>Consumer removes data from buffer, consumes it</li>
+<li>Cooperation: Producer feeds Consumer<ul>
+<li>How does data get from producer to consumer?</li>
+<li>How does consumer wait for producer?</li>
+</ul>
+</li>
+<li><p>Example:</p>
+<p><img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/producer_consumer.png" width="350"></p>
+</li>
+</ul>
+</li>
+<li><p>Shared memory + semaphore</p>
+<ul>
+<li><p>implementation:</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line">shared <span class="keyword">int</span> buf[N], in = <span class="number">0</span>, out = <span class="number">0</span>;</span><br><span class="line">sem filledslots = <span class="number">0</span>, emptyslots = N, mutex = <span class="number">1</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Producer1, 2, ...</span></span><br><span class="line"><span class="keyword">while</span> (<span class="literal">true</span>) &#123;</span><br><span class="line">  wait (emptyslots); <span class="comment">// wait for available empty slots</span></span><br><span class="line">  wait (mutex); <span class="comment">// avoid racondition</span></span><br><span class="line">  buf[in] = Produce();</span><br><span class="line">  in = (in + <span class="number">1</span>) % N;</span><br><span class="line">  signal(mutex);</span><br><span class="line">  signal(filledslots); <span class="comment">// increment the number of filled slots</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Consumer1, 2, ...</span></span><br><span class="line"><span class="keyword">while</span> (<span class="literal">true</span>) &#123;</span><br><span class="line">  wait(filledslot);</span><br><span class="line">  wait(mutex);</span><br><span class="line">  Consume(buf[out]);</span><br><span class="line">  out = (out + <span class="number">1</span>) % N;</span><br><span class="line">  signal(mutex);</span><br><span class="line">  signal(emptyslots);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>work for multiple producers and consumer</p>
+</li>
+<li>Not easy to understand(many wait/signal statements), easily leads to bugs</li>
+</ul>
+</li>
+<li><p>monitors</p>
+<ul>
+<li><p>Programming language contruct for IPC</p>
+<ul>
+<li>monitors are variables requiring controlled access</li>
+<li>accessd via procedures</li>
+<li>condition variables<ul>
+<li>wait(cond)</li>
+<li>signal(cond)</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Only one process can be active inside monitor</p>
+</li>
+<li><p>Usage</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="comment">// a possible monitor implementation (provided by programming language)</span></span><br><span class="line">monitor ProducerConsumer &#123;</span><br><span class="line">  <span class="keyword">int</span> buf[N], in = <span class="number">0</span>, out = <span class="number">0</span>, count = <span class="number">0</span>;</span><br><span class="line">  cond slotavail, itemavail;</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">void</span> <span class="title">PutItem</span> <span class="params">(<span class="keyword">int</span> item)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (count == N) wait(slotavail);</span><br><span class="line">    buf[in] = item;</span><br><span class="line">    in = (in + <span class="number">1</span>) % N;</span><br><span class="line">    count++;</span><br><span class="line">    signal(itemavail);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">int</span> <span class="title">GetItem</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">int</span> item;</span><br><span class="line">    <span class="keyword">if</span> (count == <span class="number">0</span>) wait(itemavail);</span><br><span class="line">    item = buf[out];</span><br><span class="line">    out = (out + <span class="number">1</span>) % N;</span><br><span class="line">    count--;</span><br><span class="line">    signal(slotavail);</span><br><span class="line">    <span class="keyword">return</span> (item);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Producer</span></span><br><span class="line"><span class="keyword">while</span> (<span class="literal">true</span>) &#123;</span><br><span class="line">  PutItem(Produce());</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Consumer</span></span><br><span class="line"><span class="keyword">while</span> (<span class="literal">true</span>) &#123;</span><br><span class="line">  Consume(GetItem());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>mechanism</p>
+<p> <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/monitors.png" width="400"></p>
+</li>
+<li><p>more on Monitors</p>
+<ul>
+<li>If one process A siganl condition c while another process B is waiting on c, at that time two process are able to run at the same time, which breaks mutual exclusion. <strong>So each process only signal condition just before returning.</strong></li>
+<li><em>Contition variable have no memory</em><ul>
+<li>It has no value and only indicate whether an event occurs or not</li>
+<li>Signal without someone waiting does nothing</li>
+<li>Signal is “lost”</li>
+</ul>
+</li>
+<li>Monitors bring structure to IPC<ul>
+<li>localizes critical sections and synchronization</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Message Passing</p>
+<ul>
+<li><p>Model:</p>
+<p>  <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/Message_Passing.png" width="400"></p>
+</li>
+<li><p>methods:</p>
+<ul>
+<li>send(destination, &amp;message)</li>
+<li>receive(source, &amp;message)</li>
+</ul>
+</li>
+<li><p>Data transfer: in to and out of kernel message buffer</p>
+</li>
+<li><p>Synchronization: receive blocks to wait for message</p>
+</li>
+<li><p>Usage</p>
+<ul>
+<li><p>basic</p>
+  <figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="comment">/* NO SHARED MEMORY */</span></span><br><span class="line"><span class="comment">// Producer</span></span><br><span class="line"><span class="keyword">int</span> item;</span><br><span class="line"></span><br><span class="line"><span class="keyword">while</span> (<span class="literal">true</span>) &#123;</span><br><span class="line">item = Produce();</span><br><span class="line">send(Consumer, &amp;item);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Consumer</span></span><br><span class="line"><span class="keyword">int</span> item;</span><br><span class="line"></span><br><span class="line"><span class="keyword">while</span> (<span class="literal">true</span>) &#123;</span><br><span class="line">receive(Producer, &amp;item);</span><br><span class="line">Consume(item);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>with Flow Control</p>
+  <figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="comment">// Producer</span></span><br><span class="line"><span class="keyword">int</span> item, empty;</span><br><span class="line"></span><br><span class="line"><span class="keyword">while</span> (<span class="literal">true</span>) &#123;</span><br><span class="line">    item = Produce();</span><br><span class="line">    receive (Consumer,&amp;empty);</span><br><span class="line">    send(Consumer, &amp;item);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Consumer</span></span><br><span class="line"><span class="keyword">int</span> item, empty;</span><br><span class="line"></span><br><span class="line"><span class="keyword">do</span> N times &#123;</span><br><span class="line">    send(Producer, &amp;empty);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">while</span> (<span class="literal">true</span>) &#123;</span><br><span class="line">    receive(Producer, &amp;item);</span><br><span class="line">    send(Producer, &amp;empty);</span><br><span class="line">    Consume(item);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+</li>
+<li><p>more on Message Passing</p>
+<ul>
+<li><p>who should message be addressed to?</p>
+<ul>
+<li>ports(“mailbox”) rather than specific process</li>
+</ul>
+</li>
+<li><p>how to make process recieve from anyone?</p>
+<ul>
+<li>pid = receive(*, &amp;message)?</li>
+</ul>
+</li>
+<li>kernel buffering: outstanding message<ul>
+<li>message sent that haven’t been received yet</li>
+</ul>
+</li>
+<li>Good praradigm for IPC over networks</li>
+<li>Safer than shard memory paradigms</li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+]]></content>
+      <categories>
+        <category>Operating Systems</category>
+      </categories>
+      <tags>
+        <tag>OS</tag>
+        <tag>操作系统</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>同步-synchronization</title>
+    <url>/2020/04/19/synchronization/</url>
+    <content><![CDATA[<p>本文是我在上UCSD的 <a href="http://cseweb.ucsd.edu/classes/wi20/cse120-a/" target="_blank" rel="noopener">CSE 120: Principles of Operating Systems (Winter 2020)</a> 整理的笔记，这一课主要介绍了操作系统里面进程同步的算法，主要是信号量 (Semaphores) 的使用。</p>
+<a id="more"></a>
+<h2 id="Problem-introduction"><a href="#Problem-introduction" class="headerlink" title="Problem introduction"></a>Problem introduction</h2><ol>
+<li><p>Introduction</p>
+<ul>
+<li>synchronization: events happen at the same time</li>
+<li>Process synchronization<ul>
+<li>Events in process that occur “at the same time”</li>
+<li>one process have to wait for another</li>
+</ul>
+</li>
+<li>Usage<ul>
+<li>prevent race conditions</li>
+<li>wait for resources to become available</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p><strong>race condition</strong></p>
+<ul>
+<li>race condition: two process which should run sequently accidentally run at the same time (which cause a bug)</li>
+<li>To avoid race conditions:<ul>
+<li>identify related <em>critical sections</em><ul>
+<li>Section of code excuted by different processes</li>
+<li>critical sections must run <em>atomically</em> w.r.t each other</li>
+</ul>
+</li>
+<li>Enforce <em>mutual exclusion</em><ul>
+<li>only one process is allowed to be active in critical section</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><em>Atomic</em><ul>
+<li>atomic means “indivisible”</li>
+<li>effective atomicity<ul>
+<li>interrupt may occur, but it shouldn’t has effect on that section caused by other processes</li>
+</ul>
+</li>
+<li>How to determine wether a critical section is atomic<ul>
+<li>Consider effect of critical section in isolation</li>
+<li>Consider interruptions: if the result is same, then it is OK.</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><em>Mutual exclusion</em><ul>
+<li>Surrond critical section with entry/exit code</li>
+<li>entry code act as a barrier<ul>
+<li>if another process is critical section, block current process till it exit</li>
+<li>Otherwise, allow process to proceed</li>
+</ul>
+</li>
+<li>Exit code should release other entry barriers</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p><strong><strong>Requirements for good solution</strong></strong></p>
+<ul>
+<li>Given<ul>
+<li>multiple cooperating process</li>
+<li>each with related critical sections</li>
+</ul>
+</li>
+<li>At most one process in a critical section</li>
+<li>Can’t prevent entry if no others in critical section</li>
+<li>Should eventually be able to enter critical section</li>
+<li>No assumptions about CPU speed or number.</li>
+</ul>
+</li>
+</ol>
+<h2 id="Different-approaches-for-mutual-exclusion-workable"><a href="#Different-approaches-for-mutual-exclusion-workable" class="headerlink" title="Different approaches for mutual exclusion (workable)"></a>Different approaches for mutual exclusion (workable)</h2><ol>
+<li><p>Peterson’s solution</p>
+<ul>
+<li><p>implementation</p>
+  <figure class="highlight c"><table><tr><td class="code"><pre><span class="line">shared <span class="keyword">int</span> <span class="built_in">turn</span>;</span><br><span class="line">shared <span class="keyword">bool</span> intent[<span class="number">2</span>] = &#123;<span class="literal">false</span>, <span class="literal">false</span>&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// P0</span></span><br><span class="line">intent[<span class="number">0</span>] = TRUE;</span><br><span class="line"><span class="built_in">turn</span> = <span class="number">1</span>; <span class="built_in">turn</span> = <span class="number">0</span>;</span><br><span class="line"><span class="keyword">while</span> (intent[<span class="number">1</span>] &amp;&amp; <span class="built_in">turn</span>==<span class="number">1</span>);</span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">&lt; critical section &gt;</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line">intent[<span class="number">0</span>] = FALSE;</span><br><span class="line"></span><br><span class="line"><span class="comment">// P1</span></span><br><span class="line">intent[<span class="number">1</span>] = TRUE;</span><br><span class="line"><span class="keyword">while</span> (intent[<span class="number">0</span>] &amp;&amp; <span class="built_in">turn</span>==<span class="number">0</span>);</span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">&lt; critical section &gt;</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line">intent[<span class="number">1</span>] = FALSE;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>if competition occur, take turns, otherwise enter</p>
+</li>
+<li>for competing process number larger than 2, the solution will become more complex</li>
+</ul>
+</li>
+<li><p>Test-and-Set Lock Instruction: TSL</p>
+<ul>
+<li><p>requirement: TSL mem</p>
+  <figure class="highlight"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">do</span> <span class="title">atomically</span> <span class="params">(i.e., locking the memory bus)</span></span></span><br><span class="line">    [test if mem == 0 AND set mem = 1]</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>a possible C function implementation for TSL (it should be guaranteed atomic)</p>
+  <figure class="highlight c"><table><tr><td class="code"><pre><span class="line">TSL(<span class="keyword">int</span> *lockptr) &#123;</span><br><span class="line">    <span class="keyword">int</span> oldval;</span><br><span class="line">    oldval = *lockptr</span><br><span class="line">    *lockptr = <span class="number">1</span>;</span><br><span class="line">    <span class="keyword">return</span> ((oldval == <span class="number">0</span>) ? <span class="number">1</span> : <span class="number">0</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>mutual exclusion  using TSL</p>
+  <figure class="highlight c"><table><tr><td class="code"><pre><span class="line">shared <span class="keyword">int</span> lock = <span class="number">0</span>;</span><br><span class="line"><span class="comment">// P0</span></span><br><span class="line"><span class="keyword">while</span> (! TSL(&amp;lock));</span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">&lt; critical section &gt;</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line">lock = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// P1</span></span><br><span class="line"><span class="keyword">while</span> (! TSL(&amp;lock));</span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">&lt; critical section &gt;</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line">lock = <span class="number">0</span>;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>shared variable solution using TSL(int *)</p>
+<ul>
+<li>test if lock == 0 (if so, will return 1; else 0)</li>
+<li>before returning, sets lock to 1</li>
+</ul>
+</li>
+<li>simple, works for any number of threads</li>
+<li>still suffering from busy waiting</li>
+</ul>
+</li>
+<li><p><em>Semaphores</em></p>
+<ul>
+<li>Synchronization varaible<ul>
+<li>takes on integer values (non-negative)</li>
+<li>can cause a process to block/unblock</li>
+</ul>
+</li>
+<li>wait and signal operations (<strong>must be atomic, use a lower-level mechanism</strong>)<ul>
+<li>wait(s) block if zero, else decrement</li>
+<li>signal(s) unblock a process if any, else increment</li>
+</ul>
+</li>
+<li><p>no other operations allowed (<strong>cannot change/test value of semaphore</strong>)</p>
+</li>
+<li><p>simple, works for n processes</p>
+</li>
+<li>busy-waiting still exist, but it lies inside semephore, which last shorter</li>
+<li><p>Implementation</p>
+  <figure class="highlight c"><table><tr><td class="code"><pre><span class="line">wait(sem s) &#123;</span><br><span class="line">    s.n = s.n – <span class="number">1</span>;</span><br><span class="line">    <span class="keyword">if</span> (s.n &lt; <span class="number">0</span>) &#123;</span><br><span class="line">        addProc (me, s.L); <span class="comment">// add process to waiting list</span></span><br><span class="line">        block (me);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">signal(sem s) &#123;</span><br><span class="line">    s.n = s.n + <span class="number">1</span>;</span><br><span class="line">    <span class="keyword">if</span> (!empty (s.L)) &#123;</span><br><span class="line">        p = removeProc (s.L); <span class="comment">// select a process from waiting list to release</span></span><br><span class="line">        unblock (p);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>Only synchronization, no information transfer</p>
+<ul>
+<li>no way for a process to tell it blocked</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Usage of semaphore</p>
+<ul>
+<li><p>basic usage example</p>
+   <figure class="highlight c"><table><tr><td class="code"><pre><span class="line">sem mutex = <span class="number">1</span>;</span><br><span class="line"><span class="comment">//P0</span></span><br><span class="line">wait(mutex);</span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">&lt; critical section &gt;</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line">signal(mutex);</span><br><span class="line"></span><br><span class="line"><span class="comment">//P1</span></span><br><span class="line">wait(mutex);</span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">&lt; critical section &gt;</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line">signal(mutex)</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>order how processes execute</p>
+ <figure class="highlight c"><table><tr><td class="code"><pre><span class="line">sem cond = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// P0</span></span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">&lt; to be done before P1 &gt;</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line">signal(cond);</span><br><span class="line"></span><br><span class="line"><span class="comment">// P1</span></span><br><span class="line">wait(cond);</span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">&lt; to be done after P0 &gt;</span></span><br><span class="line"><span class="comment">*/</span></span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+</li>
+</ol>
+]]></content>
+      <categories>
+        <category>Operating Systems</category>
+      </categories>
+      <tags>
+        <tag>OS</tag>
+        <tag>操作系统</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>进程调度-scheduling</title>
+    <url>/2020/04/19/scheduling/</url>
+    <content><![CDATA[<p>本文是我在上UCSD的 <a href="http://cseweb.ucsd.edu/classes/wi20/cse120-a/" target="_blank" rel="noopener">CSE 120: Principles of Operating Systems (Winter 2020)</a> 整理的笔记，第三课主要介绍了操作系统里面进程调度的一些基本算法以及相关的一些分类。</p>
+<a id="more"></a>
+<h2 id="Basic-problem-and-goal"><a href="#Basic-problem-and-goal" class="headerlink" title="Basic problem and goal"></a>Basic problem and goal</h2><ol>
+<li><p>Problem introduction</p>
+<ul>
+<li>Given multiple processes and one CPU, which process gets CPU and when?</li>
+<li>How much CPU time does each process get?</li>
+<li>Possible approaches:<ul>
+<li>Let one process keep CPU till done then switch to another</li>
+<li>Each process uses CPU a bit and passed it on</li>
+<li>Ech process gets proportinal to what they pay (demand)</li>
+</ul>
+</li>
+<li>Which policy(ies) is the best?<ul>
+<li>Depends on the goals of the system<ul>
+<li>Personal computer</li>
+<li>Large time-shared computer</li>
+<li>computer controlling a nuclear power plant…</li>
+</ul>
+</li>
+<li>Even one system might have multiple(and somtimes conflicting) goals</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Some parameters needed in scheduling</p>
+<ul>
+<li>Arrival time: time that process is created</li>
+<li>Service time: CPU time needed to complete (most time unknown to the kernel)</li>
+<li>Turnaround time: from arrival to departure (actually time needed to finish the process, including running time and waiting time)</li>
+<li>Try to minimizes average turnaround time</li>
+</ul>
+</li>
+</ol>
+<h2 id="Different-scheduling-policies"><a href="#Different-scheduling-policies" class="headerlink" title="Different scheduling policies"></a>Different scheduling policies</h2><h3 id="Let-one-process-run-till-done-non-preemptive"><a href="#Let-one-process-run-till-done-non-preemptive" class="headerlink" title="Let one process run till done (non-preemptive)"></a>Let one process run till done (non-preemptive)</h3><ol>
+<li><p>Consider the service time for each process (suppose each process arrived at the same time)</p>
+<ul>
+<li><em>Longest first vs shortest first</em>: Let the longest/shortest processes among all the process created and not yet exit to run till done and then decide the next</li>
+<li><strong>Proven: Shortest first is optimal</strong></li>
+<li>However, the service time is unknown to the kernel in most of the time</li>
+</ul>
+</li>
+<li><p>Consider the arrival time</p>
+<ul>
+<li><em>First come first serve(FCFS) vs Last come first serve(LCFS)</em>: Allocate the CPU to process arrived earliest or latest.</li>
+<li>First come first serve(FCFS)<ul>
+<li>non-preemptive, simple, no stavation</li>
+<li>poor for short process arrived late</li>
+</ul>
+</li>
+<li>Last come first serve(LCFS)<ul>
+<li>simple</li>
+<li>starvation, poor for short process arrived early</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Shortest process next (SPN)</p>
+<ul>
+<li>when one process finish, select the process with shortest service time</li>
+<li><strong>Proven: optimal for non-preemptive policies</strong></li>
+<li>may cause starvation (when short process keep arriving, long process get no chance to run)</li>
+<li>However, the service time is unknown to the kernel in most of the time</li>
+</ul>
+</li>
+</ol>
+<h3 id="Select-process-when-each-quantum-end-preemptive"><a href="#Select-process-when-each-quantum-end-preemptive" class="headerlink" title="Select process when each quantum end (preemptive)"></a>Select process when each quantum end (preemptive)</h3><ol>
+<li><p>Round Robin (RR)</p>
+<ul>
+<li>Time-slice: each process gets quantum in turn</li>
+<li>Preemptive, simple, no starvation</li>
+<li>Each process waits at most (n - 1) x quantum (supposed n is fixed)</li>
+</ul>
+</li>
+<li><p>Shortest remaing time (SRT)</p>
+<ul>
+<li>At the end of each quantum, select process with shortest remaining time</li>
+<li><strong>Proven: optimal for preemptive policies</strong></li>
+<li>may cause starvation (same case as SPN)</li>
+<li>Assumes service times are known (which is difficult)</li>
+</ul>
+</li>
+<li><p>Multi-level feedback queues <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/MLFQ.png" width="120" style="float: right;"></p>
+<ul>
+<li>Priority queues 0 to N (from high to low)</li>
+<li>new processes enter queue 0 (highest priority)</li>
+<li>Each quantum select from highest priority queue (FIFO within the queue)</li>
+<li>For each process selected, run it for $T = 2^k$ quantums<ul>
+<li>if the process used T quantums, move it next loewer queue</li>
+<li>if the process used less than T quantums, back to same queue<ul>
+<li>due to yield or higher priority arrival</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>Periodically boost (all to the queue 0)</li>
+<li>Features:<ul>
+<li>Complex, adaptive, highly responsive</li>
+<li>Favors shorter over longer, possible starvation (higher priority queue run shorter time)</li>
+</ul>
+</li>
+<li><p>Example</p>
+<p>  <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/MLFQ_example.png" width="320"></p>
+</li>
+</ul>
+</li>
+<li><p>Priority scheduling</p>
+<ul>
+<li>Select process with highest priority</li>
+<li>Calculate priority based some external criteria<ul>
+<li>E.g., priority = $\frac{1}{CPU_{time used}}$</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Fair share (Proportional share)</p>
+<ul>
+<li>Assumed ach process requests ome CPU utilization</li>
+<li>Goal: utilization over long run, actual $\approx$ request</li>
+<li>Select process with minimum actual/request ratio, when some processes have same minumum ratio, randomly choose one.</li>
+<li>involving float number calculation in each quantum, maybe over head.</li>
+</ul>
+</li>
+<li><p>Stride shceduling (practical implementation for Fair share)</p>
+<ul>
+<li>For each process x with certain CPU utilization requested, calculate strides: $S_x = \frac{1}{R_x}$</li>
+<li>For each process x maintain pass value $P_x$ (initialized 0)</li>
+<li>In each quantum:<ul>
+<li>Select process x with minimum pass value P to run</li>
+<li>Increment pass value with selected process by its stride value: $P_x = P_x + S_x$</li>
+</ul>
+</li>
+<li>Optimization: use only intergers for $R_x, S_x, P_x$<ul>
+<li>Calucalte $S_x = \frac{L}{R_x}$, where L is very large like 1000000.</li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+<h3 id="Real-Time-Scheduling"><a href="#Real-Time-Scheduling" class="headerlink" title="Real Time Scheduling"></a>Real Time Scheduling</h3><h4 id="Basics"><a href="#Basics" class="headerlink" title="Basics"></a>Basics</h4><ul>
+<li><p>Reason (correctness) for real-time scheduling</p>
+<ul>
+<li>depends on logical result of computations</li>
+<li>timeing for these result</li>
+</ul>
+</li>
+<li><p>Type of real-time systems</p>
+<ul>
+<li>hard vs. soft real-time</li>
+<li>Periodic vs. aperiodic</li>
+</ul>
+</li>
+</ul>
+<h4 id="Type-of-processes"><a href="#Type-of-processes" class="headerlink" title="Type of processes"></a>Type of processes</h4><ul>
+<li><p>Periodic Process (Tasks)</p>
+<ul>
+<li>A periodic process has a fixed frequency at which it needs to run.</li>
+<li>Before each deadline it must run for a certain CPU time</li>
+<li>For each process with a period, we have C (CPU burst needed), T (period), U (C/T, utilization)</li>
+<li><p>Example</p>
+<p><img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/PP_exp.png" width="320"></p>
+</li>
+</ul>
+</li>
+<li><p>Aperiodic Process</p>
+<ul>
+<li>Aperiodic processes have no fixed, cyclical, frequency between events.</li>
+<li>For this type of process, real-time scheduling is not necessary</li>
+</ul>
+</li>
+</ul>
+<h4 id="Different-real-time-Scheduling"><a href="#Different-real-time-Scheduling" class="headerlink" title="Different real-time Scheduling"></a>Different real-time Scheduling</h4><ol>
+<li><p>Earliest Deadline First (EDF)</p>
+<ul>
+<li>schedule process with earliest deadline</li>
+<li><em>if a earlier deadline process appears, preempt</em></li>
+<li>Pros:<ul>
+<li>works for periodic and aperiodic processes</li>
+<li>Achieve 100% utilization (igoniring overhead)</li>
+</ul>
+</li>
+<li>Cons:<ul>
+<li>Expensive: requires ordering by deadline frequently</li>
+</ul>
+</li>
+<li><p>Example:</p>
+<p>  <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/EDF.png" width="320"></p>
+</li>
+</ul>
+</li>
+<li><p>Rate Monotonoic Scheduling (RMS)</p>
+<ul>
+<li>If periodic processes exist, priorityize based on rates</li>
+<li>At start of period, select highest priority</li>
+<li>Preempty if necessary</li>
+<li>When burst done, wait till next period</li>
+<li>Deadline met require:  <strong>$U_1 + … + U_n \leq n (2 ^ {1/n} - 1)$</strong></li>
+<li><p>Example:</p>
+<p>  <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/RMS.png" width="320"></p>
+</li>
+</ul>
+</li>
+<li><p>More on RMS</p>
+<ul>
+<li>RMS is simple and efficient (static priority)</li>
+<li>RMS is <strong>optimal for static priority algorithms</strong><ul>
+<li>if RMS can’t schedule, no other static priority can</li>
+</ul>
+</li>
+<li>RMS is limited in what it guarantees<ul>
+<li><strong>Utilization bounded by $n(2^{1/n}-1) &gt; \ln{2}$ ~ 69%</strong></li>
+<li>if bounded exceeded, no guarantess (but may not fail)</li>
+</ul>
+</li>
+<li>RMS is limited to periodic processes</li>
+</ul>
+</li>
+</ol>
+<h3 id="Summary"><a href="#Summary" class="headerlink" title="Summary"></a>Summary</h3><div class="table-container">
+<table>
+<thead>
+<tr>
+<th style="text-align:left">scheduling policy</th>
+<th style="text-align:left">feature</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">FCFS</td>
+<td style="text-align:left">very simple, non-preemptive</td>
+</tr>
+<tr>
+<td style="text-align:left">RR</td>
+<td style="text-align:left">simple, preemptive</td>
+</tr>
+<tr>
+<td style="text-align:left">SPN</td>
+<td style="text-align:left">threoretical, non-preemptive</td>
+</tr>
+<tr>
+<td style="text-align:left">SRT</td>
+<td style="text-align:left">threoretical, preemptive</td>
+</tr>
+<tr>
+<td style="text-align:left">MLFQ</td>
+<td style="text-align:left">adaptive, reponsive, complex</td>
+</tr>
+<tr>
+<td style="text-align:left">Priority</td>
+<td style="text-align:left">external criteria</td>
+</tr>
+<tr>
+<td style="text-align:left">FS</td>
+<td style="text-align:left">proportional allocation</td>
+</tr>
+<tr>
+<td style="text-align:left">EDF</td>
+<td style="text-align:left">100% utilization, high overhead</td>
+</tr>
+<tr>
+<td style="text-align:left">RMS</td>
+<td style="text-align:left">&lt; 100%, low overhead</td>
+</tr>
+</tbody>
+</table>
+</div>
+]]></content>
+      <categories>
+        <category>Operating Systems</category>
+      </categories>
+      <tags>
+        <tag>OS</tag>
+        <tag>操作系统</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>分时系统-timesharing</title>
+    <url>/2020/04/19/timesharing/</url>
+    <content><![CDATA[<p>本文是我在上UCSD的 <a href="http://cseweb.ucsd.edu/classes/wi20/cse120-a/" target="_blank" rel="noopener">CSE 120: Principles of Operating Systems (Winter 2020)</a> 整理的笔记，第二课主要介绍了分时系统里时间分配的概念，以及内核 (kernel) 和用户 (user) 层面上实现thread的区别以及优缺点。</p>
+<a id="more"></a>
+<ol>
+<li><p>Definition</p>
+<ul>
+<li>Multiple processes share single CPU resources</li>
+<li>Conceptually, each process makes progress over time</li>
+<li>Practically, each perioadcally get quantum of CPU time<ul>
+<li><em>quantum</em> : a basic time unit for CPU to allocate for a cycle</li>
+</ul>
+</li>
+<li>Illusion of parallel progress by rapidly switching CPU</li>
+</ul>
+</li>
+<li><p>Implementation</p>
+<ul>
+<li>Kernel keeps track of progress of each process</li>
+<li>Divided the states (progress) of each process:<ul>
+<li>Running: actually running (making progress), using CPU</li>
+<li>Ready: able to make progress, but not using CPU</li>
+<li>Blocked: unable to make progress (waiting other resources like memory, I/O etc), cannot use CPU</li>
+</ul>
+</li>
+<li>Kernel selects a ready process and let it use CPU</li>
+</ul>
+</li>
+<li><p>Process State Diagram<img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/process_state_diagram.png" width="220" style="float: right;"></p>
+<ul>
+<li>Dispatch: allocated the CPU to a process</li>
+<li>Preempt: take away CPU from process</li>
+<li>Sleep: process gives up CPU to wait for event</li>
+<li>Wakeup: event occurred, make process ready</li>
+</ul>
+</li>
+<li><p>Kernel</p>
+<ul>
+<li>A seperate memory space that store kernel code that support user processes to run<ul>
+<li>systems calls: fork(), exit(), read(), write(), yield(),…</li>
+<li>management: context switching, scheduling,…</li>
+</ul>
+</li>
+<li>Keep track of state of each process<ul>
+<li>each process has a unique ID</li>
+</ul>
+</li>
+<li>Store other info needed<ul>
+<li>areas of memory being used</li>
+<li>contents of CPU contexts</li>
+<li>other…</li>
+</ul>
+</li>
+<li>runs as an extension of current process<ul>
+<li>when system call (process give up control to kernel voluntarily)</li>
+<li>hardware interrupt (preemption)<ul>
+<li>timer</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Has text, data and multiple stack (each for each process/thread)</p>
+<ul>
+<li><p>even if two process share the same code, use seperate memory(text, data, stack) to store state of each process</p>
+<p><img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/multi_process_kernel.png" width="450"></p>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Threads</p>
+<ul>
+<li>It’s a single sequential path of execution</li>
+<li>Abstraction: independent of memory(may have different implementation like user-level and kernel-level)</li>
+<li>A thread is a part of a process<ul>
+<li>Lives in the memory of a process (share global variable)</li>
+<li>Multiple threads may exist in a process</li>
+</ul>
+</li>
+<li>To the user: unit of parallelism</li>
+<li>To the kernel: unit of schedulability</li>
+</ul>
+</li>
+<li><p>User-level threads vs Kernel-level threads</p>
+<ul>
+<li><p>user-level thread:</p>
+<ul>
+<li>Implement stacks for different threads in user space (actually share the stack in kernel)</li>
+<li>Pros:<ul>
+<li>Threads call and management in user level</li>
+<li>Efficient: no need to trapped into kernel (which is heavy)</li>
+<li>No need for kenerl support of threads</li>
+</ul>
+</li>
+<li><p>Cons:</p>
+<ul>
+<li>no true parallelism (kernel see no threads but process)</li>
+<li><p>mulitple CPU cannot let multiple threads in one process run at the same time</p>
+<p>  <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/user_threads.png" width="450"></p>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>kernel-level thread:</p>
+<ul>
+<li>Implement stacks for different threads in kernel space</li>
+<li>Pros:<ul>
+<li>can achieve true prallelism</li>
+</ul>
+</li>
+<li><p>Cons:</p>
+<ul>
+<li><p>overhead: thread switch requires kernel call</p>
+<p>  <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/kernel_thread.png" width="450"></p>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Distinguish:</p>
+<ul>
+<li>Where is the thread abstraction supported: kernel code or user code</li>
+<li>Where is the thread running: user space or kernel space</li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+]]></content>
+      <categories>
+        <category>Operating Systems</category>
+      </categories>
+      <tags>
+        <tag>OS</tag>
+        <tag>操作系统</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>进程-process</title>
+    <url>/2020/04/19/process/</url>
+    <content><![CDATA[<p>本文是我在上UCSD的 <a href="http://cseweb.ucsd.edu/classes/wi20/cse120-a/" target="_blank" rel="noopener">CSE 120: Principles of Operating Systems (Winter 2020)</a> 整理的笔记，第一课主要介绍了操作系统以及进程的一些基本概念。</p>
+<a id="more"></a>
+<ol>
+<li><p>Definition</p>
+<ul>
+<li>Abstraction of a running program (<em>dynamic</em>)</li>
+<li>While program is just static code</li>
+</ul>
+</li>
+<li><p>Resources</p>
+<ul>
+<li>CPU<ul>
+<li>Processing cycles (CPU time)</li>
+<li>Execute intstructions</li>
+</ul>
+</li>
+<li>Memory<ul>
+<li>Bytes or words</li>
+<li>maintain state</li>
+</ul>
+</li>
+<li>Other resources (I/O)</li>
+</ul>
+</li>
+<li><p><strong>Context of a Process (machine and kernel-related state)</strong></p>
+<ul>
+<li>CPU context<ul>
+<li>PC (program counter)</li>
+<li>SP (stack pointer)</li>
+<li>FP (frame pointer)</li>
+<li>GP (general pointer)</li>
+</ul>
+</li>
+<li>Memory context<ul>
+<li>program code</li>
+<li>static variables(init, uninit)</li>
+<li>heap</li>
+<li>shared memory</li>
+<li>stack of activation records</li>
+</ul>
+</li>
+<li>Other (kernel-related state, …)</li>
+</ul>
+</li>
+<li><p>Process memory structure <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/process%20memory.png" width="120" style="float: right;"></p>
+<ul>
+<li>Text area: code (program instruction)</li>
+<li>Data<ul>
+<li>Global variable</li>
+<li>Static variable (local and global)</li>
+<li>Heap</li>
+</ul>
+</li>
+<li>Stack<ul>
+<li>Activation records</li>
+<li>Automatic growth/shrinkage</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Process stack <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/process%20stack.png" width="180" style="float: right;"></p>
+<ul>
+<li>Stack of activation records</li>
+<li>An activation records stores:<ul>
+<li>return address</li>
+<li>link to previous record</li>
+<li>local varibale</li>
+<li>other</li>
+</ul>
+</li>
+<li>Stack pointer points to top</li>
+</ul>
+</li>
+<li><p>Multi-Processes</p>
+<ul>
+<li>Goal: support several processes running “simultaneously” or let one process intentionally yield to another process</li>
+<li>Method: Context switching<ul>
+<li>Switch process A (running) to process B (waiting) while store context (state) of process A (since it’s not finished)</li>
+<li>process<ul>
+<li>save context of current process<ul>
+<li>save GP</li>
+<li>save SP</li>
+<li>save PC</li>
+</ul>
+</li>
+<li>load context of next process<ul>
+<li>load GP</li>
+<li>load SP</li>
+<li><strong>load PC (must be last, once PC is loaded, the process B begins to run (PC indicates instruction execution))</strong></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+]]></content>
+      <categories>
+        <category>Operating Systems</category>
+      </categories>
+      <tags>
+        <tag>OS</tag>
+        <tag>操作系统</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>常用资源工具整理</title>
+    <url>/2020/04/19/%E5%B8%B8%E7%94%A8%E8%B5%84%E6%BA%90%E5%B7%A5%E5%85%B7%E6%95%B4%E7%90%86/</url>
+    <content><![CDATA[<h2 id="博客-amp-主题配置-（Hexo）"><a href="#博客-amp-主题配置-（Hexo）" class="headerlink" title="博客 &amp; 主题配置 （Hexo）"></a>博客 &amp; 主题配置 （Hexo）</h2><ul>
+<li><p><a href="https://www.bilibili.com/video/BV1Yb411a7ty" target="_blank" rel="noopener">手把手教你从0开始搭建自己的个人博客 |无坑版视频教程| hexo</a><br> 视频讲解建立hexo博客以及部署到github pages上，需要注意下建立博客的过程最好不用root模式，只需要用chown改变npm的权限就可以了，不然后续写博客可能比较麻烦</p>
+</li>
+<li><p><a href="https://www.zyjdn.com/2020/02/05/Hexo-NexT%E4%B8%BB%E9%A2%98/" target="_blank" rel="noopener">Hexo-NexT主题</a><br> 这篇文章和博主的后续几篇主要包括hexo-next主题（目前更新到next版本7.0+）里面的基础配置</p>
+</li>
+<li><p><a href="https://blog.csdn.net/maosidiaoxian/article/details/85220394" target="_blank" rel="noopener">如何在Hexo中对文章md文件分类</a><br> 利用 post 的 permalink 属性和 hexo 的 new_post_name 实现按日期文件夹（按年或者按月）归类文章</p>
+</li>
+</ul>
+]]></content>
+      <categories>
+        <category>tools</category>
+      </categories>
+      <tags>
+        <tag>tool</tag>
       </tags>
   </entry>
   <entry>
     <title>轮式里程计运动模型及标定</title>
-    <url>/2020/04/18/2-wheel-odometry-model-calibration/</url>
+    <url>/2020/04/18/%E8%BD%AE%E5%BC%8F%E9%87%8C%E7%A8%8B%E8%AE%A1%E8%BF%90%E5%8A%A8%E6%A8%A1%E5%9E%8B%E5%8F%8A%E6%A0%87%E5%AE%9A/</url>
     <content><![CDATA[<p>本文是我在学习深蓝学院的激光slam第二课的学习笔记，这一课主要介绍了两轮差分底盘的运动模型以及怎么对里程计数据进行校正。</p>
 <a id="more"></a>
 <h2 id="轮式里程计模型"><a href="#轮式里程计模型" class="headerlink" title="轮式里程计模型"></a>轮式里程计模型</h2><h3 id="两轮差分底盘的运动学模型"><a href="#两轮差分底盘的运动学模型" class="headerlink" title="两轮差分底盘的运动学模型"></a>两轮差分底盘的运动学模型</h3><ol>
@@ -124,7 +3769,7 @@
 </ul>
 </li>
 <li><p>差分模型及运动解算</p>
- <img src="/2020/04/18/2-wheel-odometry-model-calibration/diffence_model.png" class="" title="2-wheel-odometry-model-calibration&#x2F;diffence_model.png">
+ <img src="/2020/04/18/%E8%BD%AE%E5%BC%8F%E9%87%8C%E7%A8%8B%E8%AE%A1%E8%BF%90%E5%8A%A8%E6%A8%A1%E5%9E%8B%E5%8F%8A%E6%A0%87%E5%AE%9A/diffence_model.png" class="" title="2-wheel-odometry-model-calibration&#x2F;diffence_model.png">
 <ul>
 <li>考虑两轮在做半径为r的圆周运动，v和w是底盘中心的线速度和角速度，$v_{L/R}$ 和 $\omega_{L/R}$ 分别对应左/右轮子的线速度和角速度，d为底盘中心离两侧轮子的距离，b为两轮之间的距离（b = 2d）</li>
 <li>目标：根据两轮的角速度（编码器测出的数据）以及其他参数求出底盘中心（机器人）运动的线速度v和角速度w</li>
@@ -147,7 +3792,7 @@
 </ol>
 <h3 id="轨迹推算（Dead-Reckoning）"><a href="#轨迹推算（Dead-Reckoning）" class="headerlink" title="轨迹推算（Dead Reckoning）"></a>轨迹推算（Dead Reckoning）</h3><ol>
 <li><p>示意图</p>
- <img src="/2020/04/18/2-wheel-odometry-model-calibration/dead_reckoning.png.png" class="" title="2-wheel-odometry-model-calibration&#x2F;dead_reckoning.png.png">
+ <img src="/2020/04/18/%E8%BD%AE%E5%BC%8F%E9%87%8C%E7%A8%8B%E8%AE%A1%E8%BF%90%E5%8A%A8%E6%A8%A1%E5%9E%8B%E5%8F%8A%E6%A0%87%E5%AE%9A/dead_reckoning.png.png" class="" title="2-wheel-odometry-model-calibration&#x2F;dead_reckoning.png.png">
 </li>
 <li><p>递推公式</p>
 <ul>
@@ -262,6 +3907,116 @@
 <script type="math/tex; mode=display">r_L = -J_{21}b</script><script type="math/tex; mode=display">r_R = J_{22}b</script></li>
 <li><p>至此轮式里程计标定完毕</p>
 </li>
+</ul>
+</li>
+</ol>
+]]></content>
+      <categories>
+        <category>激光slam</category>
+      </categories>
+      <tags>
+        <tag>slam</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>激光slam介绍及相关数学基础</title>
+    <url>/2020/04/18/%E6%BF%80%E5%85%89slam%E4%BB%8B%E7%BB%8D%E5%8F%8A%E7%9B%B8%E5%85%B3%E6%95%B0%E5%AD%A6%E5%9F%BA%E7%A1%80/</url>
+    <content><![CDATA[<p>本文是我在学习深蓝学院的激光slam第一课的学习笔记，这一课主要介绍了2d和3d的激光slam的一些基本概念，以及需要的一些数学基础。</p>
+<a id="more"></a>
+<h2 id="激光slam介绍"><a href="#激光slam介绍" class="headerlink" title="激光slam介绍"></a>激光slam介绍</h2><h3 id="基本方法"><a href="#基本方法" class="headerlink" title="基本方法"></a>基本方法</h3><ol>
+<li><p>输入</p>
+<ul>
+<li>里程计数据（odometry）：正常来说都会有，因为slam一般配备在移动机器人、无人车，在一些特殊场景可能没有（手持设备）</li>
+<li>2d/3d激光雷达扫描结果：必须要有，在2dslam的情况下一般是单线的</li>
+<li>IMU： 一般是可选的，可以没有</li>
+</ul>
+</li>
+<li><p>输出</p>
+<ul>
+<li>3d点云地图：3dslam输出，在导航的时候会转成覆盖栅格地图进行导航</li>
+<li>覆盖栅格地图（occupancy-grid map）：将环境分割成对栅格并输出每个栅格是否可通行</li>
+<li>轨迹(trajectory) 或姿态（pose graph）</li>
+</ul>
+</li>
+<li><p>帧间匹配方法（2d）</p>
+<ul>
+<li>PL-ICP(Point-to-line ICP)：利用<strong>点到线</strong>的距离做误差计算，相对于点到点的方法更加符合室内结构化场景，但比较依靠初始解</li>
+<li>CSM(Correlation Scan Match)：<strong>暴力枚举</strong>所有可能的状态进行匹配相关性计算，取最优结果，（通过一定优化可以减少计算时间）</li>
+<li>Optimization-Based：将地图空间看成解空间，依赖<strong>地图状态的梯度</strong>通过迭代求解，能方便引入额外约束，同样依赖初始解</li>
+<li>实际常用 CSM + 梯度优化的方法，（也可以用 CSM + PL-ICP, 但是需要实际场景中有比较多结构化线段）</li>
+</ul>
+</li>
+<li><p>帧间匹配方法（3d）</p>
+<ul>
+<li>Point-to-Plane ICP：用点到面的距离作误差匹配</li>
+<li>Plane-to-Place ICP (GCIP): 面到面的距离</li>
+<li>NDT：划分网格拟合高斯分布，因为计算速度快所以在3d场景用得多一点</li>
+<li>NICP：在icp的基础上引入法向量信息（normal），角度精度较高</li>
+<li>IMLS-ICP：对点云进行局部曲面拟合</li>
+<li>Feature-based Method：参考视觉slam，提取特征点和描述子进行特征匹配，3d激光扫描结果信息量较多，所以可以使用</li>
+</ul>
+</li>
+<li><p>回环检测方法</p>
+<ul>
+<li>Scan-to-Map</li>
+<li>Map-to-Map</li>
+<li>Branch and Bound &amp; Lazy Decision (延迟检测)：由于2d 激光slam对环境数据量太少，很容易造成不同场景结果相似，导致出现错误的回环，延迟检测的方法是只有在检测到<strong>多个回环</strong>的情况下并且回环都一致的时候才认为出现回环</li>
+</ul>
+</li>
+</ol>
+<h3 id="发展"><a href="#发展" class="headerlink" title="发展"></a>发展</h3><ol>
+<li><p>Filtered-based (滤波方法，目前在2d激光slam（主要是建图）已经很少使用，因为滤波方法更关注当前状态（位置），对历史信息不修正（没有回环的概念），所以不利于利用全局数据进行建图，在定位（VO，VIO等）用的较多)</p>
+<ul>
+<li>EKF-SLAM (1990s): 随环境增大状态量会急剧增大</li>
+<li>FastSLAM (02~03)：粒子滤波，每个粒子携带一个地图</li>
+<li>Gmapping (07): FastSLAM的升级版本</li>
+<li>Optimal RBPF (10)：Gmapping的基础上进一步优化</li>
+</ul>
+</li>
+<li><p>Graph-based (图优化方法)</p>
+<ul>
+<li>Karto-SLAM (10)：基于优化的方案（CSM + SPA）</li>
+<li>Cartographer (16)：原理和Karto一样，用ceres实现，相对更完整</li>
+</ul>
+</li>
+</ol>
+<h3 id="实际应用中注意的问题"><a href="#实际应用中注意的问题" class="headerlink" title="实际应用中注意的问题"></a>实际应用中注意的问题</h3><ol>
+<li><p><strong>数据预处理 (Preprocess)</strong></p>
+<ul>
+<li>轮式里程计标定，最好能到0.3%左右</li>
+<li>激光雷达运动畸变（扫描过程中雷达的位置变化）</li>
+<li>不同系统之间的时间同步（当每个传感器连接到不同处理器（cpu）上的时候系统时间可能会不一致，这个时候需要考虑时间同步获得统一时间戳）</li>
+</ul>
+</li>
+<li><p>实际环境的问题（大部分可以通过和视觉融合来解决）</p>
+<ul>
+<li><p>动态物体、环境变化</p>
+<ul>
+<li>高动态：移动中的人，车</li>
+<li>低动态：物体被移动（椅子，箱子），频率低</li>
+</ul>
+</li>
+<li><p>几何结构相似环境：走廊等，容易发生状态退化，在3d的情况下则是比较空旷的区域，大部分点云无效导致环境退化</p>
+</li>
+<li>建图的操作复杂</li>
+<li>全局定位</li>
+<li>地面材质变化、地面凹凸不平、机器人载重变化：会造成里程计数据误差（间接改变了轮子直径）</li>
+</ul>
+</li>
+</ol>
+<h2 id="数学基础"><a href="#数学基础" class="headerlink" title="数学基础"></a>数学基础</h2><ol>
+<li><p>位姿和转换矩阵（pose &amp; transformation matrix）</p>
+<ul>
+<li>假设机器人B在坐标系O中的坐标表示为 $(x, y, \theta)$</li>
+<li><p>则坐标系B到坐标系O的转换矩阵为：</p>
+<script type="math/tex; mode=display">T_{OB} = \begin{bmatrix}\cos{\theta} & -\sin{\theta} & x \\ \sin{\theta} & \cos{\theta} & y\\ 0 & 0 & 1 \end{bmatrix} = \begin{bmatrix}R & t \\ 0 & 1 \end{bmatrix}</script> <img src="/2020/04/18/%E6%BF%80%E5%85%89slam%E4%BB%8B%E7%BB%8D%E5%8F%8A%E7%9B%B8%E5%85%B3%E6%95%B0%E5%AD%A6%E5%9F%BA%E7%A1%80/transformation_matrix.png" class="" title="1-intro-math-basics&#x2F;transformation_matrix.png">
+</li>
+</ul>
+</li>
+<li><p>不同机器人坐标系转换</p>
+<ul>
+<li><p>机器人A和机器人B的坐标转换</p>
+<script type="math/tex; mode=display">T_{AB} = T_{AO}T_{OB} = T_{OA}^{-1}T_{OB}</script></li>
 </ul>
 </li>
 </ol>

@@ -21,17 +21,27 @@
     var CONFIG = {"hostname":"xiaotaoguo.github.io","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
   </script>
 
-  <meta name="description" content="Stay hungry, stay foolish">
-<meta property="og:type" content="website">
-<meta property="og:title" content="Tao&#39;s Blog">
-<meta property="og:url" content="https://xiaotaoguo.github.io/categories/%E6%BF%80%E5%85%89slam/index.html">
+  <meta name="description" content="本文是我在上UCSD的 CSE 120: Principles of Operating Systems (Winter 2020) 整理的笔记，这一课主要介绍了操作系统里面输入系统系统的概念，包括硬件上的组成以及软件的结构。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="输入&#x2F;输出系统-I&#x2F;O system">
+<meta property="og:url" content="https://xiaotaoguo.github.io/2020/04/19/IO-system/index.html">
 <meta property="og:site_name" content="Tao&#39;s Blog">
-<meta property="og:description" content="Stay hungry, stay foolish">
+<meta property="og:description" content="本文是我在上UCSD的 CSE 120: Principles of Operating Systems (Winter 2020) 整理的笔记，这一课主要介绍了操作系统里面输入系统系统的概念，包括硬件上的组成以及软件的结构。">
 <meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/hardware_io.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/IO_system_structure.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/user_space_io.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/io_operation.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/unix_io.png">
+<meta property="article:published_time" content="2020-04-19T18:08:26.000Z">
+<meta property="article:modified_time" content="2020-04-19T18:11:50.879Z">
 <meta property="article:author" content="Xiaotao Guo">
+<meta property="article:tag" content="OS">
+<meta property="article:tag" content="操作系统">
 <meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/hardware_io.png">
 
-<link rel="canonical" href="https://xiaotaoguo.github.io/categories/%E6%BF%80%E5%85%89slam/">
+<link rel="canonical" href="https://xiaotaoguo.github.io/2020/04/19/IO-system/">
 
 
 <script id="page-configurations">
@@ -39,12 +49,12 @@
   CONFIG.page = {
     sidebar: "",
     isHome : false,
-    isPost : false,
+    isPost : true,
     lang   : 'en'
   };
 </script>
 
-  <title>Category: 激光slam | Tao's Blog</title>
+  <title>输入/输出系统-I/O system | Tao's Blog</title>
   
 
 
@@ -185,71 +195,337 @@
         <div class="content-wrap">
           
 
-          <div class="content category">
+          <div class="content post posts-expand">
             
 
+    
   
   
-  
-  <div class="post-block">
-    <div class="posts-collapse">
-      <div class="collection-title">
-        <h2 class="collection-header">激光slam
-          <small>Category</small>
-        </h2>
-      </div>
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://xiaotaoguo.github.io/2020/04/19/IO-system/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://avatars3.githubusercontent.com/u/45047478?s=460&u=3be5d506be9a30bd6eadfd29cd36c61e30833bb2&v=4">
+      <meta itemprop="name" content="Xiaotao Guo">
+      <meta itemprop="description" content="Stay hungry, stay foolish">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Tao's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          输入/输出系统-I/O system
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2020-04-19 14:08:26 / Modified: 14:11:50" itemprop="dateCreated datePublished" datetime="2020-04-19T14:08:26-04:00">2020-04-19</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Operating-Systems/" itemprop="url" rel="index"><span itemprop="name">Operating Systems</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="Views" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="eye"></i>
+              </span>
+              <span class="post-meta-item-text">Views: </span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span>
+<br>
+            <span class="post-meta-item" title="Symbols count in article">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+              <span>2.4k</span>
+            </span>
+            <span class="post-meta-item" title="Reading time">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+              <span>2 mins.</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
 
       
-    <div class="collection-year">
-      <span class="collection-header">2020</span>
+        <p>本文是我在上UCSD的 <a href="http://cseweb.ucsd.edu/classes/wi20/cse120-a/" target="_blank" rel="noopener">CSE 120: Principles of Operating Systems (Winter 2020)</a> 整理的笔记，这一课主要介绍了操作系统里面输入系统系统的概念，包括硬件上的组成以及软件的结构。</p>
+<a id="more"></a>
+<h2 id="I-O-basic"><a href="#I-O-basic" class="headerlink" title="I/O basic"></a>I/O basic</h2><ol>
+<li><p>Intro</p>
+<ul>
+<li><p>I/O = Input/Output</p>
+<ul>
+<li>Input from attached device to CPU/memory</li>
+<li>Output from CPU/memory to device</li>
+</ul>
+</li>
+<li><p>Synchronization and transferring data</p>
+</li>
+</ul>
+</li>
+<li><p>Issues</p>
+<ul>
+<li><p>Problems:</p>
+<ul>
+<li>So many different types of I/O devices</li>
+<li>Wide range: speed, operation, data transfer units</li>
+</ul>
+</li>
+<li><p>Questions:</p>
+<ul>
+<li>How does a process initiate I/O?</li>
+<li>How is synchronization achieved?</li>
+<li>How is data transferred?</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Background: I/O Hardware</p>
+<ul>
+<li><p>CPU and device (controller) communicate via</p>
+<ul>
+<li>I/O instructions</li>
+<li>Memory instructuions (memory-mapped)</li>
+</ul>
+</li>
+<li><p>Data transfer: progammed I/O vs. DMA (direct memory access)</p>
+</li>
+<li><p>Synchronization: polling vs. interrupts</p>
+<p>  <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/hardware_io.png" width="500"></p>
+</li>
+</ul>
+</li>
+<li><p>Buffered/Unbuffered I/O</p>
+<ul>
+<li><p>Pros:</p>
+<ul>
+<li>What if pages containing buffer are paged out?</li>
+<li>What if entire process is swapped out?</li>
+<li>Can pin pages, but if too many processes do this?</li>
+</ul>
+</li>
+<li><p>Cons:</p>
+<ul>
+<li>Memory copying is expensive</li>
+<li>Consider effect on caches</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Dealing with Complexity of Devices</p>
+<ul>
+<li><p>Many different types of devices</p>
+<ul>
+<li>Classify by shared characteristics</li>
+<li>Imposes structure: shared code, lower complexity</li>
+</ul>
+</li>
+<li><p>Dimensions</p>
+<ul>
+<li>Varaible vs. fixed size units</li>
+<li>Sequential vs. random-access</li>
+<li>Synchronous vs. asynchronous</li>
+<li>Speed of operation</li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+<h2 id="I-O-system"><a href="#I-O-system" class="headerlink" title="I/O system"></a>I/O system</h2><ol>
+<li><p>I/O system Intro</p>
+<ul>
+<li><p>Software that deals with I/O</p>
+<ul>
+<li>Mostly in the kernel</li>
+<li>Also in processes (in form of library, e.g., stdio)</li>
+</ul>
+</li>
+<li><p>Separated into two portions</p>
+<ul>
+<li>Device-dependent</li>
+<li>Device- independent</li>
+</ul>
+</li>
+<li><p>Structure: Layered</p>
+<p>  <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/IO_system_structure.png" width="500"></p>
+</li>
+</ul>
+</li>
+<li><p>Device Dependent: Device Drivers</p>
+<ul>
+<li><p>Encapsulates device-dependent code</p>
+<ul>
+<li>Contains device-specific register reads/write</li>
+</ul>
+</li>
+<li><p>Implements a standard interface</p>
+<ul>
+<li>open(), close(), read(), write()</li>
+</ul>
+</li>
+<li><p>Interrupt handlers</p>
+<ul>
+<li>Executes when I/O completes</li>
+<li>Updates data structure</li>
+<li>Wakes up waiting process</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Device-Independent I/O</p>
+<ul>
+<li>Uniform interfacing for device drivers</li>
+<li>Naming, protection</li>
+<li>Uniform block size</li>
+<li>Buffering, caching</li>
+<li>Storage allocation</li>
+<li>Locking</li>
+<li>Error handling</li>
+</ul>
+</li>
+<li><p>User-space I/O <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/user_space_io.png" width="180" style="float: right;"></p>
+<ul>
+<li><p>Convenient interface</p>
+<ul>
+<li>printf() vs. write()</li>
+</ul>
+</li>
+<li><p>User-level buffering</p>
+<ul>
+<li>Unix: stdio library</li>
+</ul>
+</li>
+<li><p>Spooling daemons</p>
+<ul>
+<li>Printer</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Overall Operation</p>
+<p> <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/io_operation.png" width="350"></p>
+</li>
+</ol>
+<h3 id="Example-UNIX"><a href="#Example-UNIX" class="headerlink" title="Example: UNIX"></a>Example: UNIX</h3><ol>
+<li><p>I/O Model <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/unix_io.png" width="180" style="float: right;"></p>
+<ul>
+<li>Uses file system interface</li>
+<li>stdio.h: C standard I/O library</li>
+<li><p>Block devices (disks, USB cameras, …)</p>
+<ul>
+<li>Fixed-size blocks</li>
+<li>Randomly addressable</li>
+<li>Uses buffer cache</li>
+</ul>
+</li>
+<li><p>Character devices (serial ports, parallel ports, sound cards,…)</p>
+<ul>
+<li>Variable sequence of bytes</li>
+<li>For non-block devices</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>I/O System Call Interface</p>
+<ul>
+<li>fd = open(“/dev/devname”, …)</li>
+<li>close(fd)</li>
+<li>nr = read(fd, buf, n)</li>
+<li>nw = write(fd, buf, n)</li>
+<li>ioctl(fd, cmd, buf) //(input/output control)</li>
+</ul>
+</li>
+<li><p>Standard I/O Library</p>
+<ul>
+<li>fopen, fread, fwrite, fprintf, fscanf, fclose, …</li>
+<li>Private buffer kept in user space</li>
+<li>Minimizes the number of I/O system calls</li>
+</ul>
+</li>
+<li><p>Software Block Cache Design</p>
+<ul>
+<li>Has copies of blocks that are also on disk</li>
+<li><p>Upon read or write</p>
+<ul>
+<li>Check if a buffer contains the block</li>
+<li>If not, get from disk</li>
+<li>To make room, remove LRU block</li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+
     </div>
 
-  <article itemscope itemtype="http://schema.org/Article">
-    <header class="post-header">
+    
+    
+    
+        
 
-      <div class="post-meta">
-        <time itemprop="dateCreated"
-              datetime="2020-04-18T21:38:13-04:00"
-              content="2020-04-18">
-          04-18
-        </time>
-      </div>
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>Post author:  </strong>Xiaotao Guo
+  </li>
+  <li class="post-copyright-link">
+    <strong>Post link: </strong>
+    <a href="https://xiaotaoguo.github.io/2020/04/19/IO-system/" title="输入&#x2F;输出系统-I&#x2F;O system">https://xiaotaoguo.github.io/2020/04/19/IO-system/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>Copyright Notice:  </strong>All articles in this blog are licensed under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> unless stating additionally.
+  </li>
+</ul>
+</div>
 
-      <div class="post-title">
-          <a class="post-title-link" href="/2020/04/18/%E8%BD%AE%E5%BC%8F%E9%87%8C%E7%A8%8B%E8%AE%A1%E8%BF%90%E5%8A%A8%E6%A8%A1%E5%9E%8B%E5%8F%8A%E6%A0%87%E5%AE%9A/" itemprop="url">
-            <span itemprop="name">轮式里程计运动模型及标定</span>
-          </a>
-      </div>
 
-    </header>
-  </article>
+      <footer class="post-footer">
+          
+          <div class="post-tags">
+              <a href="/tags/OS/" rel="tag"><i class="fa fa-tag"></i> OS</a>
+              <a href="/tags/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/" rel="tag"><i class="fa fa-tag"></i> 操作系统</a>
+          </div>
 
-  <article itemscope itemtype="http://schema.org/Article">
-    <header class="post-header">
+        
 
-      <div class="post-meta">
-        <time itemprop="dateCreated"
-              datetime="2020-04-18T21:37:51-04:00"
-              content="2020-04-18">
-          04-18
-        </time>
-      </div>
 
-      <div class="post-title">
-          <a class="post-title-link" href="/2020/04/18/%E6%BF%80%E5%85%89slam%E4%BB%8B%E7%BB%8D%E5%8F%8A%E7%9B%B8%E5%85%B3%E6%95%B0%E5%AD%A6%E5%9F%BA%E7%A1%80/" itemprop="url">
-            <span itemprop="name">激光slam介绍及相关数学基础</span>
-          </a>
-      </div>
-
-    </header>
-  </article>
-
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/04/19/file-system/" rel="prev" title="文件系统-filesystem">
+      <i class="fa fa-chevron-left"></i> 文件系统-filesystem
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/04/19/protection/" rel="next" title="保护-protection">
+      保护-protection <i class="fa fa-chevron-right"></i>
+    </a></div>
     </div>
-  </div>
+      </footer>
+    
+  </article>
   
   
-  
-
   
 
 
@@ -302,6 +578,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#I-O-basic"><span class="nav-number">1.</span> <span class="nav-text">I&#x2F;O basic</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#I-O-system"><span class="nav-number">2.</span> <span class="nav-text">I&#x2F;O system</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Example-UNIX"><span class="nav-number">2.1.</span> <span class="nav-text">Example: UNIX</span></a></li></ol></li></ol></div>
       </div>
       <!--/noindex-->
 
