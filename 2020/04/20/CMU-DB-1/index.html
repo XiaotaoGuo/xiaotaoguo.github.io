@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon32.ico">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon16.ico">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"guoxiaotao.xyz","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="今天开始学习Databases Systems CMU 15-445&#x2F;645&#x2F; Fall 2019，课程比较硬核，重点主要集中在怎么样设计一个数据库系统，希望能坚持学完。第一课主要是课程介绍以及介绍一些关于数据库管理系统的基础概念，包括关系模型，以及关于retional algebra 关系代数的一些基本操作。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Databases Systems CMU - 01 介绍">
+<meta property="og:url" content="https://guoxiaotao.xyz/2020/04/20/CMU-DB-1/index.html">
+<meta property="og:site_name" content="Tao&#39;s Blog">
+<meta property="og:description" content="今天开始学习Databases Systems CMU 15-445&#x2F;645&#x2F; Fall 2019，课程比较硬核，重点主要集中在怎么样设计一个数据库系统，希望能坚持学完。第一课主要是课程介绍以及介绍一些关于数据库管理系统的基础概念，包括关系模型，以及关于retional algebra 关系代数的一些基本操作。">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://guoxiaotao.xyz/2020/04/20/CMU-DB-1/%E9%9F%B3%E4%B9%90%E5%95%86%E5%BA%97%E4%BE%8B%E5%AD%90.png">
+<meta property="og:image" content="https://guoxiaotao.xyz/2020/04/20/CMU-DB-1/%E4%BE%8B%E5%AD%90.png">
+<meta property="og:image" content="https://guoxiaotao.xyz/2020/04/20/CMU-DB-1/%E5%B8%A6%E4%B8%BB%E9%94%AE%E7%9A%84%E4%BE%8B%E5%AD%90.png">
+<meta property="og:image" content="https://guoxiaotao.xyz/2020/04/20/CMU-DB-1/%E5%A4%96%E9%94%AE%E4%BE%8B%E5%AD%901.png">
+<meta property="og:image" content="https://guoxiaotao.xyz/2020/04/20/CMU-DB-1/%E5%A4%96%E9%94%AE%E4%BE%8B%E5%AD%902.png">
+<meta property="og:image" content="https://guoxiaotao.xyz/2020/04/20/CMU-DB-1/select.png">
+<meta property="og:image" content="https://guoxiaotao.xyz/2020/04/20/CMU-DB-1/projection.png">
+<meta property="og:image" content="https://guoxiaotao.xyz/2020/04/20/CMU-DB-1/union.png">
+<meta property="og:image" content="https://guoxiaotao.xyz/2020/04/20/CMU-DB-1/Intersection.png">
+<meta property="og:image" content="https://guoxiaotao.xyz/2020/04/20/CMU-DB-1/difference.png">
+<meta property="og:image" content="https://guoxiaotao.xyz/2020/04/20/CMU-DB-1/product.png">
+<meta property="og:image" content="https://guoxiaotao.xyz/2020/04/20/CMU-DB-1/join.png">
+<meta property="article:published_time" content="2020-04-20T04:25:25.000Z">
+<meta property="article:modified_time" content="2020-04-20T21:04:17.953Z">
+<meta property="article:author" content="Xiaotao Guo">
+<meta property="article:tag" content="database">
+<meta property="article:tag" content="数据库">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://guoxiaotao.xyz/2020/04/20/CMU-DB-1/%E9%9F%B3%E4%B9%90%E5%95%86%E5%BA%97%E4%BE%8B%E5%AD%90.png">
+
+<link rel="canonical" href="https://guoxiaotao.xyz/2020/04/20/CMU-DB-1/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en'
+  };
+</script>
+
+  <title>Databases Systems CMU - 01 介绍 | Tao's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Tao's Blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="tags fa-fw"></i>Tags<span class="badge">6</span></a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="th fa-fw"></i>Categories<span class="badge">4</span></a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="archive fa-fw"></i>Archives<span class="badge">19</span></a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://guoxiaotao.xyz/2020/04/20/CMU-DB-1/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://avatars3.githubusercontent.com/u/45047478?s=460&u=3be5d506be9a30bd6eadfd29cd36c61e30833bb2&v=4">
+      <meta itemprop="name" content="Xiaotao Guo">
+      <meta itemprop="description" content="Stay hungry, stay foolish">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Tao's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Databases Systems CMU - 01 介绍
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2020-04-20 00:25:25 / Modified: 17:04:17" itemprop="dateCreated datePublished" datetime="2020-04-20T00:25:25-04:00">2020-04-20</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/database/" itemprop="url" rel="index"><span itemprop="name">database</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="Views" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="eye"></i>
+              </span>
+              <span class="post-meta-item-text">Views: </span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Comment Counts: </span>
+    
+    <a title="valine" href="/2020/04/20/CMU-DB-1/#valine-comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2020/04/20/CMU-DB-1/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+<br>
+            <span class="post-meta-item" title="Symbols count in article">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+              <span>4.5k</span>
+            </span>
+            <span class="post-meta-item" title="Reading time">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+              <span>4 mins.</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>今天开始学习<a href="https://15445.courses.cs.cmu.edu/fall2019/" target="_blank" rel="noopener">Databases Systems CMU 15-445/645/ Fall 2019</a>，课程比较硬核，重点主要集中在怎么样设计一个数据库系统，希望能坚持学完。第一课主要是课程介绍以及介绍一些关于数据库管理系统的基础概念，包括关系模型，以及关于retional algebra 关系代数的一些基本操作。</p>
+<a id="more"></a>
+<h2 id="课程介绍"><a href="#课程介绍" class="headerlink" title="课程介绍"></a>课程介绍</h2><ol>
+<li><p>课程主要集中在以下几个方面：</p>
+<ul>
+<li>Relational Databases</li>
+<li>Storage</li>
+<li>Execution</li>
+<li>Concurrency Control</li>
+<li>Recovery</li>
+<li>Distributed Databases</li>
+<li>Potpourri (集合)</li>
+</ul>
+</li>
+<li><p>教材</p>
+<p> 主要参考 <a href="https://www.db-book.com/db7/index.html" target="_blank" rel="noopener">Database System Concepts (第七版)</a> 以及课程笔记。</p>
+</li>
+<li><p>Project</p>
+<p> 本课将会从零开始实现一个存储管理器，用的语言是C++17。项目将基于一个教学用数据库管理系统<a href="https://github.com/cmu-db/bustub" target="_blank" rel="noopener">BusTub</a>，该系统的大致架构为：</p>
+<ul>
+<li>Disk-Oriented Storage</li>
+<li>Volcano-style Query Processing</li>
+<li>Pluggable APIs</li>
+<li><em>Currently does not support SQL</em></li>
+</ul>
+</li>
+</ol>
+<h2 id="数据库管理系统"><a href="#数据库管理系统" class="headerlink" title="数据库管理系统"></a>数据库管理系统</h2><h3 id="例子"><a href="#例子" class="headerlink" title="例子"></a>例子</h3><p>假设我们现在需要一个音乐商店（类似iTunes）来管理所有的歌手和专辑，那么我们需要存储的信息包括：<strong>歌手信息</strong>和<strong>歌手发布的专辑信息</strong>。最简单的思路是将数据库以CSV文件的方式来存储，具体实现方式可以是这样：</p>
+<ul>
+<li>用一个单独的文件来存储每个我们需要的信息（在这个例子里面就是歌手信息和专辑信息）</li>
+<li><p>每次应用想读取信息可以通过解析这些文件来获取</p>
+  <img src="/2020/04/20/CMU-DB-1/%E9%9F%B3%E4%B9%90%E5%95%86%E5%BA%97%E4%BE%8B%E5%AD%90.png" class="" title="CMU-DB-1">
+</li>
+</ul>
+<p>当我们想找Ice Cube的信息的时候，我们可以通过下面的Python来实现</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> line <span class="keyword">in</span> file:</span><br><span class="line">    record = parse(line)</span><br><span class="line">    <span class="keyword">if</span> <span class="string">"Ice Cube"</span> == record[<span class="number">0</span>]:</span><br><span class="line">        <span class="keyword">print</span> int(record[<span class="number">1</span>])</span><br></pre></td></tr></table></figure>
+<p>但是这种简单的实现方式会遇到很多问题：</p>
+<ul>
+<li>怎么保证在每个专辑项的时候都保证歌手名字格式是一致的？</li>
+<li>假如某个人不小心在输入年份的时候输入了一个不合法的string导致没办法转成整数怎么办？</li>
+<li>当一个专辑有多个创作者是怎么办？</li>
+</ul>
+<p>除此之外还有很多实现上的细节需要注意：</p>
+<ul>
+<li>怎么找到一条特定记录？通过上面的for-loop方法在数据量很大的时候效率会变得很低</li>
+<li>怎么保证这样的数据库系统可以兼容多平台（手机、平板、电脑）或者多种编程语言？</li>
+<li>当两个线程想同时向一个文件写入时怎么保证不会互相覆盖？</li>
+</ul>
+<p>另外还考虑数据库的安全问题：</p>
+<ul>
+<li>当程序在往数据库写入记录的时候数据库突然崩溃了怎么办？</li>
+<li>如果我们向复制数据库在多台机器以保证高可用性的时候需要注意什么？</li>
+</ul>
+<p>基于上面提到的问题，我们需要实现一个通用的数据库管理系统(Database Management System)来对数据库进行信息的<strong>存储</strong>和<strong>分析</strong>，这个系统需要能做到允许用户<em>自定义</em>，<em>创建</em>，<em>写入查找</em>，<em>更新</em>，<em>管理</em>一个数据库</p>
+<h3 id="数据库系统模型介绍"><a href="#数据库系统模型介绍" class="headerlink" title="数据库系统模型介绍"></a>数据库系统模型介绍</h3><ol>
+<li><p>Relational Model (关系模型)</p>
+<p> 早期的数据库系统很难构建和维护，用户在构建系统之前需要清楚知道以后他会怎么使用，软件使用和硬件实现方式耦合度很高，直到1970 年 Ted Codd 提出了一个数据库的抽象概念来避免这种情况，这个模型主要包括以下三个要点：</p>
+<ul>
+<li>将数据库以关系 (relation) 的方式存在一个简单的数据结构里面</li>
+<li>数据将会通过高级语言来进行访问</li>
+<li>物理存储方式留给第三方具体实现（抽象本身不包括实现方式，用户不需要自己实现）</li>
+</ul>
+</li>
+<li><p>Data models &amp; Schema</p>
+<p> 这里提出了两个概念：</p>
+<ul>
+<li>data model：有关怎么描述数据在数据库里面里面的一系列描述方式</li>
+<li><p>schema：针对一种特定数据模型给出的对该类型数据的描述方式（这一部分其实不太清楚，看看后续有没有具体的例子）</p>
+<p>总的来说，数据模型抽象的概括了我们怎么样存储数据，schema则是说明了具体存了哪些内容</p>
+</li>
+</ul>
+</li>
+<li><p>一些常见的data model</p>
+<ul>
+<li>Relational：绝大部分的DBMS都是用这个模型，这门课也是学习这种模型</li>
+<li>Key/Value：这个包括下面直到Column-family都是属于NoSql的模型</li>
+<li>Graph</li>
+<li>Document</li>
+<li>Column-family</li>
+<li>Array/Matrix：机器学习里面常用这种模型</li>
+<li>Hierarchical：最后两种比较少见</li>
+<li>Network</li>
+</ul>
+</li>
+<li><p>Relational Model</p>
+<p> Relational Model主要包括以下三个要素：</p>
+<ul>
+<li>Structure(结构)：有关关系和他们的具体内容的定义（描述）</li>
+<li>Integrity（完整性）：保证数据库的内容符合相关约束条件（给定一个数据库怎么判断他是不是符合标准）</li>
+<li>Manipulation（操作）：怎么访问和更改数据库的内容</li>
+</ul>
+</li>
+</ol>
+<h4 id="音乐商店例子：数据库描述"><a href="#音乐商店例子：数据库描述" class="headerlink" title="音乐商店例子：数据库描述"></a>音乐商店例子：数据库描述</h4><p>根据这三个要素，再回头看最初提到的音乐商店的例子：</p>
+<img src="/2020/04/20/CMU-DB-1/%E4%BE%8B%E5%AD%90.png" class="" title="CMU-DB-1">
+<p>在这个例子里面，<strong>relation(关系)</strong>指的就是所有描述一个记录的无序集合 (unordered set)，这里每一行表示了一个艺术家的记录，包括了姓名，年份和国家；其中一个特定的记录（record）被称为<strong>tuple（元组）</strong>，它包括了该记录所有的参数（value），一般来说每个参数都是不能再细分的（数、字符串等等，不能是数据，向量），null参数是任何tuple的成员之一。在这个例子里我们可以说<em>n-ary Relation = Table with n columns</em>，一个n维的relation可以用一个n列的表格来表示。</p>
+<p>在一个relation中我们可以用<strong>primary key（主键）</strong>来特定的标识出某个tuple，某一些DBMS会在你没有定义定义primary key的时候自动创建一个内部primary key，例如SQL:2003会产生一个序列、MySQL会自动递增一个序号，这时表格可能会下图这样子的，需要注意的是，这个id不代表记录的任何属性，只是我们用来标识出他的一个记号，这个记号也有可能不会显式地显示出来</p>
+<img src="/2020/04/20/CMU-DB-1/%E5%B8%A6%E4%B8%BB%E9%94%AE%E7%9A%84%E4%BE%8B%E5%AD%90.png" class="" title="CMU-DB-1">
+<p>除此之外，我们还需要有个机制来联系两个relation，所以还引入了一个<strong>foreign key（外键）</strong>，这个键主要用来在一个tuple里面通过他来联系到另一个relation里面的另一个tuple，在这个例子指的就是艺术家和专辑之间的联系，如下图：</p>
+<img src="/2020/04/20/CMU-DB-1/%E5%A4%96%E9%94%AE%E4%BE%8B%E5%AD%901.png" class="" title="CMU-DB-1">
+<p>但是这里可以发现一个问题，但专辑不止有一个艺术家的时候怎么办？前面提到了每一个value必须是不可再分的，所以不能用一个数组来保存，这个时候我们可以用第三个relation来描述这两个relation之间的联系，这个relation里面每一个tuple只需要包含两个value：艺术家的id和专辑的id，如下图所示：</p>
+<img src="/2020/04/20/CMU-DB-1/%E5%A4%96%E9%94%AE%E4%BE%8B%E5%AD%902.png" class="" title="CMU-DB-1">
+<h4 id="音乐商店例子：数据库操作"><a href="#音乐商店例子：数据库操作" class="headerlink" title="音乐商店例子：数据库操作"></a>音乐商店例子：数据库操作</h4><p>在确认了怎么表示一个数据库之后我们需要来操作它，这里我们主要关心把一个信息存进数据库和把它提取出来，这里主要两种方式：</p>
+<ul>
+<li>Procedural：每次查询制定好一个策略（不是具体的实现）用来给DBMS来执行查找</li>
+<li>Non-Procedural：查询操作不指定具体查找方法</li>
+</ul>
+<p>这两种方式的具体应用分别是<strong>Relational Algebra（关系代数）</strong>和<strong>Relational Calculus（关系演算）</strong>，这门课里面我们主要关注第一种查找方式。</p>
+<p>Relational Algebra里面基于集合（没有重复元素）的运算法则规定了七种基本运算来获取和操作一个relation里面的tuple，其中每一个操作的输入是一个或多个relation，输出是一个新的reltaion：</p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th style="text-align:center">符号</th>
+<th style="text-align:center">操作</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">$\sigma$</td>
+<td style="text-align:center">Select</td>
+</tr>
+<tr>
+<td style="text-align:center">$\pi$</td>
+<td style="text-align:center">Projection</td>
+</tr>
+<tr>
+<td style="text-align:center">$\cup$</td>
+<td style="text-align:center">Union</td>
+</tr>
+<tr>
+<td style="text-align:center">$\cap$</td>
+<td style="text-align:center">Intersection</td>
+</tr>
+<tr>
+<td style="text-align:center">$-$</td>
+<td style="text-align:center">Difference</td>
+</tr>
+<tr>
+<td style="text-align:center">$\times$</td>
+<td style="text-align:center">Product</td>
+</tr>
+<tr>
+<td style="text-align:center">$\Join$</td>
+<td style="text-align:center">Join</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>下面对每一个操作进行介绍：</p>
+<h5 id="Select（选择）"><a href="#Select（选择）" class="headerlink" title="Select（选择）"></a>Select（选择）</h5><p>选择操作是从一个relation里面选出一个tuple的子集满足给定的选择条件，作用和一个filter类似，具体语法是$\sigma_{predicate}(R)$，可以看看下面的例子,对同一个relation用不同的条件可以输出不同的结果（也是一个relation），这个操作对应SQL里面WHERE语句：</p>
+<img src="/2020/04/20/CMU-DB-1/select.png" class="" title="CMU-DB-1">
+<h5 id="Projection（投影）"><a href="#Projection（投影）" class="headerlink" title="Projection（投影）"></a>Projection（投影）</h5><p>给定一个relation，投影操作可以输出一个只包括tuple里面的特定参数(attributes)新的relation，通过这个操作可以重新安排参数的顺序，也可以对所有tuple的某个参数进行统一的修改，效果和对应的SQL语句如下图所示，具体的语法是$\pi_{A1,A2,…,An}(R)$:</p>
+<img src="/2020/04/20/CMU-DB-1/projection.png" class="" title="CMU-DB-1">
+<h5 id="Union（并集）"><a href="#Union（并集）" class="headerlink" title="Union（并集）"></a>Union（并集）</h5><p>联合操作比较简单，就是把两个relation合成一个新的relation，语法是$R\cup S$，效果如下所示，值得注意的是这个操作的两个输入relation需要有完全一样顺序的参数，否则不会匹配（另外这个例子里面好像不会去重？？）</p>
+<img src="/2020/04/20/CMU-DB-1/union.png" class="" title="CMU-DB-1">
+<h5 id="Intersection（交集）"><a href="#Intersection（交集）" class="headerlink" title="Intersection（交集）"></a>Intersection（交集）</h5><p>对两个relation取共同部分，同样需要两个relation有完全一样的参数和顺序，语法是$R\cap S$：</p>
+<img src="/2020/04/20/CMU-DB-1/Intersection.png" class="" title="CMU-DB-1">
+<h5 id="Difference（差集）"><a href="#Difference（差集）" class="headerlink" title="Difference（差集）"></a>Difference（差集）</h5><p>差集的输入是两个relation，输出所有在第一个relation出现过但没有在第二个relation出现的tuple组成的relation，语法是$R-S$</p>
+<img src="/2020/04/20/CMU-DB-1/difference.png" class="" title="CMU-DB-1">
+<h5 id="Product-叉乘"><a href="#Product-叉乘" class="headerlink" title="Product (叉乘)"></a>Product (叉乘)</h5><p>叉乘取两个relation作为输入，输出两个relation中各自所有tuple的排列组合产生的tuple并组成新的relation，语法是$R\times S$，类似SQL的cross join，效果如下</p>
+<img src="/2020/04/20/CMU-DB-1/product.png" class="" title="CMU-DB-1">
+<h5 id="Join-（联合）"><a href="#Join-（联合）" class="headerlink" title="Join （联合）"></a>Join （联合）</h5><p>Join取两个relation并输出一个新的relation，其中的tuple是这两个relation都包含的一部分（可能有共同的一个或多个参数），语法是$R\Join S$，类似SQL的NATURAL JOIN</p>
+<img src="/2020/04/20/CMU-DB-1/join.png" class="" title="CMU-DB-1">
+<h5 id="其他"><a href="#其他" class="headerlink" title="其他"></a>其他</h5><p>除了七种基本操作以外，relational algebra还有一些额外的操作，例如：Rename - $\rho$, Assignment - $R\leftarrow S$, Duplicate Elimination - $\delta$, Aggregation $\gamma$, sorting - $\tau$, Division - $R \div S$</p>
+<p>相对于最初提到具体的某个具体的实现（for-loop），用relational algebra来实现某个查找相对来说虽然抽象程度更高，但是同一个查找可能不同的algebra实现方式可能效率不同，比如$\sigma_{b_{id}=102(R\Join S)} vs. (R\Join(\sigma_{b_{id}=102}(S)))$。对用户而言他在执行某个查找的时候只需要提出这样一个要求，来避免具体的实现细节（针对不同的数据库可能不同的执行顺序效率不同）：</p>
+<ul>
+<li>Retrieve the joined tuples from R and S where b_id equals 102.</li>
+</ul>
+<p>值得注意的是，虽然现在SQL已经是事实上的标准，relational model独立于任何一种特定的查询语言，用这种模型的好处是不需要去了解特定的实现细节（比如要不要用for循环去查找等等），而其中关系代数定义了关系数据库里面最基本的操作。</p>
+
+    </div>
+
+    
+    
+    
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>Post author:  </strong>Xiaotao Guo
+  </li>
+  <li class="post-copyright-link">
+    <strong>Post link: </strong>
+    <a href="https://guoxiaotao.xyz/2020/04/20/CMU-DB-1/" title="Databases Systems CMU - 01 介绍">https://guoxiaotao.xyz/2020/04/20/CMU-DB-1/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>Copyright Notice:  </strong>All articles in this blog are licensed under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> unless stating additionally.
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+          
+          <div class="post-tags">
+              <a href="/tags/database/" rel="tag"><i class="fa fa-tag"></i> database</a>
+              <a href="/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/" rel="tag"><i class="fa fa-tag"></i> 数据库</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/04/19/distributed-system/" rel="prev" title="分布式系统-distributed system">
+      <i class="fa fa-chevron-left"></i> 分布式系统-distributed system
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    <div class="comments" id="valine-comments"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#课程介绍"><span class="nav-number">1.</span> <span class="nav-text">课程介绍</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#数据库管理系统"><span class="nav-number">2.</span> <span class="nav-text">数据库管理系统</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#例子"><span class="nav-number">2.1.</span> <span class="nav-text">例子</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#数据库系统模型介绍"><span class="nav-number">2.2.</span> <span class="nav-text">数据库系统模型介绍</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#音乐商店例子：数据库描述"><span class="nav-number">2.2.1.</span> <span class="nav-text">音乐商店例子：数据库描述</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#音乐商店例子：数据库操作"><span class="nav-number">2.2.2.</span> <span class="nav-text">音乐商店例子：数据库操作</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#Select（选择）"><span class="nav-number">2.2.2.1.</span> <span class="nav-text">Select（选择）</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#Projection（投影）"><span class="nav-number">2.2.2.2.</span> <span class="nav-text">Projection（投影）</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#Union（并集）"><span class="nav-number">2.2.2.3.</span> <span class="nav-text">Union（并集）</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#Intersection（交集）"><span class="nav-number">2.2.2.4.</span> <span class="nav-text">Intersection（交集）</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#Difference（差集）"><span class="nav-number">2.2.2.5.</span> <span class="nav-text">Difference（差集）</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#Product-叉乘"><span class="nav-number">2.2.2.6.</span> <span class="nav-text">Product (叉乘)</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#Join-（联合）"><span class="nav-number">2.2.2.7.</span> <span class="nav-text">Join （联合）</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#其他"><span class="nav-number">2.2.2.8.</span> <span class="nav-text">其他</span></a></li></ol></li></ol></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Xiaotao Guo"
+      src="https://avatars3.githubusercontent.com/u/45047478?s=460&u=3be5d506be9a30bd6eadfd29cd36c61e30833bb2&v=4">
+  <p class="site-author-name" itemprop="name">Xiaotao Guo</p>
+  <div class="site-description" itemprop="description">Stay hungry, stay foolish</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">19</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">6</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/XiaotaoGuo" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;XiaotaoGuo" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.google.com/maps/place/Virginia/@37.9179474,-83.9116557,6z/data=!3m1!4b1!4m5!3m4!1s0x884cd670bdbcb2cd:0xc04e4149b746a695!8m2!3d37.4315734!4d-78.6568942" title="Virginia, USA → https:&#x2F;&#x2F;www.google.com&#x2F;maps&#x2F;place&#x2F;Virginia&#x2F;@37.9179474,-83.9116557,6z&#x2F;data&#x3D;!3m1!4b1!4m5!3m4!1s0x884cd670bdbcb2cd:0xc04e4149b746a695!8m2!3d37.4315734!4d-78.6568942" rel="noopener" target="_blank"><i class="fa fa-map-marker fa-fw"></i>Virginia, USA</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.linkedin.com/in/xiaotaoguo/" title="LinkedIn → https:&#x2F;&#x2F;www.linkedin.com&#x2F;in&#x2F;xiaotaoguo&#x2F;" rel="noopener" target="_blank"><i class="fab fa-linkedin fa-fw"></i>LinkedIn</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:guoxiaotao0819@gmail.com" title="E-Mail → mailto:guoxiaotao0819@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://ucsd.edu/" title="UC San Diego → https:&#x2F;&#x2F;ucsd.edu&#x2F;" rel="noopener" target="_blank"><i class="fa fa-graduation-cap fa-fw"></i>UC San Diego</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zju.edu.cn/" title="ZJU → https:&#x2F;&#x2F;www.zju.edu.cn&#x2F;" rel="noopener" target="_blank"><i class="fa fa-graduation-cap fa-fw"></i>ZJU</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://torc.ai/" title="Torc Robotics → https:&#x2F;&#x2F;torc.ai&#x2F;" rel="noopener" target="_blank"><i class="fa fa-briefcase fa-fw"></i>Torc Robotics</a>
+      </span>
+  </div>
+
+
+
+    <div class="links-of-blogroll motion-element links-of-blogroll-block">
+      <div class="links-of-blogroll-title">
+        <!-- modify icon to fire by szw -->
+        <i class="fa fa-history fa-" aria-hidden="true"></i>
+        近期文章
+      </div>
+      <ul class="links-of-blogroll-list">
+        
+        
+          <li>
+            <a href="/2020/04/20/CMU-DB-1/" title="Databases Systems CMU - 01 介绍" target="_blank">Databases Systems CMU - 01 介绍</a>
+          </li>
+        
+          <li>
+            <a href="/2020/04/19/distributed-system/" title="分布式系统-distributed system" target="_blank">分布式系统-distributed system</a>
+          </li>
+        
+          <li>
+            <a href="/2020/04/19/networks/" title="网络-networks" target="_blank">网络-networks</a>
+          </li>
+        
+          <li>
+            <a href="/2020/04/19/security/" title="安全机制-security" target="_blank">安全机制-security</a>
+          </li>
+        
+          <li>
+            <a href="/2020/04/19/protection/" title="保护-protection" target="_blank">保护-protection</a>
+          </li>
+        
+      </ul>
+    </div>
+
+
+      </div>
+
+      <script type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?d=3IgjZ2nwFXDxOcZaq3bMwhX63fbnM0O-5aVh7uWblik&cl=ffffff&w=a"></script>
+      
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-cog"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Xiaotao Guo</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a>
+  </div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="Total Visitors">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="Total Views">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+  <script>
+    (function(){
+      var bp = document.createElement('script');
+      var curProtocol = window.location.protocol.split(':')[0];
+      bp.src = (curProtocol === 'https') ? 'https://zz.bdstatic.com/linksubmit/push.js' : 'http://push.zhanzhang.baidu.com/push.js';
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(bp, s);
+    })();
+  </script>
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+      
+
+<script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      loader: {
+        source: {
+          '[tex]/amsCd': '[tex]/amscd',
+          '[tex]/AMScd': '[tex]/amscd'
+        }
+      },
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'ams'
+      },
+      options: {
+        renderActions: {
+          findScript: [10, doc => {
+            document.querySelectorAll('script[type^="math/tex"]').forEach(node => {
+              const display = !!node.type.match(/; *mode=display/);
+              const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+              const text = document.createTextNode('');
+              node.parentNode.replaceChild(text, node);
+              math.start = {node: text, delim: '', n: 0};
+              math.end = {node: text, delim: '', n: 0};
+              doc.math.push(math);
+            });
+          }, '', false],
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              let target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    (function () {
+      var script = document.createElement('script');
+      script.src = '//cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+      script.defer = true;
+      document.head.appendChild(script);
+    })();
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+    
+
+  
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//unpkg.com/valine/dist/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : true,
+      appId      : 'gyDhE6WmYReAVJr69uuRmqab-gzGzoHsz',
+      appKey     : 'EEq9PxLIVddyewEdu9gUytK2',
+      placeholder: "Your comment makes this site better!",
+      avatar     : 'mm',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : false,
+      lang       : '' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : false,
+      serverURLs : ''
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>
