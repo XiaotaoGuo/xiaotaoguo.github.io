@@ -3758,7 +3758,10 @@
 </li>
 </ul>
 <h2 id="zsh相关"><a href="#zsh相关" class="headerlink" title="zsh相关"></a>zsh相关</h2><ul>
-<li><a href="https://www.zhihu.com/question/21418449" target="_blank" rel="noopener">zsh基本配置</a><br> zshrc基本配置</li>
+<li><p><a href="https://www.zhihu.com/question/21418449" target="_blank" rel="noopener">zsh基本配置</a><br> zshrc基本配置，主要用了antigen管理插件和prezto管理prompt</p>
+</li>
+<li><p><a href="https://mikebuss.com/2014/04/07/customizing-prezto/" target="_blank" rel="noopener">Customizing Your Prezto Prompt</a><br> 选择prezto主题</p>
+</li>
 </ul>
 ]]></content>
       <categories>
