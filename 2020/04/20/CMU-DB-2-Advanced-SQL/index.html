@@ -41,7 +41,7 @@
 <meta property="og:image" content="https://guoxiaotao.xyz/2020/04/20/CMU-DB-2-Advanced-SQL/over_partition.png">
 <meta property="og:image" content="https://guoxiaotao.xyz/2020/04/20/CMU-DB-2-Advanced-SQL/rank.png">
 <meta property="article:published_time" content="2020-04-20T21:29:31.000Z">
-<meta property="article:modified_time" content="2020-04-21T05:48:55.070Z">
+<meta property="article:modified_time" content="2020-04-21T05:56:28.101Z">
 <meta property="article:author" content="Xiaotao Guo">
 <meta property="article:tag" content="database">
 <meta property="article:tag" content="数据库">
@@ -239,7 +239,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2020-04-21 01:48:55" itemprop="dateModified" datetime="2020-04-21T01:48:55-04:00">2020-04-21</time>
+                <time title="Modified: 2020-04-21 01:56:28" itemprop="dateModified" datetime="2020-04-21T01:56:28-04:00">2020-04-21</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -278,13 +278,13 @@
               <span class="post-meta-item-icon">
                 <i class="far fa-file-word"></i>
               </span>
-              <span>6k</span>
+              <span>6.1k</span>
             </span>
             <span class="post-meta-item" title="Reading time">
               <span class="post-meta-item-icon">
                 <i class="far fa-clock"></i>
               </span>
-              <span>5 mins.</span>
+              <span>6 mins.</span>
             </span>
 
         </div>
@@ -311,20 +311,20 @@
 <img src="/2020/04/20/CMU-DB-2-Advanced-SQL/example.png" class="" title="CMU-DB-2-Advanced-SQL">
 <h4 id="Aggregates-（聚合）"><a href="#Aggregates-（聚合）" class="headerlink" title="Aggregates （聚合）"></a>Aggregates （聚合）</h4><p>聚合操作是一系列函数的总称，这些函数的特点是取一系列 tuples 然后返回一个单元素(single value)，具体包括以下这些：</p>
 <ul>
-<li>AVG(col): 返回该列的平均值，下面以此类推</li>
-<li>MIN(col)</li>
-<li>MAX(col)</li>
-<li>SUM(col)</li>
-<li>COUNT(col):返回该列元素个数</li>
+<li><code>AVG(col)</code>: 返回该列的平均值，下面以此类推</li>
+<li><code>MIN(col)</code></li>
+<li><code>MAX(col)</code></li>
+<li><code>SUM(col)</code></li>
+<li><code>COUNT(col)</code>:返回该列元素个数</li>
 </ul>
 <p>下面看一下这些函数的具体使用场景。</p>
 <p>假设我们想要获取用“@cs”邮箱登录的学生个数，我们可能会用以下SQL语句，我们会注意到聚合函数只会用在 SELECT 语句的输出列表中（很显然，因为聚合函数只会产生一个元素所以肯定是最终结果）</p>
 <figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SELECT</span> <span class="keyword">COUNT</span>(login) <span class="keyword">AS</span> cnt</span><br><span class="line">    <span class="keyword">FROM</span> student <span class="keyword">WHERE</span> login <span class="keyword">LIKE</span> <span class="string">'%@cs'</span></span><br></pre></td></tr></table></figure>
 <p>我们还可以用以下两种语句来进一步简化：</p>
 <figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">// ver 2</span><br><span class="line"><span class="keyword">SELECT</span> <span class="keyword">COUNT</span>(*) <span class="keyword">AS</span> cnt</span><br><span class="line">    <span class="keyword">FROM</span> student <span class="keyword">WHERE</span> login <span class="keyword">LIKE</span> <span class="string">'@cs'</span></span><br><span class="line"></span><br><span class="line">// ver <span class="number">3</span></span><br><span class="line"><span class="keyword">SELECT</span> <span class="keyword">COUNT</span>(<span class="number">1</span>) <span class="keyword">AS</span> cnt</span><br><span class="line">    <span class="keyword">FROM</span> student <span class="keyword">WHERE</span> login <span class="keyword">LIKE</span> <span class="string">'%@cs'</span></span><br></pre></td></tr></table></figure>
-<p>我们还可以同时使用多个聚合函数，假设我们想获得“@cs”邮箱登录的学生个数和他们的平均GPA，可以用以下方式查找，最后会输出含一个tuple（平均GPA和学生个数）的表：</p>
+<p>我们还可以同时使用多个聚合函数，假设我们想获得<code>“@cs”</code>邮箱登录的学生个数和他们的平均GPA，可以用以下方式查找，最后会输出含一个tuple（平均GPA和学生个数）的表：</p>
 <figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SELECT</span> <span class="keyword">AVG</span>(gpa), <span class="keyword">COUNT</span>(<span class="keyword">sid</span>)</span><br><span class="line">    <span class="keyword">FROM</span> student <span class="keyword">WHERE</span> login <span class="keyword">LIKE</span> <span class="string">'%@cs'</span></span><br></pre></td></tr></table></figure>
-<p>聚合函数中 COUNT, SUM, AVG 还支持对其输入参数用关键字 DISTINCT 来进行去重，用以下方式可以获得用”@cs”邮箱登录的不重复学生人数：</p>
+<p>聚合函数中 <code>COUNT</code>, <code>SUM</code>, <code>AVG</code> 还支持对其输入参数用关键字 <code>DISTINCT</code> 来进行去重，用以下方式可以获得用”@cs”邮箱登录的不重复学生人数：</p>
 <figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SELECT</span> <span class="keyword">COUNT</span>(<span class="keyword">DISTINCT</span> login) <span class="keyword">AS</span> cnt</span><br><span class="line">    <span class="keyword">FROM</span> student <span class="keyword">WHERE</span> login <span class="keyword">LIKE</span> <span class="string">'%@cs'</span></span><br></pre></td></tr></table></figure>
 <p>在使用聚合函数的过程要注意在聚合函数以外的列的输出是<em>未定义的(undefined)</em>，具体参考以下例子</p>
 <figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">// 获取每门课上注册学生的平均GPA</span><br><span class="line"><span class="keyword">SELECT</span> <span class="keyword">AVG</span>(s.gpa), e.cid</span><br><span class="line">    <span class="keyword">FROM</span> enrolled <span class="keyword">as</span> e, student <span class="keyword">AS</span> s</span><br><span class="line">    <span class="keyword">WHERE</span> e.sid = s.sid</span><br></pre></td></tr></table></figure>
@@ -335,9 +335,9 @@
 <h4 id="分组（group-by）"><a href="#分组（group-by）" class="headerlink" title="分组（group by）"></a>分组（group by）</h4><p>要实现上述提到的查找（获取每门课上注册学生的平均GPA），我们还需要加入分组操作来将输入的tuples分成不同部分并对每个部分进行聚合运算，代码和结果如下所示：</p>
 <figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SELECT</span> <span class="keyword">AVG</span>(s.gpa), e.cid</span><br><span class="line">    <span class="keyword">FROM</span> enrolled <span class="keyword">AS</span> e, student <span class="keyword">AS</span> s</span><br><span class="line">    <span class="keyword">WHERE</span> e.sid = s.sid</span><br><span class="line">    <span class="keyword">GROUP</span> <span class="keyword">BY</span> e.sid</span><br></pre></td></tr></table></figure>
 <img src="/2020/04/20/CMU-DB-2-Advanced-SQL/result2.png" class="" title="CMU-DB-2-Advanced-SQL">
-<p>注意：所有出现在 SELECT 输出语句的非聚合值必须都要出现 GROUP BY 语句里，如：</p>
+<p>注意：所有出现在 <code>SELECT</code> 输出语句的非聚合值必须都要出现 <code>GROUP BY</code> 语句里，如：</p>
 <figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">// s.name 要出现在 GROUP BY 语句里</span><br><span class="line"><span class="keyword">SELECT</span> <span class="keyword">AVG</span>(s.gpa), e.cid， s.name</span><br><span class="line">    <span class="keyword">FROM</span> enrolled <span class="keyword">AS</span> e, student <span class="keyword">AS</span> s</span><br><span class="line">    <span class="keyword">WHERE</span> e.sid = s.sid</span><br><span class="line">    <span class="keyword">GROUP</span> <span class="keyword">BY</span> e.sid</span><br></pre></td></tr></table></figure>
-<p>如果我们想对输出的table进行筛选，比如选出平均gpg高于3.9的，我们可能会想到以下语句，但是聚合计算的结果不能出现ADD语句里面，我们可以用HAVGING语句：</p>
+<p>如果我们想对输出的table进行筛选，比如选出平均gpg高于3.9的，我们可能会想到以下语句，但是聚合计算的结果不能出现<code>ADD</code>语句里面，我们可以用HAVGING语句：</p>
 <figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">// avg_gpa 不能出现在 AND 作为条件！</span><br><span class="line"><span class="keyword">SELECT</span> <span class="keyword">AVG</span>(s.gpa) <span class="keyword">AS</span> avg_gpa, e.cid</span><br><span class="line">    <span class="keyword">FROM</span> enrolled <span class="keyword">AS</span> e, student <span class="keyword">AS</span> s</span><br><span class="line">    <span class="keyword">WHERE</span> e.sid = s.sid</span><br><span class="line">    <span class="keyword">AND</span> avg_gpa &gt; <span class="number">3.9</span></span><br><span class="line">    <span class="keyword">GROUP</span> <span class="keyword">BY</span> e.sid</span><br><span class="line"></span><br><span class="line">// avg_gpa 可以出现在<span class="keyword">HAVING</span>语句里作为筛选条件</span><br><span class="line"><span class="keyword">SELECT</span> <span class="keyword">AVG</span>(s.gpa) <span class="keyword">AS</span> avg_gpa, e.cid</span><br><span class="line">    <span class="keyword">FROM</span> enrolled <span class="keyword">AS</span> e, student <span class="keyword">AS</span> s</span><br><span class="line">    <span class="keyword">WHERE</span> e.sid = s.sid</span><br><span class="line">    <span class="keyword">GROUP</span> <span class="keyword">BY</span> e.sid</span><br><span class="line">    <span class="keyword">HAVING</span> avg_gpa &gt; <span class="number">3.0</span>;</span><br></pre></td></tr></table></figure>
 <p>成果运行结果如下：</p>
 <img src="/2020/04/20/CMU-DB-2-Advanced-SQL/result-filter.png" class="" title="CMU-DB-2-Advanced-SQL">
@@ -345,16 +345,16 @@
 <h3 id="String-amp-Date-Time-Operation"><a href="#String-amp-Date-Time-Operation" class="headerlink" title="String &amp; Date/Time Operation"></a>String &amp; Date/Time Operation</h3><p>下面对SQL里面有关string, date 和 time 的操作进行介绍</p>
 <h4 id="String-字符串操作"><a href="#String-字符串操作" class="headerlink" title="String 字符串操作"></a>String 字符串操作</h4><p>针对String的操作，不同DBMS的它的要求（单/双引号，区分/不区分大小写）不一样，具体参考下表</p>
 <img src="/2020/04/20/CMU-DB-2-Advanced-SQL/string-1.png" class="" title="CMU-DB-2-Advanced-SQL">
-<p><strong>LIKE</strong> 关键字可以用来进行字符串匹配，匹配操作为：’%’ 匹配任何子串（包括空串），’_’ 匹配任何单个字符，具体例子如下：</p>
+<p><strong>LIKE</strong> 关键字可以用来进行字符串匹配，匹配操作为：<code>&#39;%&#39;</code>匹配任何子串（包括空串），’_’ 匹配任何单个字符，具体例子如下：</p>
 <figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">// 找到所有 e.cid 以 '15-' 开头的</span><br><span class="line"><span class="keyword">SELECT</span> * <span class="keyword">FROM</span> enrolled <span class="keyword">AS</span> e</span><br><span class="line">    <span class="keyword">WHERE</span> e.cid <span class="keyword">LIKE</span> <span class="string">'15-%'</span></span><br><span class="line"></span><br><span class="line">// 找到所有登录名 以 <span class="string">'@c'</span> + 一个字符串结尾的</span><br><span class="line"><span class="keyword">SELECT</span> * <span class="keyword">FROM</span> student <span class="keyword">AS</span> s</span><br><span class="line">    <span class="keyword">WHERE</span> s.login <span class="keyword">LIKE</span> <span class="string">'%@c_'</span></span><br></pre></td></tr></table></figure>
 <p>SQL 还定义了一些字符串操作的函数既可以用来输出结果也能用来作为条件，部分例子如下：</p>
 <figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">// 取长度为5的子串</span><br><span class="line"><span class="keyword">SELECT</span> <span class="keyword">SUBSTRING</span>(<span class="keyword">name</span>, <span class="number">0</span>, <span class="number">5</span>) <span class="keyword">AS</span> abbrv_name</span><br><span class="line">    <span class="keyword">FROM</span> student <span class="keyword">WHERE</span> <span class="keyword">sid</span> = <span class="number">53688</span></span><br><span class="line"></span><br><span class="line">// 转大写</span><br><span class="line"><span class="keyword">SELECT</span> * <span class="keyword">FROM</span> student <span class="keyword">AS</span> s</span><br><span class="line">    <span class="keyword">WHERE</span> <span class="keyword">UPPER</span>(s.name) <span class="keyword">LIKE</span> <span class="string">'KAN%'</span></span><br></pre></td></tr></table></figure>
-<p>SQL标准里面规定可以用 ‘||’ 来链接两个或多个字符串，其他不同DBMS也有不同的操作符/函数支持：</p>
+<p>SQL标准里面规定可以用 <code>&#39;||&#39;</code> 来链接两个或多个字符串，其他不同DBMS也有不同的操作符/函数支持：</p>
 <figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">// SQL-92</span><br><span class="line"><span class="keyword">SELECT</span> <span class="keyword">name</span> <span class="keyword">FROM</span> student</span><br><span class="line">    <span class="keyword">WHERE</span> login = <span class="keyword">LOWER</span>(<span class="keyword">name</span>) || <span class="string">'@cs'</span></span><br><span class="line"></span><br><span class="line">// MSSQL</span><br><span class="line"><span class="keyword">SELECT</span> <span class="keyword">name</span> <span class="keyword">FROM</span> student</span><br><span class="line">    <span class="keyword">WHERE</span> login = <span class="keyword">LOWER</span>(<span class="keyword">name</span>) + <span class="string">'@cs'</span></span><br><span class="line"></span><br><span class="line">// mySQL</span><br><span class="line"><span class="keyword">SELECT</span> <span class="keyword">name</span> <span class="keyword">FROM</span> student</span><br><span class="line">    <span class="keyword">WHERE</span> login = <span class="keyword">CONCAT</span>(<span class="keyword">LOWER</span>(<span class="keyword">name</span>), <span class="string">'@cs'</span>)</span><br></pre></td></tr></table></figure>
 <h4 id="DATA-TIME-时间-日期操作"><a href="#DATA-TIME-时间-日期操作" class="headerlink" title="DATA/TIME 时间/日期操作"></a>DATA/TIME 时间/日期操作</h4><p>这一部分主要包括了SQL规定的一些关于操作和修改日期/时间的操作，可以作为输出或中间参数。同样，这些操作可能在不同DBMS上有不同的支持程度和具体语法，下面举一部分例子。</p>
-<p>不同的DBMS有不同的方法获取获取当前日期，比如函数：NOW()、CURRENT_TIMESTAMP()，或者关键字CURRENT_TIMESTAMP;</p>
+<p>不同的DBMS有不同的方法获取获取当前日期，比如函数：<code>NOW()</code>、<code>CURRENT_TIMESTAMP()</code>，或者关键字<code>CURRENT_TIMESTAMP</code>;</p>
 <img src="/2020/04/20/CMU-DB-2-Advanced-SQL/time.png" class="" title="CMU-DB-2-Advanced-SQL">
-<p>也可以可以通过 EXTRACT 或者 ‘-‘ 或者 DATEDIFF 等等各种方法来获取日期信息（同样根据不同DBMS有不同语法）</p>
+<p>也可以可以通过 <code>EXTRACT</code> 或者 <code>&#39;-&#39;</code> 或者 <code>DATEDIFF</code> 等等各种方法来获取日期信息（同样根据不同DBMS有不同语法）</p>
 <img src="/2020/04/20/CMU-DB-2-Advanced-SQL/time_difference.png" class="" title="CMU-DB-2-Advanced-SQL">
 <h3 id="Output-Control-Redirection"><a href="#Output-Control-Redirection" class="headerlink" title="Output Control + Redirection"></a>Output Control + Redirection</h3><h4 id="Output-redirection-输出重定向"><a href="#Output-redirection-输出重定向" class="headerlink" title="Output redirection 输出重定向"></a>Output redirection 输出重定向</h4><p>SQL 支持将输出保存到另一个表格里面，这个操作需要满足两个条件：</p>
 <ul>
@@ -363,13 +363,13 @@
 </ul>
 <p>比如：</p>
 <figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">// SQL-02</span><br><span class="line"><span class="keyword">SELECT</span> <span class="keyword">DISTINCT</span> cid <span class="keyword">INTO</span> CourseIds</span><br><span class="line">    <span class="keyword">From</span> enrolled;</span><br><span class="line"></span><br><span class="line">// mySQL</span><br><span class="line"><span class="keyword">CREATE</span> <span class="keyword">TABLE</span> CourseIDs (</span><br><span class="line">    <span class="keyword">SELECT</span> <span class="keyword">DISTINCT</span> cid <span class="keyword">FROM</span> enrolled</span><br><span class="line">);</span><br></pre></td></tr></table></figure>
-<p>同时也支持通过 INSECT 关键字将 SELECT 输出的 tuple 插入到已经存在的表格里：</p>
+<p>同时也支持通过 <code>INSECT</code> 关键字将 <code>SELECT</code> 输出的 tuple 插入到已经存在的表格里：</p>
 <ul>
-<li>内部的 SELECT 必须输出和目标表格相同列数的 tuple</li>
+<li>内部的 <code>SELECT</code> 必须输出和目标表格相同列数的 tuple</li>
 <li>不同 BDMS 对两者重复项有不同的处理选项和语法</li>
 </ul>
 <figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">INSERT</span> <span class="keyword">INTO</span> CourseIds</span><br><span class="line">(<span class="keyword">SELECT</span> <span class="keyword">DISTINCT</span> cid <span class="keyword">FROM</span> enrolled)</span><br></pre></td></tr></table></figure>
-<h4 id="Output-Control"><a href="#Output-Control" class="headerlink" title="Output Control"></a>Output Control</h4><p>SQL 支持用 ORDER 关键字根据 tuple 中的一列或多列的值进行排序，语法是</p>
+<h4 id="Output-Control"><a href="#Output-Control" class="headerlink" title="Output Control"></a>Output Control</h4><p>SQL 支持用 <code>ORDER</code> 关键字根据 tuple 中的一列或多列的值进行排序，语法是</p>
 <img src="/2020/04/20/CMU-DB-2-Advanced-SQL/SORT.png" class="" title="CMU-DB-2-Advanced-SQL">
 <p>我们还可以用 <code>LIMIT</code> 来限制输出 tuples 的数量，并用 OFFSET 来规定一个输出范围</p>
 <figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">// LIMIT &lt;count&gt; [OFFSET]</span><br><span class="line"><span class="keyword">SELECT</span> <span class="keyword">sid</span>, <span class="keyword">name</span> <span class="keyword">FROM</span> student</span><br><span class="line">    <span class="keyword">WHERE</span> login <span class="keyword">LIKE</span> <span class="string">'%@cs'</span></span><br><span class="line">    <span class="keyword">LIMIT</span> <span class="number">20</span> <span class="keyword">OFFSET</span> <span class="number">10</span></span><br></pre></td></tr></table></figure>
