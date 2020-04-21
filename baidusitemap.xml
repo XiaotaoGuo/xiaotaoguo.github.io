@@ -1,6 +1,51 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
+    <loc>https://guoxiaotao.xyz/2020/04/19/virtual_memory/</loc>
+    <lastmod>2020-04-21</lastmod>
+  </url>  <url>
+    <loc>https://guoxiaotao.xyz/2020/04/19/timesharing/</loc>
+    <lastmod>2020-04-21</lastmod>
+  </url>  <url>
+    <loc>https://guoxiaotao.xyz/2020/04/19/synchronization/</loc>
+    <lastmod>2020-04-21</lastmod>
+  </url>  <url>
+    <loc>https://guoxiaotao.xyz/2020/04/19/security/</loc>
+    <lastmod>2020-04-21</lastmod>
+  </url>  <url>
+    <loc>https://guoxiaotao.xyz/2020/04/19/scheduling/</loc>
+    <lastmod>2020-04-21</lastmod>
+  </url>  <url>
+    <loc>https://guoxiaotao.xyz/2020/04/19/protection/</loc>
+    <lastmod>2020-04-21</lastmod>
+  </url>  <url>
+    <loc>https://guoxiaotao.xyz/2020/04/19/process/</loc>
+    <lastmod>2020-04-21</lastmod>
+  </url>  <url>
+    <loc>https://guoxiaotao.xyz/2020/04/19/networks/</loc>
+    <lastmod>2020-04-21</lastmod>
+  </url>  <url>
+    <loc>https://guoxiaotao.xyz/2020/04/19/memory_management/</loc>
+    <lastmod>2020-04-21</lastmod>
+  </url>  <url>
+    <loc>https://guoxiaotao.xyz/2020/04/19/logical_memory/</loc>
+    <lastmod>2020-04-21</lastmod>
+  </url>  <url>
+    <loc>https://guoxiaotao.xyz/2020/04/19/IO-system/</loc>
+    <lastmod>2020-04-21</lastmod>
+  </url>  <url>
+    <loc>https://guoxiaotao.xyz/2020/04/19/inter_process_communication/</loc>
+    <lastmod>2020-04-21</lastmod>
+  </url>  <url>
+    <loc>https://guoxiaotao.xyz/2020/04/19/file-system/</loc>
+    <lastmod>2020-04-21</lastmod>
+  </url>  <url>
+    <loc>https://guoxiaotao.xyz/2020/04/19/distributed-system/</loc>
+    <lastmod>2020-04-21</lastmod>
+  </url>  <url>
+    <loc>https://guoxiaotao.xyz/2020/04/19/deadlock/</loc>
+    <lastmod>2020-04-21</lastmod>
+  </url>  <url>
     <loc>https://guoxiaotao.xyz/2020/04/20/CMU-DB-1/</loc>
     <lastmod>2020-04-21</lastmod>
   </url>  <url>
@@ -9,51 +54,6 @@
   </url>  <url>
     <loc>https://guoxiaotao.xyz/2020/04/19/%E5%B8%B8%E7%94%A8%E8%B5%84%E6%BA%90%E5%B7%A5%E5%85%B7%E6%95%B4%E7%90%86/</loc>
     <lastmod>2020-04-20</lastmod>
-  </url>  <url>
-    <loc>https://guoxiaotao.xyz/2020/04/19/networks/</loc>
-    <lastmod>2020-04-19</lastmod>
-  </url>  <url>
-    <loc>https://guoxiaotao.xyz/2020/04/19/scheduling/</loc>
-    <lastmod>2020-04-19</lastmod>
-  </url>  <url>
-    <loc>https://guoxiaotao.xyz/2020/04/19/distributed-system/</loc>
-    <lastmod>2020-04-19</lastmod>
-  </url>  <url>
-    <loc>https://guoxiaotao.xyz/2020/04/19/security/</loc>
-    <lastmod>2020-04-19</lastmod>
-  </url>  <url>
-    <loc>https://guoxiaotao.xyz/2020/04/19/protection/</loc>
-    <lastmod>2020-04-19</lastmod>
-  </url>  <url>
-    <loc>https://guoxiaotao.xyz/2020/04/19/IO-system/</loc>
-    <lastmod>2020-04-19</lastmod>
-  </url>  <url>
-    <loc>https://guoxiaotao.xyz/2020/04/19/file-system/</loc>
-    <lastmod>2020-04-19</lastmod>
-  </url>  <url>
-    <loc>https://guoxiaotao.xyz/2020/04/19/virtual_memory/</loc>
-    <lastmod>2020-04-19</lastmod>
-  </url>  <url>
-    <loc>https://guoxiaotao.xyz/2020/04/19/logical_memory/</loc>
-    <lastmod>2020-04-19</lastmod>
-  </url>  <url>
-    <loc>https://guoxiaotao.xyz/2020/04/19/inter_process_communication/</loc>
-    <lastmod>2020-04-19</lastmod>
-  </url>  <url>
-    <loc>https://guoxiaotao.xyz/2020/04/19/memory_management/</loc>
-    <lastmod>2020-04-19</lastmod>
-  </url>  <url>
-    <loc>https://guoxiaotao.xyz/2020/04/19/deadlock/</loc>
-    <lastmod>2020-04-19</lastmod>
-  </url>  <url>
-    <loc>https://guoxiaotao.xyz/2020/04/19/synchronization/</loc>
-    <lastmod>2020-04-19</lastmod>
-  </url>  <url>
-    <loc>https://guoxiaotao.xyz/2020/04/19/process/</loc>
-    <lastmod>2020-04-19</lastmod>
-  </url>  <url>
-    <loc>https://guoxiaotao.xyz/2020/04/19/timesharing/</loc>
-    <lastmod>2020-04-19</lastmod>
   </url>  <url>
     <loc>https://guoxiaotao.xyz/2020/04/18/%E8%BD%AE%E5%BC%8F%E9%87%8C%E7%A8%8B%E8%AE%A1%E8%BF%90%E5%8A%A8%E6%A8%A1%E5%9E%8B%E5%8F%8A%E6%A0%87%E5%AE%9A/</loc>
     <lastmod>2020-04-19</lastmod>

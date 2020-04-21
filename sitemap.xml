@@ -2,6 +2,111 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>https://guoxiaotao.xyz/2020/04/19/virtual_memory/</loc>
+    
+    <lastmod>2020-04-21T06:01:41.104Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://guoxiaotao.xyz/2020/04/19/timesharing/</loc>
+    
+    <lastmod>2020-04-21T06:01:34.432Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://guoxiaotao.xyz/2020/04/19/synchronization/</loc>
+    
+    <lastmod>2020-04-21T06:01:28.600Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://guoxiaotao.xyz/2020/04/19/security/</loc>
+    
+    <lastmod>2020-04-21T06:01:22.829Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://guoxiaotao.xyz/2020/04/19/scheduling/</loc>
+    
+    <lastmod>2020-04-21T06:01:16.273Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://guoxiaotao.xyz/2020/04/19/protection/</loc>
+    
+    <lastmod>2020-04-21T06:01:10.169Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://guoxiaotao.xyz/2020/04/19/process/</loc>
+    
+    <lastmod>2020-04-21T06:01:03.925Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://guoxiaotao.xyz/2020/04/19/networks/</loc>
+    
+    <lastmod>2020-04-21T06:00:55.021Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://guoxiaotao.xyz/2020/04/19/memory_management/</loc>
+    
+    <lastmod>2020-04-21T06:00:49.777Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://guoxiaotao.xyz/2020/04/19/logical_memory/</loc>
+    
+    <lastmod>2020-04-21T06:00:44.241Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://guoxiaotao.xyz/2020/04/19/IO-system/</loc>
+    
+    <lastmod>2020-04-21T06:00:38.013Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://guoxiaotao.xyz/2020/04/19/inter_process_communication/</loc>
+    
+    <lastmod>2020-04-21T06:00:31.869Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://guoxiaotao.xyz/2020/04/19/file-system/</loc>
+    
+    <lastmod>2020-04-21T06:00:25.477Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://guoxiaotao.xyz/2020/04/19/distributed-system/</loc>
+    
+    <lastmod>2020-04-21T06:00:19.233Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://guoxiaotao.xyz/2020/04/19/deadlock/</loc>
+    
+    <lastmod>2020-04-21T06:00:06.729Z</lastmod>
+    
+  </url>
+  
+  <url>
     <loc>https://guoxiaotao.xyz/2020/04/20/CMU-DB-1/</loc>
     
     <lastmod>2020-04-21T05:58:37.645Z</lastmod>
@@ -40,111 +145,6 @@
     <loc>https://guoxiaotao.xyz/about/index.html</loc>
     
     <lastmod>2020-04-19T19:07:40.215Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>https://guoxiaotao.xyz/2020/04/19/networks/</loc>
-    
-    <lastmod>2020-04-19T18:46:54.480Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>https://guoxiaotao.xyz/2020/04/19/scheduling/</loc>
-    
-    <lastmod>2020-04-19T18:36:29.159Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>https://guoxiaotao.xyz/2020/04/19/distributed-system/</loc>
-    
-    <lastmod>2020-04-19T18:33:49.791Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>https://guoxiaotao.xyz/2020/04/19/security/</loc>
-    
-    <lastmod>2020-04-19T18:19:55.878Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>https://guoxiaotao.xyz/2020/04/19/protection/</loc>
-    
-    <lastmod>2020-04-19T18:14:45.147Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>https://guoxiaotao.xyz/2020/04/19/IO-system/</loc>
-    
-    <lastmod>2020-04-19T18:11:50.879Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>https://guoxiaotao.xyz/2020/04/19/file-system/</loc>
-    
-    <lastmod>2020-04-19T18:07:56.974Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>https://guoxiaotao.xyz/2020/04/19/virtual_memory/</loc>
-    
-    <lastmod>2020-04-19T18:02:14.238Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>https://guoxiaotao.xyz/2020/04/19/logical_memory/</loc>
-    
-    <lastmod>2020-04-19T17:58:52.338Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>https://guoxiaotao.xyz/2020/04/19/inter_process_communication/</loc>
-    
-    <lastmod>2020-04-19T17:48:06.293Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>https://guoxiaotao.xyz/2020/04/19/memory_management/</loc>
-    
-    <lastmod>2020-04-19T17:46:48.373Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>https://guoxiaotao.xyz/2020/04/19/deadlock/</loc>
-    
-    <lastmod>2020-04-19T17:44:06.525Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>https://guoxiaotao.xyz/2020/04/19/synchronization/</loc>
-    
-    <lastmod>2020-04-19T17:36:35.063Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>https://guoxiaotao.xyz/2020/04/19/process/</loc>
-    
-    <lastmod>2020-04-19T17:25:57.409Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>https://guoxiaotao.xyz/2020/04/19/timesharing/</loc>
-    
-    <lastmod>2020-04-19T17:25:51.765Z</lastmod>
     
   </url>
   
