@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon32.ico">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon16.ico">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"guoxiaotao.xyz","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="本文是我在学习深蓝学院的激光slam课程第三讲的学习笔记，在上一节课学习了轮式里程计的校正之后，这一课学习传感器数据预处理的另一部分：激光雷达运动畸变的校正，这一部分是对激光slam的效果和性能影响非常大的部分。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="激光雷达运动畸变去除">
+<meta property="og:url" content="https://guoxiaotao.xyz/2020/04/21/lidarSLAM-3/index.html">
+<meta property="og:site_name" content="Tao&#39;s Blog">
+<meta property="og:description" content="本文是我在学习深蓝学院的激光slam课程第三讲的学习笔记，在上一节课学习了轮式里程计的校正之后，这一课学习传感器数据预处理的另一部分：激光雷达运动畸变的校正，这一部分是对激光slam的效果和性能影响非常大的部分。">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://guoxiaotao.xyz/2020/04/21/lidarSLAM-3/%E4%B8%89%E8%A7%92%E6%B5%8B%E8%B7%9D.png">
+<meta property="og:image" content="https://guoxiaotao.xyz/2020/04/21/lidarSLAM-3/tof.png">
+<meta property="og:image" content="https://guoxiaotao.xyz/2020/04/21/lidarSLAM-3/%E5%85%89%E6%9D%9F%E6%A8%A1%E5%9E%8B.png">
+<meta property="og:image" content="https://guoxiaotao.xyz/2020/04/21/lidarSLAM-3/%E4%BC%BC%E7%84%B6%E5%9C%BA.png">
+<meta property="og:image" content="https://guoxiaotao.xyz/2020/04/21/lidarSLAM-3/%E7%95%B8%E5%8F%98.png">
+<meta property="og:image" content="https://guoxiaotao.xyz/2020/04/21/lidarSLAM-3/%E7%BA%AF%E4%BC%B0%E8%AE%A1%E6%B3%95.png">
+<meta property="og:image" content="https://guoxiaotao.xyz/2020/04/21/lidarSLAM-3/vicp.png">
+<meta property="article:published_time" content="2020-04-21T20:02:51.000Z">
+<meta property="article:modified_time" content="2020-04-21T23:30:50.424Z">
+<meta property="article:author" content="Xiaotao Guo">
+<meta property="article:tag" content="slam">
+<meta property="article:tag" content="lidar-slam">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://guoxiaotao.xyz/2020/04/21/lidarSLAM-3/%E4%B8%89%E8%A7%92%E6%B5%8B%E8%B7%9D.png">
+
+<link rel="canonical" href="https://guoxiaotao.xyz/2020/04/21/lidarSLAM-3/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en'
+  };
+</script>
+
+  <title>激光雷达运动畸变去除 | Tao's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Tao's Blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="tags fa-fw"></i>Tags<span class="badge">7</span></a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="th fa-fw"></i>Categories<span class="badge">4</span></a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="archive fa-fw"></i>Archives<span class="badge">21</span></a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://guoxiaotao.xyz/2020/04/21/lidarSLAM-3/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://avatars3.githubusercontent.com/u/45047478?s=460&u=3be5d506be9a30bd6eadfd29cd36c61e30833bb2&v=4">
+      <meta itemprop="name" content="Xiaotao Guo">
+      <meta itemprop="description" content="Stay hungry, stay foolish">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Tao's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          激光雷达运动畸变去除
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2020-04-21 16:02:51 / Modified: 19:30:50" itemprop="dateCreated datePublished" datetime="2020-04-21T16:02:51-04:00">2020-04-21</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%BF%80%E5%85%89slam/" itemprop="url" rel="index"><span itemprop="name">激光slam</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="Views" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="eye"></i>
+              </span>
+              <span class="post-meta-item-text">Views: </span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Comment Counts: </span>
+    
+    <a title="valine" href="/2020/04/21/lidarSLAM-3/#valine-comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2020/04/21/lidarSLAM-3/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+<br>
+            <span class="post-meta-item" title="Symbols count in article">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+              <span>5.2k</span>
+            </span>
+            <span class="post-meta-item" title="Reading time">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+              <span>5 mins.</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>本文是我在学习深蓝学院的<a href="https://www.shenlanxueyuan.com/course/152" target="_blank" rel="noopener">激光slam课程</a>第三讲的学习笔记，在上一节课学习了轮式里程计的校正之后，这一课学习传感器数据预处理的另一部分：激光雷达运动畸变的校正，这一部分是对激光slam的效果和性能影响非常大的部分。</p>
+<a id="more"></a>
+<h2 id="激光雷达"><a href="#激光雷达" class="headerlink" title="激光雷达"></a>激光雷达</h2><h3 id="传感器介绍"><a href="#传感器介绍" class="headerlink" title="传感器介绍"></a>传感器介绍</h3><p>按照测距原理分激光雷达有两种</p>
+<h4 id="三角测距"><a href="#三角测距" class="headerlink" title="三角测距"></a>三角测距</h4><p>三角测距的大致原理如下图所示，和双目类似通过两个点测出目标点和两点连线的距离，计算方法大概如下：</p>
+<script type="math/tex; mode=display">
+\begin{aligned}
+x + y &= L \\
+\frac{x}{\sin{(\frac{\pi}{2}-\beta)}} &= \frac{d}{\sin{\beta}} \\
+\frac{y}{\sin{(\frac{\pi}{2}-\alpha)}} &= \frac{d}{\sin{\alpha}}
+\end{aligned}</script><p>三个方程三个未知数，联立可以解出，可以发现距离和基线和两个出射角都有关：</p>
+<script type="math/tex; mode=display">d = L \frac{\sin{\alpha}\sin{\beta}}{\sin{(\alpha+\beta)}}</script><img src="/2020/04/21/lidarSLAM-3/%E4%B8%89%E8%A7%92%E6%B5%8B%E8%B7%9D.png" class="" title="lidarSLAM-3">
+<p>三角测距有以下特点：</p>
+<ul>
+<li><em>受限于基线长度</em>，中近距离精度较高，远距离精度较差（所以一般在室内用）</li>
+<li>结构简单，价格比较便宜</li>
+<li>比较容易受干扰（强光等）</li>
+</ul>
+<h4 id="飞行时间测距（tof）"><a href="#飞行时间测距（tof）" class="headerlink" title="飞行时间测距（tof）"></a>飞行时间测距（tof）</h4><p>飞行时间的测距原理如下所示，原理偏光学一点所以不推导了。</p>
+<img src="/2020/04/21/lidarSLAM-3/tof.png" class="" title="lidarSLAM-3">
+<p>TOF的特点：</p>
+<ul>
+<li>测距范围广（只跟时间差/光相位差有关，距离影响不大）</li>
+<li>测距精度高</li>
+<li>抗干扰能力强</li>
+<li>价格贵</li>
+<li>室内/外都可以用</li>
+</ul>
+<h3 id="激光雷达数学模型介绍"><a href="#激光雷达数学模型介绍" class="headerlink" title="激光雷达数学模型介绍"></a>激光雷达数学模型介绍</h3><p>这里主要介绍如何通过激光束的观测结果以及地图来计算机器人位姿的数学模型。</p>
+<h4 id="光束模型（beam-model）"><a href="#光束模型（beam-model）" class="headerlink" title="光束模型（beam model）"></a>光束模型（beam model）</h4><p>这个模型是概率学提出的比较传统的数学模型，具体来说可以参考以下四张图。假设机器人位姿是 $x_t$, 并且发射一束激光期望能够打到前方 $z_t^*$ (期望值)距离处的物体（根据地图 $m$ 获得期望值），但是由于各种原因（噪声），返回来的值 $z_t$ (观测值)不一定和实际值一致。而光束模型认为总共能有四种噪声和真实值耦合形成观测值，分别是：</p>
+<ul>
+<li>高斯噪声：高斯噪声使得观测值在真实值周围形成高斯分布 （大部分时候是符合这个分布）</li>
+<li>物体被遮挡：因为物体被遮挡所以观测值会比真实值小很多，形成指数分布 （出现动态物体的时候会出现）</li>
+<li>没扫到物体：因为物体没被扫到所以观测值无穷大（可以通过判断是否超出有效距离过滤掉）</li>
+<li>均匀噪声：均匀噪声使得观测值在真实值周围形成均匀分布（正常传感器应该不太会出现这种噪声）</li>
+</ul>
+<img src="/2020/04/21/lidarSLAM-3/%E5%85%89%E6%9D%9F%E6%A8%A1%E5%9E%8B.png" class="" title="lidarSLAM-3">
+<p>基于这四种模型，我们给每种模型分配不同的权重(对每一个激光点 $z_t^k$， 共k个)<em>计算出在当前位姿基于建好的地图出现观测值的概率就可以用来判断位姿的准确性</em>，计算过程如下：<br>先计算出每个激光点的得分（出现概率，越高所以越准确），第一项是四个模型的权重，一般高斯分布的权重会比较高（大部分），均匀分布的权重比较低（出现情况很少）。</p>
+<script type="math/tex; mode=display">
+p(z_t^k|x_t, m) = \begin{bmatrix}z_{hit}\\z_{short}\\z_{max}\\z_{rand}\end{bmatrix}^T\begin{bmatrix}p_{hit}(z_t^k|x_t,m)\\p_{short}(z_t^k|x_t,m)\\p_{max}(z_t^k|x_t,m)\\p_{rand}(z_t^k|x_t,m)\end{bmatrix}</script><p>然后我们再把该帧所有激光点的概率相乘就能得到这帧激光束的得分（概率），这个模型的要点就要搜索一个位姿 $x_t^*$ 使得该帧的得分（出现概率）最高。</p>
+<script type="math/tex; mode=display">
+p(z_t|x_t, m) = \prod_{k=1}^Kp(z_t^k|x_t, m)</script><p>这个模型需要将一个激光束中所有的点的概率都计算出来（一条线上的所有激光点）而且一帧有很多条激光束，<em>计算量大</em>。<br>并且这个模型有一个致命的缺点。假设我们考虑在一个比较结构化的场景（室内环境，大部分都是平面的结构等等）的时候，这个时候当我们在靠近真实值的过程中，我们可以发现计算出来的激光束的得分是逐渐上升的，而且变化大部分是一个连续的过程，这种场景下没有问题。但是如果在比较不规则的场景（室外环境，假设有一个电线杆在 $z_t^<em>$ 处），这个时候只要我们<em>*假设的位姿离真实位姿有一点点的变化都会导致激光束的得分急剧降低</em></em>（只要稍微旋转一下就扫不动电线杆，所以会出现无穷大 $z_{max}$ ，而实际激光束 $z_t$ 并不是），所以这会给搜索带来很大的困难以及误匹配，因为这两个原因，所以现在实际上比较少采用这种模型。</p>
+<h4 id="似然场模型-likelyhood-model"><a href="#似然场模型-likelyhood-model" class="headerlink" title="似然场模型 (likelyhood model)"></a>似然场模型 (likelyhood model)</h4><p>似然场模型的原理如下图所示，左边是实际环境图 $m$ ，这个时候如果不考虑似然场的话我们可以认为如果在给定位姿 $x_t$ 的时候打中 实际障碍物的概率是 1，如果没打中就是 0，这样每条激光束出现概率非 0 即 1，过于绝对出现光束模型的病态问题，似然场模型的要点是将地图进行高斯平滑，激光束击中障碍物周围的环境形成以障碍物位姿为中心的高斯分布，这样就算我们估算的位姿不是很准确导致在那个位姿实际上打不到障碍物，如右图所示，该帧观测值的概率也不会是0，而是一个接近1的值，这样做的好处有：</p>
+<ul>
+<li>结果随环境影响变化不大，适合用于结构化和非结构化环境</li>
+<li>不用对每束激光束的所有激光点都计算（只需要对每束光束的端点查表计算概率），计算比较简单</li>
+</ul>
+<img src="/2020/04/21/lidarSLAM-3/%E4%BC%BC%E7%84%B6%E5%9C%BA.png" class="" title="lidarSLAM-3">
+<h3 id="运动畸变成因"><a href="#运动畸变成因" class="headerlink" title="运动畸变成因"></a>运动畸变成因</h3><p>运动畸变如下图所示，观测结果会和真实结果有一个偏差，主要产生的根本原因是<strong>我们假设激光雷达的扫描结果是在同一时刻（机器人位姿没有变化）产生，但是实际上激光雷达的扫描结果需要一定时间，在这个时间内机器人如果有运动的话实际的扫描的结果就会出现偏移</strong>。假设按照下图场景，激光雷达逆时针旋转，在一开始旋转的时候 $t_0$ 机器人还没有往前走，所以结果是准确的，但是在转过一半之后$(t+\delta t)$机器人已经往前走了一段距离，这个时候激光扫描结果会变小（因为靠近墙了），但是我们还是认为他在$t_0$时刻的位置，所以结果就会显示是墙离我们越来越近了，所以会出现歪掉的现象，原因是因为<strong>激光帧率比较低的时候，机器人的运动不能忽略</strong>，这个畸变现象是由于运动畸变带来的（根本原因是旋转速度太慢），所以叫做运动畸变。</p>
+<img src="/2020/04/21/lidarSLAM-3/%E7%95%B8%E5%8F%98.png" class="" title="lidarSLAM-3">
+<h2 id="运动畸变去除"><a href="#运动畸变去除" class="headerlink" title="运动畸变去除"></a>运动畸变去除</h2><p>接下来开始介绍怎么进行运动畸变的去除。</p>
+<h3 id="纯估计方法"><a href="#纯估计方法" class="headerlink" title="纯估计方法"></a>纯估计方法</h3><p>首先讲纯估计的方法，这种方法是一种<em>类ICP</em>的方法。</p>
+<h4 id="迭代最近点-ICP-方法"><a href="#迭代最近点-ICP-方法" class="headerlink" title="迭代最近点(ICP)方法"></a>迭代最近点(ICP)方法</h4><p>先介绍ICP的方法，ICP(Itrative Cloest Point)迭代最近点的方法的要点是，给定两个两个点云：</p>
+<script type="math/tex; mode=display">
+\begin{aligned}
+X &= \{x_1, x_2, ..., x_N\}\\
+P &= \{p_1, p_2, ..., p_N\}
+\end{aligned}</script><p>我们需要找到一个变换关系 $(R, t)$ 使得下式最小，这个过程叫<em>点云配准</em>，或者匹配点云。式子里面有旋转矩阵 $R$ 所以会引入三角量，因此不能用线性最小二乘解来求：</p>
+<script type="math/tex; mode=display">
+E(R, t) = \frac{1}{N}\sum_{i=1}^{N}||x_i-Rp_i-t||^2</script><p>在<strong>给定两个点云的对应点</strong>的时候，虽然不能用线性最小二乘解，但是这个式子的最小值有解析解（在后面讲到帧间匹配的时候会推导，这里先直接说明，之后补充），计算过程是：</p>
+<ul>
+<li>先求出两个点云的几何中心</li>
+</ul>
+<script type="math/tex; mode=display">
+\begin{aligned}
+u_x &= \sum_{i=1}^{N}x_i\\
+u_p &= \sum_{i=1}^{N}p_i
+\end{aligned}</script><ul>
+<li>对两个点云去中心化</li>
+</ul>
+<script type="math/tex; mode=display">
+\begin{aligned}
+X' = \{x_i-u_x\} = \{x_i'\}\\
+P' = \{p_i-u_p\} = \{p_i'\}
+\end{aligned}</script><ul>
+<li>SVD 分解</li>
+</ul>
+<script type="math/tex; mode=display">
+W = \sum_{i=1}^{N}x_i'p_i'^T = U\begin{bmatrix}\sigma_1 & 0 & 0 \\ 0 & \sigma_2 & 0 \\0 & 0 & \sigma_3\end{bmatrix}V^T</script><ul>
+<li>ICP 的解是：</li>
+</ul>
+<script type="math/tex; mode=display">
+\begin{aligned}
+R &= UV^T\\
+t &= u_x - Ru_p
+\end{aligned}</script><p>实际过程中，我们大概率并<strong>不知道对应点关系</strong>，这个时候不可以一步计算出 $R$ 和 $t$ 的最佳结果，需要用到<strong>期望最大化</strong> (Expectation Maxmization, EM) 的思想，先给定一个初值（匹配关系），利用初值进行计算 R 和 t, 再根据 R 和 t 对点云进行转换，计算误差和新的匹配关系，根据新的匹配关系进项迭代计算，直至最后算出误差小于一个阈值，这个时候可以认为匹配关系和点云之间的转换关系都计算比较准确了，大概过程如下图所示：</p>
+<img src="/2020/04/21/lidarSLAM-3/%E7%BA%AF%E4%BC%B0%E8%AE%A1%E6%B3%95.png" class="" title="lidarSLAM-3">
+<h4 id="VICP方法"><a href="#VICP方法" class="headerlink" title="VICP方法"></a>VICP方法</h4><p>ICP在激光匹配中没有考虑两种情况：激光的运动畸变和部分激光数据可能是错误的（错误数据可能就是来自于运动畸变）。基于这种情况，VICP（Velocity-ICP）把速度的影响也考虑在内，它的要点是假设机器人在扫描过程中进行<strong>匀速运动</strong>，在匹配迭代的时候同时估计机器人的速度，本质上用匀速运动对一帧内的位姿进行线性插值（LOAM里面也有用到这个方法），具体计算过程如下：</p>
+<ul>
+<li>$X^i, X^{i-1}$ 表示第i帧和第i-1帧的激光扫描数据</li>
+<li>$T^i, T^{i-1}$ 表示对应时刻的位姿</li>
+<li>机器人的速度$V_i$可以通过两个时刻的位姿和时间差求出</li>
+<li>我们把第i帧的时间划分为n段，分别是:</li>
+</ul>
+<script type="math/tex; mode=display">(t_i-n\Delta t, t_i - (n-1)\Delta t, ... ,t_i - \Delta t, t_i)</script><ul>
+<li>则第i帧的第j个节点的位姿矩阵是：$T_{t_i - (n-j)\Delta t} = T_ie^{(n-j)\Delta t(-V_i)}$</li>
+<li>所以校正过程是：$\bar X^i = \{e^{(n-j)\Delta t(-V_i)}x_j|j=0,…,n\}$</li>
+</ul>
+<p>算法流程和效果如下图所示：</p>
+<img src="/2020/04/21/lidarSLAM-3/vicp.png" class="" title="lidarSLAM-3">
+<h3 id="里程计辅助方法"><a href="#里程计辅助方法" class="headerlink" title="里程计辅助方法"></a>里程计辅助方法</h3><p>VICP有两个缺点：</p>
+<ul>
+<li>在用低帧率（5Hz， 200ms）的激光雷达，匀速运动假设不成立（每帧时间太长）</li>
+<li>在数据预处理（去畸变）的过程中跟状态估计（速度和位姿估计）耦合在一起</li>
+</ul>
+<p>而里程计/IMU可以弥补这个缺点，因为它的位姿更新频率很快(200Hz，5ms, IMU能到1kHz)，所以能够更加准确的反应运动情况，同时可以跟状态估计完全解耦。因此在里程计短时间内(200ms)的准确度比较高的时候，我们可以借助里程计来去除畸变，IMU的更新频率也很快，但是它的线性加速度精度太差（控制成本的情况下），所以几乎不能用来估计位置信息。</p>
+<p>在处理信息的时候也有两种思路：</p>
+<ul>
+<li>单片机读取激光雷达数据和位姿信息，进行运动畸变去除，然后上传到CPU，好处是不用考虑不同系统的时间同步问题，但是由于在单片机处理之后再上传所以数据需要压缩，否则会产生延时</li>
+<li>用CPU读取激光雷达数据，然后单片机上传里程计积分数据，先对数据进行时间同步然后统一进行畸变去除，需要位姿插值，因为没有时延问题所以通常采用这种方法。</li>
+</ul>
+<p>接下来介绍具体方法，我们已知的数据有：</p>
+<ul>
+<li>当前帧激光起始时间：$t_s, t_e$</li>
+<li>(同一帧内)两束激光的时间差$\Delta t$</li>
+<li>一个包含里程计数据的队列，时间范围应该覆盖当前帧激光的时间范围</li>
+</ul>
+<p>接下来具体目标为：</p>
+<ul>
+<li>获得当前帧激光数据每一个激光束端点的机器人位姿</li>
+<li>根据求解的位姿把所有激光束转换到统一坐标系下</li>
+<li>重新封装成一帧激光数据并发布</li>
+</ul>
+<p>其中关键步骤就是计算当前帧激光数据的对应机器人位姿：</p>
+<ul>
+<li>假如里程计数据队列正好对到了激光数据的时间范围（时间同步好了），那么激光帧的起止时间的位姿就是里程计数据队列的队头和队尾数据的时间戳</li>
+<li>如果开始时间没有对应里程计位姿数据，则用里程计相邻的两个位姿数据进行线性插值（因为里程计数据采集频率高，所以做匀速运动进行线性插值比较合理）</li>
+<li>在一帧数据之间的任意一点<ul>
+<li>认为机器人做匀加速运动进行二次插值（用起始点，结束点和中间点）</li>
+<li>还可以进行分段线性插值（用激光帧时间范围内的所有里程计数据点进行分段线性插值）</li>
+</ul>
+</li>
+</ul>
+<p>获得每个激光点对应的机器人位姿 $p_i$ 之后，可以将激光点信息 $x_i$（在当前时间插值得到的位姿坐标系下）转换为统一的坐标系下（比如起始时间）：$x_i’=p_i^Tx_i$，接下来重新封装激光信息发布出去：</p>
+<script type="math/tex; mode=display">
+\begin{aligned}
+x_i' &= (p_x, p_y)\\
+range &= \sqrt{p_x^2+p_y^2}\\
+angle &= \arctan{(p_y, p_x)}
+\end{aligned}</script><h3 id="融合方法"><a href="#融合方法" class="headerlink" title="融合方法"></a>融合方法</h3><p>融合方法主要就是考虑前两种的方法的融合。我们先用里程计方法插值得到位姿数据进行去畸变。假设我们认为里程计方法还是存在误差（采集频率还是不够快），我们可以认为误差是跟时间线性分布的，所以我们用ICP的方法进行一次匹配，并将匹配结果作为正确值，这个过程会产生一个误差作为里程计的误差值。基于误差线性分布的假设，我们可以把误差平均分配到每一个时间段内，进行激光点修正，然后再进行ICP迭代直到结果收敛。</p>
+
+    </div>
+
+    
+    
+    
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>Post author:  </strong>Xiaotao Guo
+  </li>
+  <li class="post-copyright-link">
+    <strong>Post link: </strong>
+    <a href="https://guoxiaotao.xyz/2020/04/21/lidarSLAM-3/" title="激光雷达运动畸变去除">https://guoxiaotao.xyz/2020/04/21/lidarSLAM-3/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>Copyright Notice:  </strong>All articles in this blog are licensed under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> unless stating additionally.
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+          
+          <div class="post-tags">
+              <a href="/tags/slam/" rel="tag"><i class="fa fa-tag"></i> slam</a>
+              <a href="/tags/lidar-slam/" rel="tag"><i class="fa fa-tag"></i> lidar-slam</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/04/20/CMU-DB-2-Advanced-SQL/" rel="prev" title="[CMU-15-445/645]-Advanced SQL">
+      <i class="fa fa-chevron-left"></i> [CMU-15-445/645]-Advanced SQL
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    <div class="comments" id="valine-comments"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#激光雷达"><span class="nav-number">1.</span> <span class="nav-text">激光雷达</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#传感器介绍"><span class="nav-number">1.1.</span> <span class="nav-text">传感器介绍</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#三角测距"><span class="nav-number">1.1.1.</span> <span class="nav-text">三角测距</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#飞行时间测距（tof）"><span class="nav-number">1.1.2.</span> <span class="nav-text">飞行时间测距（tof）</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#激光雷达数学模型介绍"><span class="nav-number">1.2.</span> <span class="nav-text">激光雷达数学模型介绍</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#光束模型（beam-model）"><span class="nav-number">1.2.1.</span> <span class="nav-text">光束模型（beam model）</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#似然场模型-likelyhood-model"><span class="nav-number">1.2.2.</span> <span class="nav-text">似然场模型 (likelyhood model)</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#运动畸变成因"><span class="nav-number">1.3.</span> <span class="nav-text">运动畸变成因</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#运动畸变去除"><span class="nav-number">2.</span> <span class="nav-text">运动畸变去除</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#纯估计方法"><span class="nav-number">2.1.</span> <span class="nav-text">纯估计方法</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#迭代最近点-ICP-方法"><span class="nav-number">2.1.1.</span> <span class="nav-text">迭代最近点(ICP)方法</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#VICP方法"><span class="nav-number">2.1.2.</span> <span class="nav-text">VICP方法</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#里程计辅助方法"><span class="nav-number">2.2.</span> <span class="nav-text">里程计辅助方法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#融合方法"><span class="nav-number">2.3.</span> <span class="nav-text">融合方法</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Xiaotao Guo"
+      src="https://avatars3.githubusercontent.com/u/45047478?s=460&u=3be5d506be9a30bd6eadfd29cd36c61e30833bb2&v=4">
+  <p class="site-author-name" itemprop="name">Xiaotao Guo</p>
+  <div class="site-description" itemprop="description">Stay hungry, stay foolish</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">21</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">7</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/XiaotaoGuo" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;XiaotaoGuo" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.google.com/maps/place/Virginia/@37.9179474,-83.9116557,6z/data=!3m1!4b1!4m5!3m4!1s0x884cd670bdbcb2cd:0xc04e4149b746a695!8m2!3d37.4315734!4d-78.6568942" title="Virginia, USA → https:&#x2F;&#x2F;www.google.com&#x2F;maps&#x2F;place&#x2F;Virginia&#x2F;@37.9179474,-83.9116557,6z&#x2F;data&#x3D;!3m1!4b1!4m5!3m4!1s0x884cd670bdbcb2cd:0xc04e4149b746a695!8m2!3d37.4315734!4d-78.6568942" rel="noopener" target="_blank"><i class="fa fa-map-marker fa-fw"></i>Virginia, USA</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.linkedin.com/in/xiaotaoguo/" title="LinkedIn → https:&#x2F;&#x2F;www.linkedin.com&#x2F;in&#x2F;xiaotaoguo&#x2F;" rel="noopener" target="_blank"><i class="fab fa-linkedin fa-fw"></i>LinkedIn</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:guoxiaotao0819@gmail.com" title="E-Mail → mailto:guoxiaotao0819@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://ucsd.edu/" title="UC San Diego → https:&#x2F;&#x2F;ucsd.edu&#x2F;" rel="noopener" target="_blank"><i class="fa fa-graduation-cap fa-fw"></i>UC San Diego</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zju.edu.cn/" title="ZJU → https:&#x2F;&#x2F;www.zju.edu.cn&#x2F;" rel="noopener" target="_blank"><i class="fa fa-graduation-cap fa-fw"></i>ZJU</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://torc.ai/" title="Torc Robotics → https:&#x2F;&#x2F;torc.ai&#x2F;" rel="noopener" target="_blank"><i class="fa fa-briefcase fa-fw"></i>Torc Robotics</a>
+      </span>
+  </div>
+
+
+
+    <div class="links-of-blogroll motion-element links-of-blogroll-block">
+      <div class="links-of-blogroll-title">
+        <!-- modify icon to fire by szw -->
+        <i class="fa fa-history fa-" aria-hidden="true"></i>
+        recent posts
+      </div>
+      <ul class="links-of-blogroll-list">
+        
+        
+          <li>
+            <a href="/2020/04/21/lidarSLAM-3/" title="激光雷达运动畸变去除" target="_blank">激光雷达运动畸变去除</a>
+          </li>
+        
+          <li>
+            <a href="/2020/04/20/CMU-DB-2-Advanced-SQL/" title="[CMU-15-445/645]-Advanced SQL" target="_blank">[CMU-15-445/645]-Advanced SQL</a>
+          </li>
+        
+          <li>
+            <a href="/2020/04/20/CMU-DB-1/" title="[CMU-15-445/645] - 介绍" target="_blank">[CMU-15-445/645] - 介绍</a>
+          </li>
+        
+          <li>
+            <a href="/2020/04/19/distributed-system/" title="[UCSD CSE120]分布式系统-distributed system" target="_blank">[UCSD CSE120]分布式系统-distributed system</a>
+          </li>
+        
+          <li>
+            <a href="/2020/04/19/networks/" title="[UCSD CSE120]网络-networks" target="_blank">[UCSD CSE120]网络-networks</a>
+          </li>
+        
+      </ul>
+    </div>
+
+
+      </div>
+
+      <script type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?d=3IgjZ2nwFXDxOcZaq3bMwhX63fbnM0O-5aVh7uWblik&cl=ffffff&w=a"></script>
+      
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-cog"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Xiaotao Guo</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a>
+  </div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="Total Visitors">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="Total Views">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+  <script>
+    (function(){
+      var bp = document.createElement('script');
+      var curProtocol = window.location.protocol.split(':')[0];
+      bp.src = (curProtocol === 'https') ? 'https://zz.bdstatic.com/linksubmit/push.js' : 'http://push.zhanzhang.baidu.com/push.js';
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(bp, s);
+    })();
+  </script>
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+      
+
+<script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      loader: {
+        source: {
+          '[tex]/amsCd': '[tex]/amscd',
+          '[tex]/AMScd': '[tex]/amscd'
+        }
+      },
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'ams'
+      },
+      options: {
+        renderActions: {
+          findScript: [10, doc => {
+            document.querySelectorAll('script[type^="math/tex"]').forEach(node => {
+              const display = !!node.type.match(/; *mode=display/);
+              const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+              const text = document.createTextNode('');
+              node.parentNode.replaceChild(text, node);
+              math.start = {node: text, delim: '', n: 0};
+              math.end = {node: text, delim: '', n: 0};
+              doc.math.push(math);
+            });
+          }, '', false],
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              let target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    (function () {
+      var script = document.createElement('script');
+      script.src = '//cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+      script.defer = true;
+      document.head.appendChild(script);
+    })();
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+    
+
+  
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//unpkg.com/valine/dist/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : true,
+      appId      : 'gyDhE6WmYReAVJr69uuRmqab-gzGzoHsz',
+      appKey     : 'EEq9PxLIVddyewEdu9gUytK2',
+      placeholder: "Your comment makes this site better!",
+      avatar     : 'mm',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : false,
+      lang       : '' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : false,
+      serverURLs : ''
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>
