@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon32.ico">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon16.ico">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"guoxiaotao.xyz","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="这是我在学习Databases Systems CMU 15-445&#x2F;645&#x2F; Fall 2019过程记录的一些笔记，这节课介绍了SQL的各种语法和应用，主要包括聚合&#x2F;窗口函数、对字符串和日期的操作、输出控制和重定向以及常用表达式，一部分代码可能逻辑上有点模糊，最好自己跑一下深化理解。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="[CMU-15-445&#x2F;645]-Advanced SQL">
+<meta property="og:url" content="https://guoxiaotao.xyz/2020/04/20/CMU-DB-2-Advanced-SQL/index.html">
+<meta property="og:site_name" content="Tao&#39;s Blog">
+<meta property="og:description" content="这是我在学习Databases Systems CMU 15-445&#x2F;645&#x2F; Fall 2019过程记录的一些笔记，这节课介绍了SQL的各种语法和应用，主要包括聚合&#x2F;窗口函数、对字符串和日期的操作、输出控制和重定向以及常用表达式，一部分代码可能逻辑上有点模糊，最好自己跑一下深化理解。">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://guoxiaotao.xyz/2020/04/20/CMU-DB-2-Advanced-SQL/example.png">
+<meta property="og:image" content="https://guoxiaotao.xyz/2020/04/20/CMU-DB-2-Advanced-SQL/output-result.png">
+<meta property="og:image" content="https://guoxiaotao.xyz/2020/04/20/CMU-DB-2-Advanced-SQL/result-mysql.png">
+<meta property="og:image" content="https://guoxiaotao.xyz/2020/04/20/CMU-DB-2-Advanced-SQL/sqlite.png">
+<meta property="og:image" content="https://guoxiaotao.xyz/2020/04/20/CMU-DB-2-Advanced-SQL/result2.png">
+<meta property="og:image" content="https://guoxiaotao.xyz/2020/04/20/CMU-DB-2-Advanced-SQL/result-filter.png">
+<meta property="og:image" content="https://guoxiaotao.xyz/2020/04/20/CMU-DB-2-Advanced-SQL/string-1.png">
+<meta property="og:image" content="https://guoxiaotao.xyz/2020/04/20/CMU-DB-2-Advanced-SQL/time.png">
+<meta property="og:image" content="https://guoxiaotao.xyz/2020/04/20/CMU-DB-2-Advanced-SQL/time_difference.png">
+<meta property="og:image" content="https://guoxiaotao.xyz/2020/04/20/CMU-DB-2-Advanced-SQL/SORT.png">
+<meta property="og:image" content="https://guoxiaotao.xyz/2020/04/20/CMU-DB-2-Advanced-SQL/over_partition.png">
+<meta property="og:image" content="https://guoxiaotao.xyz/2020/04/20/CMU-DB-2-Advanced-SQL/rank.png">
+<meta property="article:published_time" content="2020-04-20T21:29:31.000Z">
+<meta property="article:modified_time" content="2020-04-21T05:48:55.070Z">
+<meta property="article:author" content="Xiaotao Guo">
+<meta property="article:tag" content="database">
+<meta property="article:tag" content="数据库">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://guoxiaotao.xyz/2020/04/20/CMU-DB-2-Advanced-SQL/example.png">
+
+<link rel="canonical" href="https://guoxiaotao.xyz/2020/04/20/CMU-DB-2-Advanced-SQL/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en'
+  };
+</script>
+
+  <title>[CMU-15-445/645]-Advanced SQL | Tao's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Tao's Blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="tags fa-fw"></i>Tags<span class="badge">6</span></a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="th fa-fw"></i>Categories<span class="badge">4</span></a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="archive fa-fw"></i>Archives<span class="badge">20</span></a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://guoxiaotao.xyz/2020/04/20/CMU-DB-2-Advanced-SQL/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://avatars3.githubusercontent.com/u/45047478?s=460&u=3be5d506be9a30bd6eadfd29cd36c61e30833bb2&v=4">
+      <meta itemprop="name" content="Xiaotao Guo">
+      <meta itemprop="description" content="Stay hungry, stay foolish">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Tao's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          [CMU-15-445/645]-Advanced SQL
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2020-04-20 17:29:31" itemprop="dateCreated datePublished" datetime="2020-04-20T17:29:31-04:00">2020-04-20</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-04-21 01:48:55" itemprop="dateModified" datetime="2020-04-21T01:48:55-04:00">2020-04-21</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/database/" itemprop="url" rel="index"><span itemprop="name">database</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="Views" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="eye"></i>
+              </span>
+              <span class="post-meta-item-text">Views: </span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Comment Counts: </span>
+    
+    <a title="valine" href="/2020/04/20/CMU-DB-2-Advanced-SQL/#valine-comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2020/04/20/CMU-DB-2-Advanced-SQL/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+<br>
+            <span class="post-meta-item" title="Symbols count in article">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+              <span>6k</span>
+            </span>
+            <span class="post-meta-item" title="Reading time">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+              <span>5 mins.</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>这是我在学习<a href="https://15445.courses.cs.cmu.edu/fall2019/" target="_blank" rel="noopener">Databases Systems CMU 15-445/645/ Fall 2019</a>过程记录的一些笔记，这节课介绍了SQL的各种语法和应用，主要包括聚合/窗口函数、对字符串和日期的操作、输出控制和重定向以及常用表达式，一部分代码可能逻辑上有点模糊，最好自己跑一下深化理解。</p>
+<a id="more"></a>
+<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><h3 id="关于-relational-language-的复习"><a href="#关于-relational-language-的复习" class="headerlink" title="关于 relational language 的复习"></a>关于 relational language 的复习</h3><p>在上一篇中主要介绍了Relational Language的一些基本概念以及相对应的Relational Algebra的一些基本用法。这里面有一个很重要的概念是在使用Relational language的时候只需要说明他们想要得到什么样的结果/答案，并不用去关心如何得到这个结果（包括怎么用relational algebra的基本操作去得到答案），这一部分应该由DBMS(数据库管理系统)去完成以及优化每一次查询操作（包括重新排列用户给的操作以及产生一个查找计划）。</p>
+<h3 id="SQL的历史"><a href="#SQL的历史" class="headerlink" title="SQL的历史"></a>SQL的历史</h3><p>SQL最初是从IBM的 system R 中一个叫 “SEQUEL” 的语言演变而来，意思是 “Structred English Query Language”，并在19世纪79年代被 Oracle 采用。在1983年 IBM 发布了DB2，接下来在1986 年被ANSI 作为标准，ISO 在1987 年将他命名为 SQL (Structured Query Language)，目前最新的 SQL 标准到 2016 年，大部分 DBMS 至少支持 SQL-92。</p>
+<p>SQL 实际上包括了三种语言，分别是：</p>
+<ul>
+<li>Data Manipulation Language (DML)：插入，更新，删除数据</li>
+<li>Data Definition Language (DDL)：创建定义数据库</li>
+<li>Data Conrtol Language (DCL)：权限控制</li>
+</ul>
+<p>除此之外还包括：查看定义（View Definition），添加控制条件保证数据完整性等等。另外，跟之前提到relational model不一样，SQL是基于 <strong>Bag(无序，但是允许重复数据)</strong> 的，而不是Set(无序且不允许重复)。</p>
+<h2 id="SQL"><a href="#SQL" class="headerlink" title="SQL"></a>SQL</h2><h3 id="聚合（Aggregations）-分组-Group-By"><a href="#聚合（Aggregations）-分组-Group-By" class="headerlink" title="聚合（Aggregations） + 分组(Group By)"></a>聚合（Aggregations） + 分组(Group By)</h3><p>假设我们现在有一个数据库包括以下三个表格，主要表示了学生信息和课程信息以及他们之间关系：</p>
+<img src="/2020/04/20/CMU-DB-2-Advanced-SQL/example.png" class="" title="CMU-DB-2-Advanced-SQL">
+<h4 id="Aggregates-（聚合）"><a href="#Aggregates-（聚合）" class="headerlink" title="Aggregates （聚合）"></a>Aggregates （聚合）</h4><p>聚合操作是一系列函数的总称，这些函数的特点是取一系列 tuples 然后返回一个单元素(single value)，具体包括以下这些：</p>
+<ul>
+<li>AVG(col): 返回该列的平均值，下面以此类推</li>
+<li>MIN(col)</li>
+<li>MAX(col)</li>
+<li>SUM(col)</li>
+<li>COUNT(col):返回该列元素个数</li>
+</ul>
+<p>下面看一下这些函数的具体使用场景。</p>
+<p>假设我们想要获取用“@cs”邮箱登录的学生个数，我们可能会用以下SQL语句，我们会注意到聚合函数只会用在 SELECT 语句的输出列表中（很显然，因为聚合函数只会产生一个元素所以肯定是最终结果）</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SELECT</span> <span class="keyword">COUNT</span>(login) <span class="keyword">AS</span> cnt</span><br><span class="line">    <span class="keyword">FROM</span> student <span class="keyword">WHERE</span> login <span class="keyword">LIKE</span> <span class="string">'%@cs'</span></span><br></pre></td></tr></table></figure>
+<p>我们还可以用以下两种语句来进一步简化：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">// ver 2</span><br><span class="line"><span class="keyword">SELECT</span> <span class="keyword">COUNT</span>(*) <span class="keyword">AS</span> cnt</span><br><span class="line">    <span class="keyword">FROM</span> student <span class="keyword">WHERE</span> login <span class="keyword">LIKE</span> <span class="string">'@cs'</span></span><br><span class="line"></span><br><span class="line">// ver <span class="number">3</span></span><br><span class="line"><span class="keyword">SELECT</span> <span class="keyword">COUNT</span>(<span class="number">1</span>) <span class="keyword">AS</span> cnt</span><br><span class="line">    <span class="keyword">FROM</span> student <span class="keyword">WHERE</span> login <span class="keyword">LIKE</span> <span class="string">'%@cs'</span></span><br></pre></td></tr></table></figure>
+<p>我们还可以同时使用多个聚合函数，假设我们想获得“@cs”邮箱登录的学生个数和他们的平均GPA，可以用以下方式查找，最后会输出含一个tuple（平均GPA和学生个数）的表：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SELECT</span> <span class="keyword">AVG</span>(gpa), <span class="keyword">COUNT</span>(<span class="keyword">sid</span>)</span><br><span class="line">    <span class="keyword">FROM</span> student <span class="keyword">WHERE</span> login <span class="keyword">LIKE</span> <span class="string">'%@cs'</span></span><br></pre></td></tr></table></figure>
+<p>聚合函数中 COUNT, SUM, AVG 还支持对其输入参数用关键字 DISTINCT 来进行去重，用以下方式可以获得用”@cs”邮箱登录的不重复学生人数：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SELECT</span> <span class="keyword">COUNT</span>(<span class="keyword">DISTINCT</span> login) <span class="keyword">AS</span> cnt</span><br><span class="line">    <span class="keyword">FROM</span> student <span class="keyword">WHERE</span> login <span class="keyword">LIKE</span> <span class="string">'%@cs'</span></span><br></pre></td></tr></table></figure>
+<p>在使用聚合函数的过程要注意在聚合函数以外的列的输出是<em>未定义的(undefined)</em>，具体参考以下例子</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">// 获取每门课上注册学生的平均GPA</span><br><span class="line"><span class="keyword">SELECT</span> <span class="keyword">AVG</span>(s.gpa), e.cid</span><br><span class="line">    <span class="keyword">FROM</span> enrolled <span class="keyword">as</span> e, student <span class="keyword">AS</span> s</span><br><span class="line">    <span class="keyword">WHERE</span> e.sid = s.sid</span><br></pre></td></tr></table></figure>
+<p>程序在不同程序(pavlo，mysql, sqlite)的运行结果，可以发现对这种未定义的行为，不同程序的标准一样，可能会直接报错，也有可能随机挑选一个值输出，所以要尽可能避免出现这种情况：</p>
+<img src="/2020/04/20/CMU-DB-2-Advanced-SQL/output-result.png" class="" title="CMU-DB-2-Advanced-SQL">
+<img src="/2020/04/20/CMU-DB-2-Advanced-SQL/result-mysql.png" class="" title="CMU-DB-2-Advanced-SQL">
+<img src="/2020/04/20/CMU-DB-2-Advanced-SQL/sqlite.png" class="" title="CMU-DB-2-Advanced-SQL">
+<h4 id="分组（group-by）"><a href="#分组（group-by）" class="headerlink" title="分组（group by）"></a>分组（group by）</h4><p>要实现上述提到的查找（获取每门课上注册学生的平均GPA），我们还需要加入分组操作来将输入的tuples分成不同部分并对每个部分进行聚合运算，代码和结果如下所示：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SELECT</span> <span class="keyword">AVG</span>(s.gpa), e.cid</span><br><span class="line">    <span class="keyword">FROM</span> enrolled <span class="keyword">AS</span> e, student <span class="keyword">AS</span> s</span><br><span class="line">    <span class="keyword">WHERE</span> e.sid = s.sid</span><br><span class="line">    <span class="keyword">GROUP</span> <span class="keyword">BY</span> e.sid</span><br></pre></td></tr></table></figure>
+<img src="/2020/04/20/CMU-DB-2-Advanced-SQL/result2.png" class="" title="CMU-DB-2-Advanced-SQL">
+<p>注意：所有出现在 SELECT 输出语句的非聚合值必须都要出现 GROUP BY 语句里，如：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">// s.name 要出现在 GROUP BY 语句里</span><br><span class="line"><span class="keyword">SELECT</span> <span class="keyword">AVG</span>(s.gpa), e.cid， s.name</span><br><span class="line">    <span class="keyword">FROM</span> enrolled <span class="keyword">AS</span> e, student <span class="keyword">AS</span> s</span><br><span class="line">    <span class="keyword">WHERE</span> e.sid = s.sid</span><br><span class="line">    <span class="keyword">GROUP</span> <span class="keyword">BY</span> e.sid</span><br></pre></td></tr></table></figure>
+<p>如果我们想对输出的table进行筛选，比如选出平均gpg高于3.9的，我们可能会想到以下语句，但是聚合计算的结果不能出现ADD语句里面，我们可以用HAVGING语句：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">// avg_gpa 不能出现在 AND 作为条件！</span><br><span class="line"><span class="keyword">SELECT</span> <span class="keyword">AVG</span>(s.gpa) <span class="keyword">AS</span> avg_gpa, e.cid</span><br><span class="line">    <span class="keyword">FROM</span> enrolled <span class="keyword">AS</span> e, student <span class="keyword">AS</span> s</span><br><span class="line">    <span class="keyword">WHERE</span> e.sid = s.sid</span><br><span class="line">    <span class="keyword">AND</span> avg_gpa &gt; <span class="number">3.9</span></span><br><span class="line">    <span class="keyword">GROUP</span> <span class="keyword">BY</span> e.sid</span><br><span class="line"></span><br><span class="line">// avg_gpa 可以出现在<span class="keyword">HAVING</span>语句里作为筛选条件</span><br><span class="line"><span class="keyword">SELECT</span> <span class="keyword">AVG</span>(s.gpa) <span class="keyword">AS</span> avg_gpa, e.cid</span><br><span class="line">    <span class="keyword">FROM</span> enrolled <span class="keyword">AS</span> e, student <span class="keyword">AS</span> s</span><br><span class="line">    <span class="keyword">WHERE</span> e.sid = s.sid</span><br><span class="line">    <span class="keyword">GROUP</span> <span class="keyword">BY</span> e.sid</span><br><span class="line">    <span class="keyword">HAVING</span> avg_gpa &gt; <span class="number">3.0</span>;</span><br></pre></td></tr></table></figure>
+<p>成果运行结果如下：</p>
+<img src="/2020/04/20/CMU-DB-2-Advanced-SQL/result-filter.png" class="" title="CMU-DB-2-Advanced-SQL">
+<p>通过这种方式可以很方便筛选我们想要的结果，而且不用考虑实现过程。</p>
+<h3 id="String-amp-Date-Time-Operation"><a href="#String-amp-Date-Time-Operation" class="headerlink" title="String &amp; Date/Time Operation"></a>String &amp; Date/Time Operation</h3><p>下面对SQL里面有关string, date 和 time 的操作进行介绍</p>
+<h4 id="String-字符串操作"><a href="#String-字符串操作" class="headerlink" title="String 字符串操作"></a>String 字符串操作</h4><p>针对String的操作，不同DBMS的它的要求（单/双引号，区分/不区分大小写）不一样，具体参考下表</p>
+<img src="/2020/04/20/CMU-DB-2-Advanced-SQL/string-1.png" class="" title="CMU-DB-2-Advanced-SQL">
+<p><strong>LIKE</strong> 关键字可以用来进行字符串匹配，匹配操作为：’%’ 匹配任何子串（包括空串），’_’ 匹配任何单个字符，具体例子如下：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">// 找到所有 e.cid 以 '15-' 开头的</span><br><span class="line"><span class="keyword">SELECT</span> * <span class="keyword">FROM</span> enrolled <span class="keyword">AS</span> e</span><br><span class="line">    <span class="keyword">WHERE</span> e.cid <span class="keyword">LIKE</span> <span class="string">'15-%'</span></span><br><span class="line"></span><br><span class="line">// 找到所有登录名 以 <span class="string">'@c'</span> + 一个字符串结尾的</span><br><span class="line"><span class="keyword">SELECT</span> * <span class="keyword">FROM</span> student <span class="keyword">AS</span> s</span><br><span class="line">    <span class="keyword">WHERE</span> s.login <span class="keyword">LIKE</span> <span class="string">'%@c_'</span></span><br></pre></td></tr></table></figure>
+<p>SQL 还定义了一些字符串操作的函数既可以用来输出结果也能用来作为条件，部分例子如下：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">// 取长度为5的子串</span><br><span class="line"><span class="keyword">SELECT</span> <span class="keyword">SUBSTRING</span>(<span class="keyword">name</span>, <span class="number">0</span>, <span class="number">5</span>) <span class="keyword">AS</span> abbrv_name</span><br><span class="line">    <span class="keyword">FROM</span> student <span class="keyword">WHERE</span> <span class="keyword">sid</span> = <span class="number">53688</span></span><br><span class="line"></span><br><span class="line">// 转大写</span><br><span class="line"><span class="keyword">SELECT</span> * <span class="keyword">FROM</span> student <span class="keyword">AS</span> s</span><br><span class="line">    <span class="keyword">WHERE</span> <span class="keyword">UPPER</span>(s.name) <span class="keyword">LIKE</span> <span class="string">'KAN%'</span></span><br></pre></td></tr></table></figure>
+<p>SQL标准里面规定可以用 ‘||’ 来链接两个或多个字符串，其他不同DBMS也有不同的操作符/函数支持：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">// SQL-92</span><br><span class="line"><span class="keyword">SELECT</span> <span class="keyword">name</span> <span class="keyword">FROM</span> student</span><br><span class="line">    <span class="keyword">WHERE</span> login = <span class="keyword">LOWER</span>(<span class="keyword">name</span>) || <span class="string">'@cs'</span></span><br><span class="line"></span><br><span class="line">// MSSQL</span><br><span class="line"><span class="keyword">SELECT</span> <span class="keyword">name</span> <span class="keyword">FROM</span> student</span><br><span class="line">    <span class="keyword">WHERE</span> login = <span class="keyword">LOWER</span>(<span class="keyword">name</span>) + <span class="string">'@cs'</span></span><br><span class="line"></span><br><span class="line">// mySQL</span><br><span class="line"><span class="keyword">SELECT</span> <span class="keyword">name</span> <span class="keyword">FROM</span> student</span><br><span class="line">    <span class="keyword">WHERE</span> login = <span class="keyword">CONCAT</span>(<span class="keyword">LOWER</span>(<span class="keyword">name</span>), <span class="string">'@cs'</span>)</span><br></pre></td></tr></table></figure>
+<h4 id="DATA-TIME-时间-日期操作"><a href="#DATA-TIME-时间-日期操作" class="headerlink" title="DATA/TIME 时间/日期操作"></a>DATA/TIME 时间/日期操作</h4><p>这一部分主要包括了SQL规定的一些关于操作和修改日期/时间的操作，可以作为输出或中间参数。同样，这些操作可能在不同DBMS上有不同的支持程度和具体语法，下面举一部分例子。</p>
+<p>不同的DBMS有不同的方法获取获取当前日期，比如函数：NOW()、CURRENT_TIMESTAMP()，或者关键字CURRENT_TIMESTAMP;</p>
+<img src="/2020/04/20/CMU-DB-2-Advanced-SQL/time.png" class="" title="CMU-DB-2-Advanced-SQL">
+<p>也可以可以通过 EXTRACT 或者 ‘-‘ 或者 DATEDIFF 等等各种方法来获取日期信息（同样根据不同DBMS有不同语法）</p>
+<img src="/2020/04/20/CMU-DB-2-Advanced-SQL/time_difference.png" class="" title="CMU-DB-2-Advanced-SQL">
+<h3 id="Output-Control-Redirection"><a href="#Output-Control-Redirection" class="headerlink" title="Output Control + Redirection"></a>Output Control + Redirection</h3><h4 id="Output-redirection-输出重定向"><a href="#Output-redirection-输出重定向" class="headerlink" title="Output redirection 输出重定向"></a>Output redirection 输出重定向</h4><p>SQL 支持将输出保存到另一个表格里面，这个操作需要满足两个条件：</p>
+<ul>
+<li>输出表格不能已经被定义</li>
+<li>输出表格需要和输入表格有相同类型并且列数相同</li>
+</ul>
+<p>比如：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">// SQL-02</span><br><span class="line"><span class="keyword">SELECT</span> <span class="keyword">DISTINCT</span> cid <span class="keyword">INTO</span> CourseIds</span><br><span class="line">    <span class="keyword">From</span> enrolled;</span><br><span class="line"></span><br><span class="line">// mySQL</span><br><span class="line"><span class="keyword">CREATE</span> <span class="keyword">TABLE</span> CourseIDs (</span><br><span class="line">    <span class="keyword">SELECT</span> <span class="keyword">DISTINCT</span> cid <span class="keyword">FROM</span> enrolled</span><br><span class="line">);</span><br></pre></td></tr></table></figure>
+<p>同时也支持通过 INSECT 关键字将 SELECT 输出的 tuple 插入到已经存在的表格里：</p>
+<ul>
+<li>内部的 SELECT 必须输出和目标表格相同列数的 tuple</li>
+<li>不同 BDMS 对两者重复项有不同的处理选项和语法</li>
+</ul>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">INSERT</span> <span class="keyword">INTO</span> CourseIds</span><br><span class="line">(<span class="keyword">SELECT</span> <span class="keyword">DISTINCT</span> cid <span class="keyword">FROM</span> enrolled)</span><br></pre></td></tr></table></figure>
+<h4 id="Output-Control"><a href="#Output-Control" class="headerlink" title="Output Control"></a>Output Control</h4><p>SQL 支持用 ORDER 关键字根据 tuple 中的一列或多列的值进行排序，语法是</p>
+<img src="/2020/04/20/CMU-DB-2-Advanced-SQL/SORT.png" class="" title="CMU-DB-2-Advanced-SQL">
+<p>我们还可以用 <code>LIMIT</code> 来限制输出 tuples 的数量，并用 OFFSET 来规定一个输出范围</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">// LIMIT &lt;count&gt; [OFFSET]</span><br><span class="line"><span class="keyword">SELECT</span> <span class="keyword">sid</span>, <span class="keyword">name</span> <span class="keyword">FROM</span> student</span><br><span class="line">    <span class="keyword">WHERE</span> login <span class="keyword">LIKE</span> <span class="string">'%@cs'</span></span><br><span class="line">    <span class="keyword">LIMIT</span> <span class="number">20</span> <span class="keyword">OFFSET</span> <span class="number">10</span></span><br></pre></td></tr></table></figure>
+<h3 id="Nested-Queries-嵌套查找"><a href="#Nested-Queries-嵌套查找" class="headerlink" title="Nested Queries 嵌套查找"></a>Nested Queries 嵌套查找</h3><p>这里指的是查找指令中包括另一个查找指令，这种情况通常很难优化，但是会出现在各种地方，比如：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">// 这里第一个出现的sid是关联在student上的，第二个是关联在enrolled上的</span><br><span class="line"><span class="keyword">SELECT</span> <span class="keyword">name</span> <span class="keyword">FROM</span> student <span class="keyword">WHERE</span></span><br><span class="line">    <span class="keyword">sid</span> <span class="keyword">IN</span> (<span class="keyword">SELECT</span> <span class="keyword">sid</span> <span class="keyword">FROM</span> enrolled)</span><br></pre></td></tr></table></figure>
+<p>如果有多个查找命令时，可以用以下几种方式指定输出的结果</p>
+<ul>
+<li><code>ALL</code>：输出的 tuple 需要满足所有查找命令</li>
+<li><code>ANY</code>：输出的 tuple 需要满足至少一个查找命令</li>
+<li><code>IN</code>：和<code>ANY</code>等效</li>
+<li><code>EXISTS</code>：至少返回一行</li>
+</ul>
+<p>例子</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">// 获得上这门课的学生的姓名</span><br><span class="line"><span class="keyword">SELECT</span> <span class="keyword">name</span> <span class="keyword">FROM</span> student</span><br><span class="line">    <span class="keyword">WHERE</span> <span class="keyword">sid</span> = <span class="keyword">ANY</span>(</span><br><span class="line">        <span class="keyword">SELECT</span> <span class="keyword">sid</span> <span class="keyword">FROM</span> enrolled</span><br><span class="line">        <span class="keyword">WHERE</span> cid = <span class="string">'15-445'</span></span><br><span class="line">    )</span><br><span class="line"></span><br><span class="line">// ver2：查找命令也可以放在另一个查找命令的输出语句里</span><br><span class="line"><span class="keyword">SELECT</span> (<span class="keyword">SELECT</span> S.name <span class="keyword">FROM</span> student <span class="keyword">AS</span> S</span><br><span class="line">        <span class="keyword">WHERE</span> S.sid = E.SID) <span class="keyword">AS</span> sname</span><br><span class="line"><span class="keyword">FROM</span> enrolled <span class="keyword">AS</span> E</span><br><span class="line"><span class="keyword">WHERE</span> cid = <span class="string">'15-445'</span></span><br></pre></td></tr></table></figure>
+<p>如果想要获得一个比较复杂的结果，比如找到一个学生，他至少注册了一门课，并且在这里面id是最高的，我们可能想到用以下方法</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">// 不合标准！s.name 需要出现在HAVING里，否则结果未定义</span><br><span class="line"><span class="keyword">SELECT</span> <span class="keyword">MAX</span>(e.sid), s.name</span><br><span class="line">    <span class="keyword">FROM</span> enrolled <span class="keyword">AS</span> e, student <span class="keyword">AS</span> s</span><br><span class="line">    <span class="keyword">WHERE</span> e.sid = s.sid</span><br></pre></td></tr></table></figure>
+<p>这个时候我们可以用到<code>ALL</code>关键字</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">// sid 需要满足两个<span class="keyword">SELECT</span>里面所有的表达式</span><br><span class="line"><span class="keyword">SELECT</span> <span class="keyword">sid</span>, <span class="keyword">name</span> <span class="keyword">FROM</span> student</span><br><span class="line"><span class="keyword">WHERE</span> <span class="keyword">sid</span> =&gt; <span class="keyword">ALL</span>(</span><br><span class="line">    <span class="keyword">SELECT</span> <span class="keyword">sid</span> <span class="keyword">FROM</span> enrolled</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line">// ver2: 也可以用<span class="keyword">IN</span></span><br><span class="line"><span class="keyword">SELECT</span> <span class="keyword">sid</span>, <span class="keyword">name</span> <span class="keyword">FROM</span> student</span><br><span class="line"><span class="keyword">WHERE</span> <span class="keyword">sid</span> <span class="keyword">IN</span> (</span><br><span class="line">    <span class="keyword">SELECT</span> <span class="keyword">MAX</span>(<span class="keyword">sid</span>) <span class="keyword">FROM</span> enrolled</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line">// ver3: 通过排序+规定范围输出</span><br><span class="line"><span class="keyword">SELECT</span> <span class="keyword">sid</span>, <span class="keyword">name</span> <span class="keyword">FROM</span> student</span><br><span class="line"><span class="keyword">WHERE</span> <span class="keyword">sid</span> <span class="keyword">IN</span> (</span><br><span class="line">    <span class="keyword">SELECT</span> <span class="keyword">sid</span> <span class="keyword">FROM</span> enrolled</span><br><span class="line">    <span class="keyword">ORDER</span> <span class="keyword">BY</span> <span class="keyword">sid</span> <span class="keyword">DESC</span> <span class="keyword">LIMIT</span> <span class="number">1</span></span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+<p>假设我们需要找到所有没人注册的课程，可以用<code>NOT EXIST</code>：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">// 内部的参数也可以用到外部查找命令的表格</span><br><span class="line"><span class="keyword">SELECT</span> * <span class="keyword">FROM</span> course</span><br><span class="line"><span class="keyword">WHERE</span> <span class="keyword">NOT</span> <span class="keyword">EXISTS</span>(</span><br><span class="line">    <span class="keyword">SELECT</span> * <span class="keyword">FROM</span> enrolled</span><br><span class="line">    <span class="keyword">WHERE</span> course.cid = enrolled.cid</span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+<h3 id="Window-Functions-窗口函数"><a href="#Window-Functions-窗口函数" class="headerlink" title="Window Functions 窗口函数"></a>Window Functions 窗口函数</h3><p>窗口函数指的是对一系列 tuples 关于单行进行计算，和聚合函数类似，但是最后tuple不会集中在一个tuple上，语法是</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">// FUNC-NAME 可以是聚合函数或者别的特殊函数</span><br><span class="line">// OVER 内部可以定义怎么切分数据或者对数据排序</span><br><span class="line"><span class="keyword">SELECT</span> ... FUNC-<span class="keyword">NAME</span>(...) <span class="keyword">OVER</span> (...)</span><br><span class="line">    <span class="keyword">FROM</span> tableNAME</span><br></pre></td></tr></table></figure>
+<p>上述的聚合函数可以包括之前提到的所有函数，特殊函数则是指：</p>
+<ul>
+<li><code>ROW_NUMBER()</code>  当前行的行号</li>
+<li><code>RANK()</code> 当前行的排序位置</li>
+</ul>
+<p><code>OVER()</code>的内部可以用<code>PARTITION BY</code>来指定特定的组，如：</p>
+<img src="/2020/04/20/CMU-DB-2-Advanced-SQL/over_partition.png" class="" title="CMU-DB-2-Advanced-SQL">
+<p>假如我们想找到每门课上拿最高分的学生，可以：</p>
+<img src="/2020/04/20/CMU-DB-2-Advanced-SQL/rank.png" class="" title="CMU-DB-2-Advanced-SQL">
+<h3 id="Common-Table-Expressions-常见的表格表达式"><a href="#Common-Table-Expressions-常见的表格表达式" class="headerlink" title="Common Table Expressions 常见的表格表达式"></a>Common Table Expressions 常见的表格表达式</h3><p>除了用嵌套查找以外还能用一些常见表达式来进行查找，可以看成一个临时的表格，如：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">// <span class="keyword">with</span> 产生了一个tuple里面只有一个值<span class="number">1</span></span><br><span class="line"><span class="keyword">WITH</span> cteName <span class="keyword">AS</span> (</span><br><span class="line">    <span class="keyword">SELECT</span> <span class="number">1</span></span><br><span class="line">)</span><br><span class="line"><span class="keyword">SELECT</span> * <span class="keyword">FROM</span> cteName</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">WITH</span> cteName (col1, col2) <span class="keyword">AS</span> (</span><br><span class="line"><span class="keyword">SELECT</span> <span class="number">1</span>, <span class="number">2</span></span><br><span class="line">)</span><br><span class="line"><span class="keyword">SELECT</span> col1 + col2 <span class="keyword">FROM</span> cteName</span><br><span class="line"></span><br><span class="line">// 之前提到的例子，找到一个学生，他至少注册了一门课，并且在这里面<span class="keyword">id</span>是最高的</span><br><span class="line"><span class="keyword">WITH</span> cteSource (maxId) <span class="keyword">AS</span> (</span><br><span class="line">    <span class="keyword">SELECT</span> <span class="keyword">MAX</span>(<span class="keyword">sid</span>) <span class="keyword">FROM</span> enrolled</span><br><span class="line">)</span><br><span class="line"><span class="keyword">SELECT</span> <span class="keyword">name</span> <span class="keyword">FROM</span> student, cteSource</span><br><span class="line"><span class="keyword">WHERE</span> student.sid = cteSource.maxId</span><br><span class="line"></span><br><span class="line">// recursion，打印<span class="number">1</span>到<span class="number">10</span></span><br><span class="line"><span class="keyword">WITH</span> <span class="keyword">RECURSIVE</span> cteSource (counter) <span class="keyword">AS</span> (</span><br><span class="line">    (<span class="keyword">SELECT</span> <span class="number">1</span>)</span><br><span class="line">    <span class="keyword">UNION</span> <span class="keyword">ALL</span></span><br><span class="line">    (<span class="keyword">SELECT</span> counter + <span class="number">1</span> <span class="keyword">FROM</span> cteSource</span><br><span class="line">    <span class="keyword">WHERE</span> counter &lt; <span class="number">10</span>)</span><br><span class="line">)</span><br><span class="line"><span class="keyword">SELECT</span> * <span class="keyword">FROM</span> cteSource</span><br></pre></td></tr></table></figure>
+
+    </div>
+
+    
+    
+    
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>Post author:  </strong>Xiaotao Guo
+  </li>
+  <li class="post-copyright-link">
+    <strong>Post link: </strong>
+    <a href="https://guoxiaotao.xyz/2020/04/20/CMU-DB-2-Advanced-SQL/" title="[CMU-15-445&#x2F;645]-Advanced SQL">https://guoxiaotao.xyz/2020/04/20/CMU-DB-2-Advanced-SQL/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>Copyright Notice:  </strong>All articles in this blog are licensed under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> unless stating additionally.
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+          
+          <div class="post-tags">
+              <a href="/tags/database/" rel="tag"><i class="fa fa-tag"></i> database</a>
+              <a href="/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/" rel="tag"><i class="fa fa-tag"></i> 数据库</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/04/20/CMU-DB-1/" rel="prev" title="Databases Systems CMU - 01 介绍">
+      <i class="fa fa-chevron-left"></i> Databases Systems CMU - 01 介绍
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    <div class="comments" id="valine-comments"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#关于-relational-language-的复习"><span class="nav-number">1.1.</span> <span class="nav-text">关于 relational language 的复习</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#SQL的历史"><span class="nav-number">1.2.</span> <span class="nav-text">SQL的历史</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#SQL"><span class="nav-number">2.</span> <span class="nav-text">SQL</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#聚合（Aggregations）-分组-Group-By"><span class="nav-number">2.1.</span> <span class="nav-text">聚合（Aggregations） + 分组(Group By)</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Aggregates-（聚合）"><span class="nav-number">2.1.1.</span> <span class="nav-text">Aggregates （聚合）</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#分组（group-by）"><span class="nav-number">2.1.2.</span> <span class="nav-text">分组（group by）</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#String-amp-Date-Time-Operation"><span class="nav-number">2.2.</span> <span class="nav-text">String &amp; Date&#x2F;Time Operation</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#String-字符串操作"><span class="nav-number">2.2.1.</span> <span class="nav-text">String 字符串操作</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#DATA-TIME-时间-日期操作"><span class="nav-number">2.2.2.</span> <span class="nav-text">DATA&#x2F;TIME 时间&#x2F;日期操作</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Output-Control-Redirection"><span class="nav-number">2.3.</span> <span class="nav-text">Output Control + Redirection</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Output-redirection-输出重定向"><span class="nav-number">2.3.1.</span> <span class="nav-text">Output redirection 输出重定向</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Output-Control"><span class="nav-number">2.3.2.</span> <span class="nav-text">Output Control</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Nested-Queries-嵌套查找"><span class="nav-number">2.4.</span> <span class="nav-text">Nested Queries 嵌套查找</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Window-Functions-窗口函数"><span class="nav-number">2.5.</span> <span class="nav-text">Window Functions 窗口函数</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Common-Table-Expressions-常见的表格表达式"><span class="nav-number">2.6.</span> <span class="nav-text">Common Table Expressions 常见的表格表达式</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Xiaotao Guo"
+      src="https://avatars3.githubusercontent.com/u/45047478?s=460&u=3be5d506be9a30bd6eadfd29cd36c61e30833bb2&v=4">
+  <p class="site-author-name" itemprop="name">Xiaotao Guo</p>
+  <div class="site-description" itemprop="description">Stay hungry, stay foolish</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">20</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">6</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/XiaotaoGuo" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;XiaotaoGuo" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.google.com/maps/place/Virginia/@37.9179474,-83.9116557,6z/data=!3m1!4b1!4m5!3m4!1s0x884cd670bdbcb2cd:0xc04e4149b746a695!8m2!3d37.4315734!4d-78.6568942" title="Virginia, USA → https:&#x2F;&#x2F;www.google.com&#x2F;maps&#x2F;place&#x2F;Virginia&#x2F;@37.9179474,-83.9116557,6z&#x2F;data&#x3D;!3m1!4b1!4m5!3m4!1s0x884cd670bdbcb2cd:0xc04e4149b746a695!8m2!3d37.4315734!4d-78.6568942" rel="noopener" target="_blank"><i class="fa fa-map-marker fa-fw"></i>Virginia, USA</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.linkedin.com/in/xiaotaoguo/" title="LinkedIn → https:&#x2F;&#x2F;www.linkedin.com&#x2F;in&#x2F;xiaotaoguo&#x2F;" rel="noopener" target="_blank"><i class="fab fa-linkedin fa-fw"></i>LinkedIn</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:guoxiaotao0819@gmail.com" title="E-Mail → mailto:guoxiaotao0819@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://ucsd.edu/" title="UC San Diego → https:&#x2F;&#x2F;ucsd.edu&#x2F;" rel="noopener" target="_blank"><i class="fa fa-graduation-cap fa-fw"></i>UC San Diego</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zju.edu.cn/" title="ZJU → https:&#x2F;&#x2F;www.zju.edu.cn&#x2F;" rel="noopener" target="_blank"><i class="fa fa-graduation-cap fa-fw"></i>ZJU</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://torc.ai/" title="Torc Robotics → https:&#x2F;&#x2F;torc.ai&#x2F;" rel="noopener" target="_blank"><i class="fa fa-briefcase fa-fw"></i>Torc Robotics</a>
+      </span>
+  </div>
+
+
+
+    <div class="links-of-blogroll motion-element links-of-blogroll-block">
+      <div class="links-of-blogroll-title">
+        <!-- modify icon to fire by szw -->
+        <i class="fa fa-history fa-" aria-hidden="true"></i>
+        recent posts
+      </div>
+      <ul class="links-of-blogroll-list">
+        
+        
+          <li>
+            <a href="/2020/04/20/CMU-DB-2-Advanced-SQL/" title="[CMU-15-445/645]-Advanced SQL" target="_blank">[CMU-15-445/645]-Advanced SQL</a>
+          </li>
+        
+          <li>
+            <a href="/2020/04/20/CMU-DB-1/" title="Databases Systems CMU - 01 介绍" target="_blank">Databases Systems CMU - 01 介绍</a>
+          </li>
+        
+          <li>
+            <a href="/2020/04/19/distributed-system/" title="分布式系统-distributed system" target="_blank">分布式系统-distributed system</a>
+          </li>
+        
+          <li>
+            <a href="/2020/04/19/networks/" title="网络-networks" target="_blank">网络-networks</a>
+          </li>
+        
+          <li>
+            <a href="/2020/04/19/security/" title="安全机制-security" target="_blank">安全机制-security</a>
+          </li>
+        
+      </ul>
+    </div>
+
+
+      </div>
+
+      <!-- <script type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?d=3IgjZ2nwFXDxOcZaq3bMwhX63fbnM0O-5aVh7uWblik&cl=ffffff&w=a"></script> -->
+      
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-cog"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Xiaotao Guo</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a>
+  </div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="Total Visitors">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="Total Views">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+  <script>
+    (function(){
+      var bp = document.createElement('script');
+      var curProtocol = window.location.protocol.split(':')[0];
+      bp.src = (curProtocol === 'https') ? 'https://zz.bdstatic.com/linksubmit/push.js' : 'http://push.zhanzhang.baidu.com/push.js';
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(bp, s);
+    })();
+  </script>
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//unpkg.com/valine/dist/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : true,
+      appId      : 'gyDhE6WmYReAVJr69uuRmqab-gzGzoHsz',
+      appKey     : 'EEq9PxLIVddyewEdu9gUytK2',
+      placeholder: "Your comment makes this site better!",
+      avatar     : 'mm',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : false,
+      lang       : '' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : false,
+      serverURLs : ''
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>
