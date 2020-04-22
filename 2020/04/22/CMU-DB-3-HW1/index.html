@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon32.ico">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon16.ico">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"guoxiaotao.xyz","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="这是我在学习 Databases Systems CMU 15-445&#x2F;645&#x2F; Fall 2019 过程记录的一些笔记，本文了记录我在完成第一次作业的过程中完成结果和遇到的一些疑问。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="[CMU-15-445&#x2F;645]-Assignment 1">
+<meta property="og:url" content="https://guoxiaotao.xyz/2020/04/22/CMU-DB-3-HW1/index.html">
+<meta property="og:site_name" content="Tao&#39;s Blog">
+<meta property="og:description" content="这是我在学习 Databases Systems CMU 15-445&#x2F;645&#x2F; Fall 2019 过程记录的一些笔记，本文了记录我在完成第一次作业的过程中完成结果和遇到的一些疑问。">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2020-04-22T04:48:06.000Z">
+<meta property="article:modified_time" content="2020-04-22T19:56:52.046Z">
+<meta property="article:author" content="Xiaotao Guo">
+<meta property="article:tag" content="database">
+<meta property="article:tag" content="数据库">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://guoxiaotao.xyz/2020/04/22/CMU-DB-3-HW1/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en'
+  };
+</script>
+
+  <title>[CMU-15-445/645]-Assignment 1 | Tao's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Tao's Blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="tags fa-fw"></i>Tags<span class="badge">7</span></a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="th fa-fw"></i>Categories<span class="badge">4</span></a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="archive fa-fw"></i>Archives<span class="badge">22</span></a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://guoxiaotao.xyz/2020/04/22/CMU-DB-3-HW1/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://avatars3.githubusercontent.com/u/45047478?s=460&u=3be5d506be9a30bd6eadfd29cd36c61e30833bb2&v=4">
+      <meta itemprop="name" content="Xiaotao Guo">
+      <meta itemprop="description" content="Stay hungry, stay foolish">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Tao's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          [CMU-15-445/645]-Assignment 1
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2020-04-22 00:48:06 / Modified: 15:56:52" itemprop="dateCreated datePublished" datetime="2020-04-22T00:48:06-04:00">2020-04-22</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/database/" itemprop="url" rel="index"><span itemprop="name">database</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="Views" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="eye"></i>
+              </span>
+              <span class="post-meta-item-text">Views: </span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Comment Counts: </span>
+    
+    <a title="valine" href="/2020/04/22/CMU-DB-3-HW1/#valine-comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2020/04/22/CMU-DB-3-HW1/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+<br>
+            <span class="post-meta-item" title="Symbols count in article">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+              <span>7.1k</span>
+            </span>
+            <span class="post-meta-item" title="Reading time">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+              <span>6 mins.</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>这是我在学习 <a href="https://15445.courses.cs.cmu.edu/fall2019/" target="_blank" rel="noopener">Databases Systems CMU 15-445/645/ Fall 2019</a> 过程记录的一些笔记，本文了记录我在完成第一次作业的过程中完成结果和遇到的一些疑问。</p>
+<a id="more"></a>
+<h2 id="作业-amp-软件安装"><a href="#作业-amp-软件安装" class="headerlink" title="作业 &amp; 软件安装"></a>作业 &amp; 软件安装</h2><p>本次作业主要是熟悉以下SQL的各种用法，用的软件是Sqlite3，软件安装过程以及数据集下载都可以根据<a href="https://15445.courses.cs.cmu.edu/fall2019/homework1/" target="_blank" rel="noopener">作业指导</a>，下载完数据集之后用sqlite验证一下各部分是不是都完好，这一部分没遇到什么问题。以下是我的运行环境：</p>
+<pre><code>    系统：Ubuntu18.04
+    sqlite版本：
+    $ sqlite3 -version
+    3.22.0 2018-01-22 18:45:57 0c55d179733b46d8d0ba4d88e01a25e10677046ee3da1d5b1581e86726f2alt1
+</code></pre><h2 id="作业"><a href="#作业" class="headerlink" title="作业"></a>作业</h2><h3 id="Q1-SAMPLE"><a href="#Q1-SAMPLE" class="headerlink" title="Q1 SAMPLE"></a>Q1 SAMPLE</h3><p>运行一下样本代码并保存。</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">// 输出电影里面所有类别（不重复）</span><br><span class="line">sqlite&gt; select distinct(type) from titles order by type;</span><br><span class="line">movie</span><br><span class="line">short</span><br><span class="line">tvEpisode</span><br><span class="line">tvMiniSeries</span><br><span class="line">tvMovie</span><br><span class="line">tvSeries</span><br><span class="line">tvShort</span><br><span class="line">tvSpecial</span><br><span class="line">video</span><br><span class="line">videoGame</span><br></pre></td></tr></table></figure>
+<h3 id="Q2-UNCOMMON-TYPE"><a href="#Q2-UNCOMMON-TYPE" class="headerlink" title="Q2 UNCOMMON_TYPE"></a>Q2 UNCOMMON_TYPE</h3><blockquote>
+<p>List the longest title of each type along with the runtime minutes.</p>
+</blockquote>
+<p>找出每一类电影中时长最久的电影，如果有时长一样的话全部选择，最后输出电影类型，电影名和持续时间。输出时按照类别升序，类别相同时按照名称升序输出。<br>这道题最初想用嵌套查找+<code>RANK()</code>来做，类似课上讲的 <a href="https://guoxiaotao.xyz/2020/04/20/CMU-DB-2-Advanced-SQL/">输出每门课上id最高的学生</a> 的例子，但是sqlite3一直报括号附近语法错误，直接运行老师的代码都不行，最后也没弄明白，最后换了一种思路用  <code>with</code>来写，先找出每类最长电影的持续时长存在一个中间table里面，后面输出就比较简单了，结果和答案一样，代码如下：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- select longest runtime by type and its type</span></span><br><span class="line"><span class="keyword">WITH</span> temp(maxruntime, t) <span class="keyword">AS</span> (</span><br><span class="line">        <span class="keyword">SELECT</span> <span class="keyword">MAX</span>(runtime_minutes), titles.type <span class="keyword">FROM</span> titles <span class="keyword">GROUP</span> <span class="keyword">BY</span> <span class="keyword">type</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="keyword">SELECT</span> titles.type, titles.primary_title, titles.runtime_minutes <span class="keyword">FROM</span> titles, temp</span><br><span class="line"><span class="keyword">WHERE</span> titles.runtime_minutes = temp.maxruntime</span><br><span class="line"><span class="keyword">AND</span> titles.type = temp.t</span><br><span class="line"><span class="keyword">ORDER</span> <span class="keyword">BY</span> <span class="keyword">type</span> <span class="keyword">ASC</span>, primary_title <span class="keyword">ASC</span>;</span><br></pre></td></tr></table></figure>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 结果</span></span><br><span class="line">sqlite&gt; .read ./placeholder/q2_uncommon_type.sql</span><br><span class="line">movie|Logistics|51420</span><br><span class="line">short|Kuriocity|461</span><br><span class="line">tvEpisode|Téléthon 2012|1800</span><br><span class="line">tvMiniSeries|Kôya no yôjinbô|1755</span><br><span class="line">tvMovie|ArtQuench Presents Spirit Art|2112</span><br><span class="line">tvSeries|The Sharing Circle|8400</span><br><span class="line">tvShort|Paul McCartney Backstage at Super Bowl XXXIX|60</span><br><span class="line">tvShort|The People Next Door|60</span><br><span class="line">tvSpecial|Katy Perry Live: Witness World Wide|5760</span><br><span class="line">video|Midnight Movie Madness: 50 Movie Mega Pack|5135</span><br><span class="line">videoGame|Flushy Fish VR: Just Squidding Around|1500</span><br></pre></td></tr></table></figure>
+<h3 id="Q3-TV-VS-MOVIE"><a href="#Q3-TV-VS-MOVIE" class="headerlink" title="Q3 TV_VS_MOVIE"></a>Q3 TV_VS_MOVIE</h3><blockquote>
+<p>List all types of titles along with the number of associated titles.</p>
+</blockquote>
+<p>输出每个类别和该类别的电影数量，按数量升序输出。<br>这道题相对上一道题比较简单，代码如下：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">WITH</span> type_number(<span class="keyword">type</span>, <span class="built_in">number</span>) <span class="keyword">AS</span> (</span><br><span class="line">        <span class="keyword">SELECT</span> <span class="keyword">type</span>, <span class="keyword">COUNT</span>(*) <span class="keyword">FROM</span> titles <span class="keyword">GROUP</span> <span class="keyword">BY</span> <span class="keyword">type</span></span><br><span class="line">)</span><br><span class="line"><span class="keyword">SELECT</span> * <span class="keyword">FROM</span> type_number <span class="keyword">ORDER</span> <span class="keyword">BY</span> <span class="built_in">number</span> <span class="keyword">ASC</span>;</span><br></pre></td></tr></table></figure>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 结果</span></span><br><span class="line">tvShort|4075</span><br><span class="line">videoGame|9044</span><br><span class="line">tvSpecial|9107</span><br><span class="line">tvMiniSeries|10291</span><br><span class="line">tvMovie|45431</span><br><span class="line">tvSeries|63631</span><br><span class="line">video|90069</span><br><span class="line">movie|197957</span><br><span class="line">short|262038</span><br><span class="line">tvEpisode|1603076</span><br></pre></td></tr></table></figure>
+<h3 id="Q4-OLD-IS-NOT-GOLD"><a href="#Q4-OLD-IS-NOT-GOLD" class="headerlink" title="Q4 OLD_IS_NOT_GOLD"></a>Q4 OLD_IS_NOT_GOLD</h3><blockquote>
+<p>Which decades saw the most number of titles getting premiered? List the number of titles in every decade. Like <code>2010s|2789741</code>.</p>
+</blockquote>
+<p>按电影年代输出每个年代的电影数量，按电影数量降序输出。</p>
+<p>这道题一开始想到用一个<code>WITH</code>创建了临时表格存储年代以及对应的电影，最后可以通过按年代<code>COUNT</code>输出年代以及数量（上映年份为<code>NULL</code>的去除），但是这样不能用数量作为排序标准，后来参考<a href="https://cakebytheoceanluo.github.io/2020/03/07/CMU-15445-HomeWork1-19Fall/" target="_blank" rel="noopener">这个博主的做法</a>，创建了两个临时表格最后输出，代码如下：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">WITH</span> <span class="keyword">period</span>(<span class="keyword">year</span>, movie) <span class="keyword">AS</span> (</span><br><span class="line">        <span class="keyword">SELECT</span> <span class="keyword">SUBSTR</span>(<span class="keyword">CAST</span>(premiered <span class="keyword">AS</span> <span class="built_in">TEXT</span>), <span class="number">1</span>, <span class="number">3</span>) ||  <span class="string">"0s"</span>,</span><br><span class="line">                primary_title <span class="keyword">FROM</span> titles</span><br><span class="line">        <span class="keyword">WHERE</span> premiered <span class="keyword">IS</span> <span class="keyword">NOT</span> <span class="literal">NULL</span></span><br><span class="line">), year_num(<span class="keyword">year</span>, <span class="keyword">num</span>) <span class="keyword">AS</span> (</span><br><span class="line">        <span class="keyword">SELECT</span> <span class="keyword">year</span>, <span class="keyword">COUNT</span>(*) <span class="keyword">FROM</span> <span class="keyword">period</span></span><br><span class="line">        <span class="keyword">GROUP</span> <span class="keyword">BY</span> <span class="keyword">year</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="keyword">SELECT</span> <span class="keyword">year</span>, <span class="keyword">num</span> <span class="keyword">FROM</span> year_num <span class="keyword">ORDER</span> <span class="keyword">BY</span> <span class="keyword">num</span> <span class="keyword">DESC</span>;</span><br></pre></td></tr></table></figure>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 输出</span></span><br><span class="line">sqlite&gt; .read ./placeholder/q4_old_is_not_gold.sql</span><br><span class="line">2010s|1050732</span><br><span class="line">2000s|494639</span><br><span class="line">1990s|211453</span><br><span class="line">1980s|119258</span><br><span class="line">1970s|99707</span><br><span class="line">1960s|75237</span><br><span class="line">1950s|39554</span><br><span class="line">1910s|26596</span><br><span class="line">1920s|13153</span><br><span class="line">1930s|11492</span><br><span class="line">1940s|10011</span><br><span class="line">1900s|9586</span><br><span class="line">2020s|2492</span><br><span class="line">1890s|2286</span><br><span class="line">1880s|22</span><br><span class="line">1870s|1</span><br></pre></td></tr></table></figure>
+<h3 id="Q5-PERCENTAGE"><a href="#Q5-PERCENTAGE" class="headerlink" title="Q5 PERCENTAGE"></a>Q5 PERCENTAGE</h3><blockquote>
+<p>List the decades and the percentage of titles which premiered in the corresponding decade. Display like : <code>2010s|45.7042</code></p>
+</blockquote>
+<p>在上一题的基础上把数量换成总电影的百分比（包括<code>NULL</code>的部分）。这一题一开始卡在怎么计算电影总量不被 <code>group</code> 影响，后来发现可以用 <code>select</code> 生成一个临时变量，代码如下：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">WITH</span> <span class="keyword">period</span>(<span class="keyword">year</span>, movie) <span class="keyword">AS</span> (</span><br><span class="line">        <span class="keyword">SELECT</span> <span class="keyword">SUBSTR</span>(<span class="keyword">CAST</span>(premiered <span class="keyword">AS</span> <span class="built_in">TEXT</span>), <span class="number">1</span>, <span class="number">3</span>) ||  <span class="string">"0s"</span>,</span><br><span class="line">                primary_title <span class="keyword">FROM</span> titles</span><br><span class="line">        <span class="keyword">WHERE</span> premiered <span class="keyword">IS</span> <span class="keyword">NOT</span> <span class="literal">NULL</span>)</span><br><span class="line">, year_num(<span class="keyword">year</span>, <span class="keyword">num</span> ) <span class="keyword">AS</span> (</span><br><span class="line">        <span class="keyword">SELECT</span> <span class="keyword">year</span>, </span><br><span class="line">        <span class="keyword">ROUND</span>(<span class="number">100.0</span> * <span class="keyword">COUNT</span>(*)/ (<span class="keyword">SELECT</span> <span class="keyword">COUNT</span>(*) <span class="keyword">FROM</span> titles), <span class="number">4</span>) <span class="keyword">FROM</span> <span class="keyword">period</span></span><br><span class="line">        <span class="keyword">GROUP</span> <span class="keyword">BY</span> <span class="keyword">year</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="keyword">SELECT</span> <span class="keyword">year</span>, <span class="keyword">num</span> <span class="keyword">FROM</span> year_num <span class="keyword">ORDER</span> <span class="keyword">BY</span> <span class="keyword">num</span> <span class="keyword">DESC</span>;</span><br></pre></td></tr></table></figure>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 输出</span></span><br><span class="line">sqlite&gt; .read ./placeholder/q5_percentage.sql</span><br><span class="line">2010s|45.7891</span><br><span class="line">2000s|21.5555</span><br><span class="line">1990s|9.2148</span><br><span class="line">1980s|5.1971</span><br><span class="line">1970s|4.3451</span><br><span class="line">1960s|3.2787</span><br><span class="line">1950s|1.7237</span><br><span class="line">1910s|1.159</span><br><span class="line">1920s|0.5732</span><br><span class="line">1930s|0.5008</span><br><span class="line">1940s|0.4363</span><br><span class="line">1900s|0.4177</span><br><span class="line">2020s|0.1086</span><br><span class="line">1890s|0.0996</span><br><span class="line">1880s|0.001</span><br><span class="line">1870s|0.0</span><br></pre></td></tr></table></figure>
+<h3 id="Q6-DUBBED-SMASH"><a href="#Q6-DUBBED-SMASH" class="headerlink" title="Q6 DUBBED_SMASH"></a>Q6 DUBBED_SMASH</h3><blockquote>
+<p>List the top 10 dubbed titles with the number of dubs.</p>
+</blockquote>
+<p>按配音版本数量降序输出前十名配音版本最多的电影名和对应的数量，这道题先找到所有的配音版本电影数量，再用 <code>LIMIT</code> 来限制输出数量，代码如下。</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">WITH</span> dubbed(t_id, <span class="keyword">num</span>) <span class="keyword">AS</span> (</span><br><span class="line">        <span class="keyword">SELECT</span> title_id, <span class="keyword">COUNT</span>(*) <span class="keyword">FROM</span> akas</span><br><span class="line">        <span class="keyword">GROUP</span> <span class="keyword">BY</span> title_id</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="keyword">SELECT</span> primary_title, <span class="keyword">num</span>  <span class="keyword">FROM</span> dubbed, titles</span><br><span class="line"><span class="keyword">WHERE</span> titles.title_id = dubbed.t_id</span><br><span class="line"><span class="keyword">ORDER</span> <span class="keyword">BY</span> <span class="keyword">num</span> <span class="keyword">DESC</span></span><br><span class="line"><span class="keyword">LIMIT</span> <span class="number">10</span>;</span><br></pre></td></tr></table></figure>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 输出</span></span><br><span class="line">sqlite&gt; .read ./placeholder/q6_dubbed_smash.sql</span><br><span class="line">Mutant Virus: Vol. 1|126</span><br><span class="line">The Good, the Bad and the Ugly|73</span><br><span class="line">Star Wars: Episode V - The Empire Strikes Back|71</span><br><span class="line">Dr. Strangelove or: How I Learned to <span class="keyword">Stop</span> Worrying <span class="keyword">and</span> Love the Bomb|<span class="number">68</span></span><br><span class="line">Raiders <span class="keyword">of</span> the Lost Ark|<span class="number">62</span></span><br><span class="line">Star Wars: Episode VII - The <span class="keyword">Force</span> Awakens|<span class="number">62</span></span><br><span class="line">The Shawshank Redemption|<span class="number">61</span></span><br><span class="line">Once Upon a <span class="built_in">Time</span> <span class="keyword">in</span> the West|<span class="number">60</span></span><br><span class="line">Indiana Jones <span class="keyword">and</span> the Kingdom <span class="keyword">of</span> the Crystal Skull|<span class="number">60</span></span><br><span class="line">Airplane!|<span class="number">59</span></span><br></pre></td></tr></table></figure>
+<h3 id="Q7-IMDB-250"><a href="#Q7-IMDB-250" class="headerlink" title="Q7 IMDB_250"></a>Q7 IMDB_250</h3><blockquote>
+<p>List the IMDB Top 250 movies along with its weighted rating.</p>
+</blockquote>
+<p>按权重分数降序输出IMDB TOP250电影，计算规则如下</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">Weighted rating (WR) = (v/(v+m)) * R + (m/(v+m)) * C</span><br><span class="line">R = 电影平均得分 i.e. ratings.rating</span><br><span class="line">v = 电影投票数, i.e. ratings.votes</span><br><span class="line">m = 要进top250的最少投票数 (current 25000)</span><br><span class="line">C = 所有投票的平均得分 （计算方式是所有投票乘相应得分再除以总票数）</span><br></pre></td></tr></table></figure>
+<p>这道题主要就是注意以下各个变量的计算方法还有imbd要限定类型是电影，代码如下，结果太长就不打了，确认过和答案一样。</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">WITH</span> wr( t_id, WR ) <span class="keyword">AS</span> (</span><br><span class="line">        <span class="keyword">SELECT</span> ratings.title_id,</span><br><span class="line">        (votes / (votes + <span class="number">25000.0</span>)) * rating +</span><br><span class="line">        (<span class="number">25000.0</span> / (votes + <span class="number">25000.0</span>)) * </span><br><span class="line">        (<span class="keyword">SELECT</span> <span class="keyword">SUM</span>(rating * votes) / <span class="keyword">SUM</span>(votes) <span class="keyword">FROM</span> ratings, titles </span><br><span class="line">         <span class="keyword">WHERE</span> ratings.title_id = titles.title_id <span class="keyword">AND</span> titles.type = <span class="string">"movie"</span>)</span><br><span class="line">        <span class="keyword">FROM</span> ratings,titles</span><br><span class="line">        <span class="keyword">WHERE</span> ratings.title_id = titles.title_id <span class="keyword">AND</span> titles.type = <span class="string">"movie"</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="keyword">SELECT</span> primary_title, WR <span class="keyword">FROM</span> wr, titles</span><br><span class="line"><span class="keyword">WHERE</span> titles.title_id = t_id</span><br><span class="line"><span class="keyword">ORDER</span> <span class="keyword">BY</span> WR <span class="keyword">DESC</span></span><br><span class="line"><span class="keyword">LIMIT</span> <span class="number">250</span>;</span><br></pre></td></tr></table></figure>
+<h3 id="Q8-NUMBER-OF-ACTORS"><a href="#Q8-NUMBER-OF-ACTORS" class="headerlink" title="Q8 NUMBER_OF_ACTORS"></a>Q8 NUMBER_OF_ACTORS</h3><blockquote>
+<p>List the number of actors / actresses who have appeared in any title with Mark Hamill (born in 1951).</p>
+</blockquote>
+<p>输出所有和mark hamill有合作过的演员。这道题的思路是可以先找到所有mark hamill参演过的节目，然后再找到参演过那些节目的演员，主要去去重，代码如下：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">WITH</span> title_with_hamill(title_id) <span class="keyword">AS</span> (</span><br><span class="line">        <span class="keyword">SELECT</span> title_id <span class="keyword">FROM</span> crew, people</span><br><span class="line">        <span class="keyword">WHERE</span> crew.person_id = people.person_id  </span><br><span class="line">        <span class="keyword">AND</span> people.name = <span class="string">"Mark Hamill"</span> </span><br><span class="line">        <span class="keyword">AND</span> people.born = <span class="number">1951</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="keyword">SELECT</span> <span class="keyword">COUNT</span>(<span class="keyword">DISTINCT</span> person_id) <span class="keyword">FROM</span> crew, title_with_hamill</span><br><span class="line"><span class="keyword">WHERE</span> crew.title_id = title_with_hamill.title_id</span><br><span class="line"><span class="keyword">AND</span> (crew.category = <span class="string">"actor"</span> <span class="keyword">OR</span> crew.category = <span class="string">"actress"</span>);</span><br></pre></td></tr></table></figure>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 输出</span></span><br><span class="line">sqlite&gt; .read ./placeholder/q8_number_of_actors.sql</span><br><span class="line">206</span><br></pre></td></tr></table></figure>
+<h3 id="Q9-MOVIE-NAMES"><a href="#Q9-MOVIE-NAMES" class="headerlink" title="Q9 MOVIE_NAMES"></a>Q9 MOVIE_NAMES</h3><blockquote>
+<p>List the movies in alphabetical order which cast both Mark Hamill (born in 1951) and George Lucas (born in 1944).</p>
+</blockquote>
+<p>输出所有Mark Hamill 和 George Lucas 共同参演的电影名，按字母顺序输出，思路跟上一题差不多，找到mark hamill 参演的电影在在里面找 Georage Lucas 参演的过输出名字就可以了。</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">WITH</span> title_with_hamill(title_id) <span class="keyword">AS</span> (</span><br><span class="line">        <span class="keyword">SELECT</span> title_id <span class="keyword">FROM</span> crew, people</span><br><span class="line">        <span class="keyword">WHERE</span> crew.person_id = people.person_id  </span><br><span class="line">        <span class="keyword">AND</span> people.name = <span class="string">"Mark Hamill"</span></span><br><span class="line">        <span class="keyword">AND</span> people.born = <span class="number">1951</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="keyword">SELECT</span> <span class="keyword">DISTINCT</span> primary_title <span class="keyword">FROM</span> crew, title_with_hamill, people, titles</span><br><span class="line"><span class="keyword">WHERE</span> crew.title_id = title_with_hamill.title_id</span><br><span class="line"><span class="keyword">AND</span> titles.type = <span class="string">"movie"</span></span><br><span class="line"><span class="keyword">AND</span> crew.title_id = titles.title_id</span><br><span class="line"><span class="keyword">AND</span> (crew.person_id = people.person_id </span><br><span class="line">        <span class="keyword">AND</span> people.name = <span class="string">"George Lucas"</span> </span><br><span class="line">        <span class="keyword">AND</span> people.born = <span class="number">1944</span>)</span><br><span class="line"><span class="keyword">ORDER</span> <span class="keyword">BY</span> primary_title;</span><br></pre></td></tr></table></figure>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 输出</span></span><br><span class="line">sqlite&gt; .read ./placeholder/q9_movie_names.sql</span><br><span class="line">Star Wars: Episode V - The Empire Strikes Back</span><br></pre></td></tr></table></figure>
+<h3 id="Q10-GENRE-COUNTS"><a href="#Q10-GENRE-COUNTS" class="headerlink" title="Q10 GENRE_COUNTS"></a>Q10 GENRE_COUNTS</h3><blockquote>
+<p>List all distinct genres and the number of titles associated with them.</p>
+</blockquote>
+<p>从<code>title</code>里面的<code>genres</code>类别提取出所有不重复的类别，并类别输出相对应的节目数量，按降序排列，这里主要参考了<a href="https://stackoverflow.com/a/32051164" target="_blank" rel="noopener">这种做法</a>，将<code>genres</code>里的值取出来然后统一成<code>&#39;&#39;, &#39;...,...,...,&#39;</code>的格式，然后通过迭代和用<code>INSTR</code>找到逗号的位置，以及<code>SUBSTR</code>分割字符串来提取出所有类，最后按类别输出数量，代码如下：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">WITH</span> <span class="keyword">split</span>(word, <span class="keyword">str</span>) <span class="keyword">AS</span> (</span><br><span class="line">    <span class="keyword">SELECT</span> <span class="string">''</span>, genres || <span class="string">','</span> <span class="keyword">FROM</span> titles</span><br><span class="line">    <span class="keyword">UNION</span> <span class="keyword">ALL</span> <span class="keyword">SELECT</span></span><br><span class="line">    <span class="keyword">SUBSTR</span>(<span class="keyword">str</span>, <span class="number">0</span>, <span class="keyword">INSTR</span>(<span class="keyword">str</span>, <span class="string">','</span>)),</span><br><span class="line">    <span class="keyword">SUBSTR</span>(<span class="keyword">str</span>, <span class="keyword">INSTR</span>(<span class="keyword">str</span>, <span class="string">','</span>)+<span class="number">1</span>)</span><br><span class="line">    <span class="keyword">FROM</span> <span class="keyword">split</span> <span class="keyword">WHERE</span> <span class="keyword">str</span>!=<span class="string">''</span></span><br><span class="line">), </span><br><span class="line">genre_num(genre, <span class="keyword">num</span>) <span class="keyword">AS</span> (</span><br><span class="line"><span class="keyword">SELECT</span> word, <span class="keyword">count</span>(word) </span><br><span class="line"><span class="keyword">FROM</span> <span class="keyword">split</span></span><br><span class="line"><span class="keyword">GROUP</span> <span class="keyword">BY</span> word</span><br><span class="line"><span class="keyword">HAVING</span> word != <span class="string">''</span> <span class="keyword">AND</span> word != <span class="string">'\N'</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="keyword">SELECT</span>  * <span class="keyword">FROM</span> genre_num</span><br><span class="line"><span class="keyword">ORDER</span> <span class="keyword">BY</span> <span class="keyword">num</span> <span class="keyword">DESC</span>;</span><br></pre></td></tr></table></figure>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 结果</span></span><br><span class="line">sqlite&gt; .read ./placeholder/q10_genre_counts.sql</span><br><span class="line">Drama|620063</span><br><span class="line">Comedy|486163</span><br><span class="line">Short|310619</span><br><span class="line">Documentary|222187</span><br><span class="line">Talk-<span class="keyword">Show</span>|<span class="number">215144</span></span><br><span class="line">Romance|<span class="number">211462</span></span><br><span class="line">Family|<span class="number">159035</span></span><br><span class="line">News|<span class="number">148941</span></span><br><span class="line">Animation|<span class="number">115998</span></span><br><span class="line">Reality-TV|<span class="number">113180</span></span><br><span class="line">Music|<span class="number">105724</span></span><br><span class="line">Crime|<span class="number">99019</span></span><br><span class="line"><span class="keyword">Action</span>|<span class="number">97544</span></span><br><span class="line">Adventure|<span class="number">81686</span></span><br><span class="line">Game-<span class="keyword">Show</span>|<span class="number">75169</span></span><br><span class="line">Adult|<span class="number">65704</span></span><br><span class="line">Sport|<span class="number">48855</span></span><br><span class="line">Fantasy|<span class="number">48341</span></span><br><span class="line">Mystery|<span class="number">47155</span></span><br><span class="line">Horror|<span class="number">41552</span></span><br><span class="line">Thriller|<span class="number">40664</span></span><br><span class="line">History|<span class="number">31675</span></span><br><span class="line">Sci-Fi|<span class="number">31441</span></span><br><span class="line">Biography|<span class="number">27001</span></span><br><span class="line">Musical|<span class="number">17939</span></span><br><span class="line">Western|<span class="number">9811</span></span><br><span class="line">War|<span class="number">9309</span></span><br><span class="line">Film-Noir|<span class="number">322</span></span><br></pre></td></tr></table></figure>
+    </div>
+
+    
+    
+    
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>Post author:  </strong>Xiaotao Guo
+  </li>
+  <li class="post-copyright-link">
+    <strong>Post link: </strong>
+    <a href="https://guoxiaotao.xyz/2020/04/22/CMU-DB-3-HW1/" title="[CMU-15-445&#x2F;645]-Assignment 1">https://guoxiaotao.xyz/2020/04/22/CMU-DB-3-HW1/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>Copyright Notice:  </strong>All articles in this blog are licensed under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> unless stating additionally.
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+          
+          <div class="post-tags">
+              <a href="/tags/database/" rel="tag"><i class="fa fa-tag"></i> database</a>
+              <a href="/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/" rel="tag"><i class="fa fa-tag"></i> 数据库</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/04/21/lidarSLAM-3/" rel="prev" title="激光雷达运动畸变去除">
+      <i class="fa fa-chevron-left"></i> 激光雷达运动畸变去除
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    <div class="comments" id="valine-comments"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#作业-amp-软件安装"><span class="nav-number">1.</span> <span class="nav-text">作业 &amp; 软件安装</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#作业"><span class="nav-number">2.</span> <span class="nav-text">作业</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Q1-SAMPLE"><span class="nav-number">2.1.</span> <span class="nav-text">Q1 SAMPLE</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Q2-UNCOMMON-TYPE"><span class="nav-number">2.2.</span> <span class="nav-text">Q2 UNCOMMON_TYPE</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Q3-TV-VS-MOVIE"><span class="nav-number">2.3.</span> <span class="nav-text">Q3 TV_VS_MOVIE</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Q4-OLD-IS-NOT-GOLD"><span class="nav-number">2.4.</span> <span class="nav-text">Q4 OLD_IS_NOT_GOLD</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Q5-PERCENTAGE"><span class="nav-number">2.5.</span> <span class="nav-text">Q5 PERCENTAGE</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Q6-DUBBED-SMASH"><span class="nav-number">2.6.</span> <span class="nav-text">Q6 DUBBED_SMASH</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Q7-IMDB-250"><span class="nav-number">2.7.</span> <span class="nav-text">Q7 IMDB_250</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Q8-NUMBER-OF-ACTORS"><span class="nav-number">2.8.</span> <span class="nav-text">Q8 NUMBER_OF_ACTORS</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Q9-MOVIE-NAMES"><span class="nav-number">2.9.</span> <span class="nav-text">Q9 MOVIE_NAMES</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Q10-GENRE-COUNTS"><span class="nav-number">2.10.</span> <span class="nav-text">Q10 GENRE_COUNTS</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Xiaotao Guo"
+      src="https://avatars3.githubusercontent.com/u/45047478?s=460&u=3be5d506be9a30bd6eadfd29cd36c61e30833bb2&v=4">
+  <p class="site-author-name" itemprop="name">Xiaotao Guo</p>
+  <div class="site-description" itemprop="description">Stay hungry, stay foolish</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">22</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">7</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/XiaotaoGuo" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;XiaotaoGuo" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.google.com/maps/place/Virginia/@37.9179474,-83.9116557,6z/data=!3m1!4b1!4m5!3m4!1s0x884cd670bdbcb2cd:0xc04e4149b746a695!8m2!3d37.4315734!4d-78.6568942" title="Virginia, USA → https:&#x2F;&#x2F;www.google.com&#x2F;maps&#x2F;place&#x2F;Virginia&#x2F;@37.9179474,-83.9116557,6z&#x2F;data&#x3D;!3m1!4b1!4m5!3m4!1s0x884cd670bdbcb2cd:0xc04e4149b746a695!8m2!3d37.4315734!4d-78.6568942" rel="noopener" target="_blank"><i class="fa fa-map-marker fa-fw"></i>Virginia, USA</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.linkedin.com/in/xiaotaoguo/" title="LinkedIn → https:&#x2F;&#x2F;www.linkedin.com&#x2F;in&#x2F;xiaotaoguo&#x2F;" rel="noopener" target="_blank"><i class="fab fa-linkedin fa-fw"></i>LinkedIn</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:guoxiaotao0819@gmail.com" title="E-Mail → mailto:guoxiaotao0819@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://ucsd.edu/" title="UC San Diego → https:&#x2F;&#x2F;ucsd.edu&#x2F;" rel="noopener" target="_blank"><i class="fa fa-graduation-cap fa-fw"></i>UC San Diego</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zju.edu.cn/" title="ZJU → https:&#x2F;&#x2F;www.zju.edu.cn&#x2F;" rel="noopener" target="_blank"><i class="fa fa-graduation-cap fa-fw"></i>ZJU</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://torc.ai/" title="Torc Robotics → https:&#x2F;&#x2F;torc.ai&#x2F;" rel="noopener" target="_blank"><i class="fa fa-briefcase fa-fw"></i>Torc Robotics</a>
+      </span>
+  </div>
+
+
+
+    <div class="links-of-blogroll motion-element links-of-blogroll-block">
+      <div class="links-of-blogroll-title">
+        <!-- modify icon to fire by szw -->
+        <i class="fa fa-history fa-" aria-hidden="true"></i>
+        recent posts
+      </div>
+      <ul class="links-of-blogroll-list">
+        
+        
+          <li>
+            <a href="/2020/04/22/CMU-DB-3-HW1/" title="[CMU-15-445/645]-Assignment 1" target="_blank">[CMU-15-445/645]-Assignment 1</a>
+          </li>
+        
+          <li>
+            <a href="/2020/04/21/lidarSLAM-3/" title="激光雷达运动畸变去除" target="_blank">激光雷达运动畸变去除</a>
+          </li>
+        
+          <li>
+            <a href="/2020/04/20/CMU-DB-2-Advanced-SQL/" title="[CMU-15-445/645]-Advanced SQL" target="_blank">[CMU-15-445/645]-Advanced SQL</a>
+          </li>
+        
+          <li>
+            <a href="/2020/04/20/CMU-DB-1/" title="[CMU-15-445/645] - 介绍" target="_blank">[CMU-15-445/645] - 介绍</a>
+          </li>
+        
+          <li>
+            <a href="/2020/04/19/distributed-system/" title="[UCSD CSE120]分布式系统-distributed system" target="_blank">[UCSD CSE120]分布式系统-distributed system</a>
+          </li>
+        
+      </ul>
+    </div>
+
+
+      </div>
+
+      <script type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?d=3IgjZ2nwFXDxOcZaq3bMwhX63fbnM0O-5aVh7uWblik&cl=ffffff&w=a"></script>
+      
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-cog"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Xiaotao Guo</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a>
+  </div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="Total Visitors">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="Total Views">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+  <script>
+    (function(){
+      var bp = document.createElement('script');
+      var curProtocol = window.location.protocol.split(':')[0];
+      bp.src = (curProtocol === 'https') ? 'https://zz.bdstatic.com/linksubmit/push.js' : 'http://push.zhanzhang.baidu.com/push.js';
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(bp, s);
+    })();
+  </script>
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//unpkg.com/valine/dist/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : true,
+      appId      : 'gyDhE6WmYReAVJr69uuRmqab-gzGzoHsz',
+      appKey     : 'EEq9PxLIVddyewEdu9gUytK2',
+      placeholder: "Your comment makes this site better!",
+      avatar     : 'mm',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : false,
+      lang       : '' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : false,
+      serverURLs : ''
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>
