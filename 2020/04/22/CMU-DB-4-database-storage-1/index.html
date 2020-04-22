@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon32.ico">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon16.ico">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"guoxiaotao.xyz","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="这是我在学习Databases Systems CMU 15-445&#x2F;645&#x2F; Fall 2019过程记录的一些笔记。通过前两次课已经学习了一个数据库应该是怎么样的以及怎么通过sql去对数据库进行操作，接下来就是学习怎么样去构建一个数据库管理系统，这次课主要是介绍数据库的存储过程，主要是介绍了数据库里页的概念，以及不同方式去追踪页、存储页以及存储tuple。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="[CMU-15-445&#x2F;645] Database Storage - Part 1">
+<meta property="og:url" content="https://guoxiaotao.xyz/2020/04/22/CMU-DB-4-database-storage-1/index.html">
+<meta property="og:site_name" content="Tao&#39;s Blog">
+<meta property="og:description" content="这是我在学习Databases Systems CMU 15-445&#x2F;645&#x2F; Fall 2019过程记录的一些笔记。通过前两次课已经学习了一个数据库应该是怎么样的以及怎么通过sql去对数据库进行操作，接下来就是学习怎么样去构建一个数据库管理系统，这次课主要是介绍数据库的存储过程，主要是介绍了数据库里页的概念，以及不同方式去追踪页、存储页以及存储tuple。">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://guoxiaotao.xyz/2020/04/22/CMU-DB-4-database-storage-1/hirarchy.png">
+<meta property="og:image" content="https://guoxiaotao.xyz/2020/04/22/CMU-DB-4-database-storage-1/access_time.png">
+<meta property="og:image" content="https://guoxiaotao.xyz/2020/04/22/CMU-DB-4-database-storage-1/disk-oriented-dbms.png">
+<meta property="og:image" content="https://guoxiaotao.xyz/2020/04/22/CMU-DB-4-database-storage-1/virtual-memory.png">
+<meta property="og:image" content="https://guoxiaotao.xyz/2020/04/22/CMU-DB-4-database-storage-1/linkedlist.png">
+<meta property="og:image" content="https://guoxiaotao.xyz/2020/04/22/CMU-DB-4-database-storage-1/page-directory.png">
+<meta property="og:image" content="https://guoxiaotao.xyz/2020/04/22/CMU-DB-4-database-storage-1/strawman.png">
+<meta property="og:image" content="https://guoxiaotao.xyz/2020/04/22/CMU-DB-4-database-storage-1/slot_pages.png">
+<meta property="og:image" content="https://guoxiaotao.xyz/2020/04/22/CMU-DB-4-database-storage-1/denormal1.png">
+<meta property="og:image" content="https://guoxiaotao.xyz/2020/04/22/CMU-DB-4-database-storage-1/denormal2.png">
+<meta property="article:published_time" content="2020-04-22T20:19:26.000Z">
+<meta property="article:modified_time" content="2020-04-22T23:43:45.827Z">
+<meta property="article:author" content="Xiaotao Guo">
+<meta property="article:tag" content="database">
+<meta property="article:tag" content="数据库">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://guoxiaotao.xyz/2020/04/22/CMU-DB-4-database-storage-1/hirarchy.png">
+
+<link rel="canonical" href="https://guoxiaotao.xyz/2020/04/22/CMU-DB-4-database-storage-1/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en'
+  };
+</script>
+
+  <title>[CMU-15-445/645] Database Storage - Part 1 | Tao's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Tao's Blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="tags fa-fw"></i>Tags<span class="badge">7</span></a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="th fa-fw"></i>Categories<span class="badge">4</span></a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="archive fa-fw"></i>Archives<span class="badge">23</span></a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://guoxiaotao.xyz/2020/04/22/CMU-DB-4-database-storage-1/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://avatars3.githubusercontent.com/u/45047478?s=460&u=3be5d506be9a30bd6eadfd29cd36c61e30833bb2&v=4">
+      <meta itemprop="name" content="Xiaotao Guo">
+      <meta itemprop="description" content="Stay hungry, stay foolish">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Tao's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          [CMU-15-445/645] Database Storage - Part 1
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2020-04-22 16:19:26 / Modified: 19:43:45" itemprop="dateCreated datePublished" datetime="2020-04-22T16:19:26-04:00">2020-04-22</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/database/" itemprop="url" rel="index"><span itemprop="name">database</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="Views" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="eye"></i>
+              </span>
+              <span class="post-meta-item-text">Views: </span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Comment Counts: </span>
+    
+    <a title="valine" href="/2020/04/22/CMU-DB-4-database-storage-1/#valine-comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2020/04/22/CMU-DB-4-database-storage-1/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+<br>
+            <span class="post-meta-item" title="Symbols count in article">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+              <span>3.9k</span>
+            </span>
+            <span class="post-meta-item" title="Reading time">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+              <span>4 mins.</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>这是我在学习<a href="https://15445.courses.cs.cmu.edu/fall2019/" target="_blank" rel="noopener">Databases Systems CMU 15-445/645/ Fall 2019</a>过程记录的一些笔记。通过前两次课已经学习了<a href="https://guoxiaotao.xyz/2020/04/20/CMU-DB-1/">一个数据库应该是怎么样的</a>以及<a href="https://guoxiaotao.xyz/2020/04/20/CMU-DB-2-Advanced-SQL/">怎么通过sql去对数据库进行操作</a>，接下来就是学习怎么样去构建一个数据库管理系统，这次课主要是介绍数据库的存储过程，主要是介绍了数据库里页的概念，以及不同方式去追踪页、存储页以及存储tuple。</p>
+<a id="more"></a>
+<h2 id="存储结构"><a href="#存储结构" class="headerlink" title="存储结构"></a>存储结构</h2><p>这门课研究的DBMS(数据库管理系统)都假定数据库的数据主要存储位置都是在非易失性存储空间( Non-volatile disk，硬盘等)，而数据库管理系统的操作则是管理数据库从非易失性存储空间（硬盘）转移到易失性存储空间(内存)，前三层是易失性的，在计算机断电之后数据不会保留，而后三层则是非易失性的，数据可以长期存储，在CPU进行运算时，需要把数据从后三层的空间转移到前三层。目前还有一种最新的存储技术叫非易失性内存(Non-Voltatile Memory, NVM)，这种存储结构即有内存的高速度处理，也能像硬盘一样在断电之后也能保持速度，不过目前还在研究过程，没有普及。</p>
+<p>一个典型的数据库存储层次结构如下所示，从上往下数据读写速度逐级递减：</p>
+<img src="/2020/04/22/CMU-DB-4-database-storage-1/hirarchy.png" class="" title="CMU-DB-4-database-storage-1">
+<p>在这门课中我们主要关注后四层，把后三层统称为磁盘(Disk)，DRAM称为内存(Memory)，不同存储介质的读写速度可以参考下图，右侧是的数据主要是用来可视化长度对比。</p>
+<img src="/2020/04/22/CMU-DB-4-database-storage-1/access_time.png" class="" title="CMU-DB-4-database-storage-1">
+<h2 id="系统设计"><a href="#系统设计" class="headerlink" title="系统设计"></a>系统设计</h2><h3 id="目标"><a href="#目标" class="headerlink" title="目标"></a>目标</h3><p>针对DBMS，我们的设计目标主要是让整个系统可以管理一个数据库，它需要的空间会超过内存的可用空间（不超过的话直接全部读入内存就可以一直快速处理了）。并且用于对磁盘的读写代价太昂贵（速度太慢），所以我们需要尽可能避免大空间的读写而导致性能下降。</p>
+<p>基于磁盘的数据库管理系统一个典型工作过程如下图：</p>
+<img src="/2020/04/22/CMU-DB-4-database-storage-1/disk-oriented-dbms.png" class="" title="CMU-DB-4-database-storage-1">
+<p>首先，处理器发出要求获得某个数据，此时内存里还没有该数据，需要从磁盘读取，读取之后再将该文件的指针给处理器，然后处理器进行运算，数据库则负责其中的数据转移和检查的部分，并不关心处理器会做什么运算。</p>
+<p>从上面图以及目标来看，我们需要管理比实际内存空间要大的数据，那么为什么不直接用操作系统的虚拟内存机制然后让操作系统去管理读写操作而是去每次亲自读写内存和磁盘呢？</p>
+<p>虚拟内存的原理大致如下图所示：操作系统维护一个虚拟的地址列表(memory-mapping, mmap)，每次需要获取一页时会先在内存找有没有存好，如果没有就从磁盘读进来，有就直接访问。但是当实际内存存满数据的时候，操作系统需要决定清空哪个页面，而这个时候如果直接让操作系统来选择的话，并不可以根据数据库的性质已经查找命令做出有效率的选择，所以直接让操作系统选择并不好。</p>
+<img src="/2020/04/22/CMU-DB-4-database-storage-1/virtual-memory.png" class="" title="CMU-DB-4-database-storage-1">
+<p>如果要解决这个问题的话我们有以下选择：</p>
+<ul>
+<li>madvise: 告诉操作系统你想要怎么样读取某页</li>
+<li>mlock：告诉操作系统那些页面需要保留</li>
+<li>msync：让操作系统把内存的数据存到磁盘去</li>
+</ul>
+<p>目前市面上只有有部分DBMS (mongoDB, SQLite,…) 是采取这种策略去使用mmap，大部分都是历史原因。因为数据库管理系统本身总是能做到比操作系统来管理性能更高，主要集中在：</p>
+<ul>
+<li>把用过的page 用一个合理的顺序flush到磁盘中</li>
+<li>专门化的预处理某些数据</li>
+<li>缓存替换策略</li>
+<li>线程/线程调度</li>
+</ul>
+<p>因为操作系统总是通用性的看待这些操作，所以数据库直接管理能做的更好，所以一般不让操作系统管理，本门课搭建的数据库管理系统也不会用到mmap。</p>
+<h2 id="数据库存储"><a href="#数据库存储" class="headerlink" title="数据库存储"></a>数据库存储</h2><p>数据库管理系统有很多模块，目前我们只关注存储模块，这一方面主要有两个问题：</p>
+<ul>
+<li>数据库管理系统用什么样的方式表示磁盘里的数据库文件？<ul>
+<li>文件怎么存储？</li>
+<li>数据库里面tuple怎么表示？</li>
+<li>内存和磁盘里的页(page)怎么表示？</li>
+</ul>
+</li>
+<li>数据库管理系统怎么样管理磁盘和内存间的移动操作？</li>
+</ul>
+<p>本文主要集中解决第一个问题。</p>
+<h3 id="文件存储"><a href="#文件存储" class="headerlink" title="文件存储"></a>文件存储</h3><p>首先，DBMS 会将数据库文件写进一个或多个文件存在磁盘里。在操作系统的层面上并不关心文件的内容和格式，只要是符合一个通用的文件系统都能识别。但是对 DBMS 而言这是独有的，每个 DBMS 的数据库文件用别的 DBMS 都可能无法正确识别（早期的DBMS有一部分会用定制的文件系统来存储数据，但是现在几乎没有系统这样做了）。</p>
+<h4 id="存储管理器"><a href="#存储管理器" class="headerlink" title="存储管理器"></a>存储管理器</h4><p>首先我们需要有一个存储管理器来负责维护数据库的数据：包括对数据的读写调度来提高效率。对于存储管理器而言，文件在其的管理形式主要是表现为一系列的页（page），进而对数据的读写转为对页的读写读写和可用空间的管理。</p>
+<h4 id="数据库中的页"><a href="#数据库中的页" class="headerlink" title="数据库中的页"></a>数据库中的页</h4><p>这里要区分一些数据库中的页和和操作系统的页的概念。这里的<em>页</em>（page）的概念主要是指一个固定空间大小的数据，可以包括tuples，元数据，索引和登录数据，大部分系统不会混着存储各种数据在一个页里面，比如tuple和索引会分开存储。<br>同时大部分系统都要求页里面应该包含关于页的所有数据，包括存储了什么以及怎么样去解析等等。这里主要是为了数据的安全性，假设我们有一个表，我们把表头放在一个page里而把所有的tuple放在另一个page里面，这个时候如果磁盘损坏存着表头的page无法读取了会导致包含tuple的页也没法发挥作用。</p>
+<p>每个page都会被管理器分配一个独有的id（identifier）来进行空间上的追踪管理，这样当存储位置变了的时候管理器不需要改变页的id，只需要改变映射的地址就可以了，操作更加简介。</p>
+<p>在数据库里面不同的page的操作如下表：</p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th style="text-align:left">层次</th>
+<th style="text-align:left">大小</th>
+<th style="text-align:left">备注</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">硬件层面上的页</td>
+<td style="text-align:left">通常4KB</td>
+<td style="text-align:left">能保证读写成功的最小单位，假如我们要写入16KB，其中每4KB的读写都可以认为是一次性完成，不存在写入到一半（比如2KB）失效的</td>
+</tr>
+<tr>
+<td style="text-align:left">操作系统的页</td>
+<td style="text-align:left">通常4KB</td>
+<td style="text-align:left"></td>
+</tr>
+<tr>
+<td style="text-align:left">数据库的页</td>
+<td style="text-align:left">512B ~ 16KB</td>
+<td style="text-align:left">不同数据库页的大小不一样，SQLite和Oracle的页大小4KB，mySQL页的大小是16KB</td>
+</tr>
+</tbody>
+</table>
+</div>
+<h4 id="页面管理架构"><a href="#页面管理架构" class="headerlink" title="页面管理架构"></a>页面管理架构</h4><p>不同的数据库管理系统有不同方式去管理磁盘里面文件的page，大致有以下三种，这门课主要介绍第一种，堆文件组织。在这个层面上我们不需要知道page的具体内容是什么，只需要关心怎么存储页和读写。</p>
+<ul>
+<li>Heap File Organization （堆文件组织）</li>
+<li>Sequential / Sorted File Organization （序列文件组织）</li>
+<li>Hashing File Organization （哈希文件组织）</li>
+</ul>
+<h4 id="堆（heap）"><a href="#堆（heap）" class="headerlink" title="堆（heap）"></a>堆（heap）</h4><p>堆文件指的是一个关于页的无序集合，并且支持页的创建/读取/写入/删除的操作，同时还需要可以遍历所有页。同时堆文件需要有元数据来追踪哪些页面已经存在以及哪些页面有空余空间。堆文件的表示方式有两种：</p>
+<ul>
+<li>链表：目前比较少用</li>
+<li>页目录</li>
+</ul>
+<p>用链表的方法比较简单，只需要在文件起始位置存放两个链表的表头：分别是数据页列表的表头以及空页列表的表头，每个page追踪自身的可用空间，大致如下图所示。</p>
+<img src="/2020/04/22/CMU-DB-4-database-storage-1/linkedlist.png" class="" title="CMU-DB-4-database-storage-1">
+<p>用页目录的方法需要DBMS 维护一个特定的页来通过数据页的id来追踪数据库中所有数据页的位置，并且记录每个页还有多少可用空间，因此很重要的一点是保证页目录和各个页需要同步（我们需要考虑当在页目录更新过程系统崩溃的话有什么机制能够让页目录能继续同步）。页目录的原理大致如下图所示：</p>
+<img src="/2020/04/22/CMU-DB-4-database-storage-1/page-directory.png" class="" title="CMU-DB-4-database-storage-1">
+<h3 id="Page-layout"><a href="#Page-layout" class="headerlink" title="Page layout"></a>Page layout</h3><h4 id="Page-header-页头"><a href="#Page-header-页头" class="headerlink" title="Page header 页头"></a>Page header 页头</h4><p>每个页都包含一个页头来存储关于这个页的内容的元数据，主要包括以下几个参数，部分数据要求页面可以自我解析（例如Oracle，如上述）：</p>
+<ul>
+<li>Page size: 尺寸</li>
+<li>Checksum</li>
+<li>BDMS version: 系统版本</li>
+<li>Transaction Vsiibility</li>
+<li>Compression</li>
+</ul>
+<h4 id="Page-layout-页布局"><a href="#Page-layout-页布局" class="headerlink" title="Page layout 页布局"></a>Page layout 页布局</h4><p>对于页存储架构来说，我们现在需要理解怎么组织页内部的数据（上一部分关注怎么找到这个页），现在假设我们只存储tuples。有两种方式，分别是：</p>
+<ul>
+<li><p>tuple-oriented</p>
+<ul>
+<li><p>strawman 的方法：页面维护一个变量更新该页tuple的个数，每次往后面逐次添加tuple，如下图。这样的存储方式有一些问题：首先，当我们存的tuple是长度可变的值的话，当我们从中间删除一个tuple然后想添加一个tuple进去的时候，空间不一定匹配，另外我们需要遍历所有tuple找到我们想要的那个，效率比较低，所以目前比较少用。</p>
+<img src="/2020/04/22/CMU-DB-4-database-storage-1/strawman.png" class="" title="CMU-DB-4-database-storage-1">
+</li>
+<li><p>slotted pages：最常用的方案是在page分成两部分，前面部分存页头和一个slot 数组，每个数组位置存取到某个tuple的偏移量（offset），而后面部分则是存tuple数据，页头需要最终用过的slot的数量以及最后一个用过的slot的起始位置，大致原理如下图所示：</p>
+<img src="/2020/04/22/CMU-DB-4-database-storage-1/slot_pages.png" class="" title="CMU-DB-4-database-storage-1">
+</li>
+</ul>
+</li>
+<li><p>Log-structured(这里跳过了)</p>
+</li>
+</ul>
+<h3 id="tuple-layout"><a href="#tuple-layout" class="headerlink" title="tuple layout"></a>tuple layout</h3><p>一个tuple一般都是一序列字节，由DBMS来解析字节理解具体的类型和值。每个tuple都有一个header包含所有元数据（可见性，null值的bitmap），这里注意我们不需要把数据库的schema存进去，只关注tuple本身。另外，tuple的参数存储顺序<em>一般</em>和我们创建他们的顺序是一致的。</p>
+<p>一般可以将相关的tuple存到同一个page（denormalization），这样有可能可以减少需要的I/O操作数，但是在更新的时候可能代价更高（更慢）。如下图，bar里面有foreign key指向boo，denormalization可以把他们的表头预先合在一起。（这种做法现在比较少用，一般不同table的tuple存在不同page里）</p>
+<img src="/2020/04/22/CMU-DB-4-database-storage-1/denormal1.png" class="" title="CMU-DB-4-database-storage-1">
+<img src="/2020/04/22/CMU-DB-4-database-storage-1/denormal2.png" class="" title="CMU-DB-4-database-storage-1">
+<p>DBMS 需要用一个方式来管理每个单独的tuple，一般会对每个tuple 分配一个 record id，大部分的形式是：<code>page_id + offset/slot</code>（在上一部分提到的方式），也有可能还会存文件位置信息。但是这个信息每个DBMS的管理策略都不一样，用户不应该依赖这些信息表明顺序等等任何事情。</p>
+
+    </div>
+
+    
+    
+    
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>Post author:  </strong>Xiaotao Guo
+  </li>
+  <li class="post-copyright-link">
+    <strong>Post link: </strong>
+    <a href="https://guoxiaotao.xyz/2020/04/22/CMU-DB-4-database-storage-1/" title="[CMU-15-445&#x2F;645] Database Storage - Part 1">https://guoxiaotao.xyz/2020/04/22/CMU-DB-4-database-storage-1/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>Copyright Notice:  </strong>All articles in this blog are licensed under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> unless stating additionally.
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+          
+          <div class="post-tags">
+              <a href="/tags/database/" rel="tag"><i class="fa fa-tag"></i> database</a>
+              <a href="/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/" rel="tag"><i class="fa fa-tag"></i> 数据库</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/04/22/CMU-DB-3-HW1/" rel="prev" title="[CMU-15-445/645]-Assignment 1">
+      <i class="fa fa-chevron-left"></i> [CMU-15-445/645]-Assignment 1
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    <div class="comments" id="valine-comments"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#存储结构"><span class="nav-number">1.</span> <span class="nav-text">存储结构</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#系统设计"><span class="nav-number">2.</span> <span class="nav-text">系统设计</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#目标"><span class="nav-number">2.1.</span> <span class="nav-text">目标</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#数据库存储"><span class="nav-number">3.</span> <span class="nav-text">数据库存储</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#文件存储"><span class="nav-number">3.1.</span> <span class="nav-text">文件存储</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#存储管理器"><span class="nav-number">3.1.1.</span> <span class="nav-text">存储管理器</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#数据库中的页"><span class="nav-number">3.1.2.</span> <span class="nav-text">数据库中的页</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#页面管理架构"><span class="nav-number">3.1.3.</span> <span class="nav-text">页面管理架构</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#堆（heap）"><span class="nav-number">3.1.4.</span> <span class="nav-text">堆（heap）</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Page-layout"><span class="nav-number">3.2.</span> <span class="nav-text">Page layout</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Page-header-页头"><span class="nav-number">3.2.1.</span> <span class="nav-text">Page header 页头</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Page-layout-页布局"><span class="nav-number">3.2.2.</span> <span class="nav-text">Page layout 页布局</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#tuple-layout"><span class="nav-number">3.3.</span> <span class="nav-text">tuple layout</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Xiaotao Guo"
+      src="https://avatars3.githubusercontent.com/u/45047478?s=460&u=3be5d506be9a30bd6eadfd29cd36c61e30833bb2&v=4">
+  <p class="site-author-name" itemprop="name">Xiaotao Guo</p>
+  <div class="site-description" itemprop="description">Stay hungry, stay foolish</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">23</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">7</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/XiaotaoGuo" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;XiaotaoGuo" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.google.com/maps/place/Virginia/@37.9179474,-83.9116557,6z/data=!3m1!4b1!4m5!3m4!1s0x884cd670bdbcb2cd:0xc04e4149b746a695!8m2!3d37.4315734!4d-78.6568942" title="Virginia, USA → https:&#x2F;&#x2F;www.google.com&#x2F;maps&#x2F;place&#x2F;Virginia&#x2F;@37.9179474,-83.9116557,6z&#x2F;data&#x3D;!3m1!4b1!4m5!3m4!1s0x884cd670bdbcb2cd:0xc04e4149b746a695!8m2!3d37.4315734!4d-78.6568942" rel="noopener" target="_blank"><i class="fa fa-map-marker fa-fw"></i>Virginia, USA</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.linkedin.com/in/xiaotaoguo/" title="LinkedIn → https:&#x2F;&#x2F;www.linkedin.com&#x2F;in&#x2F;xiaotaoguo&#x2F;" rel="noopener" target="_blank"><i class="fab fa-linkedin fa-fw"></i>LinkedIn</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:guoxiaotao0819@gmail.com" title="E-Mail → mailto:guoxiaotao0819@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://ucsd.edu/" title="UC San Diego → https:&#x2F;&#x2F;ucsd.edu&#x2F;" rel="noopener" target="_blank"><i class="fa fa-graduation-cap fa-fw"></i>UC San Diego</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zju.edu.cn/" title="ZJU → https:&#x2F;&#x2F;www.zju.edu.cn&#x2F;" rel="noopener" target="_blank"><i class="fa fa-graduation-cap fa-fw"></i>ZJU</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://torc.ai/" title="Torc Robotics → https:&#x2F;&#x2F;torc.ai&#x2F;" rel="noopener" target="_blank"><i class="fa fa-briefcase fa-fw"></i>Torc Robotics</a>
+      </span>
+  </div>
+
+
+
+    <div class="links-of-blogroll motion-element links-of-blogroll-block">
+      <div class="links-of-blogroll-title">
+        <!-- modify icon to fire by szw -->
+        <i class="fa fa-history fa-" aria-hidden="true"></i>
+        recent posts
+      </div>
+      <ul class="links-of-blogroll-list">
+        
+        
+          <li>
+            <a href="/2020/04/22/CMU-DB-4-database-storage-1/" title="[CMU-15-445/645] Database Storage - Part 1" target="_blank">[CMU-15-445/645] Database Storage - Part 1</a>
+          </li>
+        
+          <li>
+            <a href="/2020/04/22/CMU-DB-3-HW1/" title="[CMU-15-445/645]-Assignment 1" target="_blank">[CMU-15-445/645]-Assignment 1</a>
+          </li>
+        
+          <li>
+            <a href="/2020/04/21/lidarSLAM-3/" title="激光雷达运动畸变去除" target="_blank">激光雷达运动畸变去除</a>
+          </li>
+        
+          <li>
+            <a href="/2020/04/20/CMU-DB-2-Advanced-SQL/" title="[CMU-15-445/645]-Advanced SQL" target="_blank">[CMU-15-445/645]-Advanced SQL</a>
+          </li>
+        
+          <li>
+            <a href="/2020/04/20/CMU-DB-1/" title="[CMU-15-445/645] - 介绍" target="_blank">[CMU-15-445/645] - 介绍</a>
+          </li>
+        
+      </ul>
+    </div>
+
+
+      </div>
+
+      <script type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?d=3IgjZ2nwFXDxOcZaq3bMwhX63fbnM0O-5aVh7uWblik&cl=ffffff&w=a"></script>
+      
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-cog"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Xiaotao Guo</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a>
+  </div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="Total Visitors">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="Total Views">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+  <script>
+    (function(){
+      var bp = document.createElement('script');
+      var curProtocol = window.location.protocol.split(':')[0];
+      bp.src = (curProtocol === 'https') ? 'https://zz.bdstatic.com/linksubmit/push.js' : 'http://push.zhanzhang.baidu.com/push.js';
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(bp, s);
+    })();
+  </script>
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//unpkg.com/valine/dist/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : true,
+      appId      : 'gyDhE6WmYReAVJr69uuRmqab-gzGzoHsz',
+      appKey     : 'EEq9PxLIVddyewEdu9gUytK2',
+      placeholder: "Your comment makes this site better!",
+      avatar     : 'mm',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : false,
+      lang       : '' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : false,
+      serverURLs : ''
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>
