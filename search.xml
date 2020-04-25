@@ -1,9 +1,39 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>ROS melodic 下使用 CSM库</title>
+    <url>/2020/04/25/ros-melodic-csm/</url>
+    <content><![CDATA[<p>在学习slam的时候偶尔需要用到 CSM 这个库，但是目前这个库最高支持到kinetic可以直接通过 apt install 下载，后来找到几种做法可以通过源码安装 CSM 使用，在这里记录一下，另外注意一下安装csm需要安装一个gsl的库。</p>
+<a id="more"></a>
+<p>首先从Github上把<a href="https://github.com/AndreaCensi/csm" target="_blank" rel="noopener">源码</a> clone 或者下载下来解压，然后有两种思路可以安装。</p>
+<ul>
+<li><p>第一种方式：只在目录内安装，然后作为第三方库保存在自己的workspace里，比较推荐这种方法，因为安装到usr目录的话可能后续如果要清理会比较麻烦。具体做法是在 csm 目录里使用作者写好的脚本安装：</p>
+  <figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">./install_quickstart.sh</span><br></pre></td></tr></table></figure>
+<p>  安装完成后使用 csm 所需的文件都在 <code>csm/deploy</code>文件夹里，在需要用到<code>csm</code>的项目和目标链接的<code>CMakeList.txt</code>中加入这两项添加csm的目录和链接csm的动态库(csm的目录位置换成你自己的)：</p>
+  <figure class="highlight cmake"><table><tr><td class="code"><pre><span class="line"><span class="keyword">include_directories</span>(</span><br><span class="line">...</span><br><span class="line">PATH_TO_CSM/deploy/<span class="keyword">include</span>/csm</span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+  <figure class="highlight cmake"><table><tr><td class="code"><pre><span class="line"><span class="keyword">target_link_libraries</span>(target_name</span><br><span class="line">...</span><br><span class="line">PATH_TO_CSM/deploy/lib/libcsm.so</span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+<p>  然后就能顺利编译通过了。</p>
+</li>
+<li><p>第二种方式：直接安装到本机上，和上面的过程差不多，在 csm 的目录下执行常规的cmake安装操作：</p>
+  <figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">mkdir build</span><br><span class="line"><span class="built_in">cd</span> build</span><br><span class="line">cmake ..</span><br><span class="line">make</span><br><span class="line">sudo make install <span class="comment"># 这一步会安装csm到本机上</span></span><br></pre></td></tr></table></figure>
+<p>  安装完成后应该能找到这几个位置：<code>/usr/local/include/csm</code>，<code>/usr/local/lib/libcsm.so</code>，<code>/usr/local/lib/libcsm-static.a</code>。也是一样在<code>CMakeList.txt</code>做相应修改就可以了：</p>
+  <figure class="highlight cmake"><table><tr><td class="code"><pre><span class="line"><span class="keyword">include_directories</span>(</span><br><span class="line">...</span><br><span class="line">/usr/local/<span class="keyword">include</span>/csm</span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+  <figure class="highlight cmake"><table><tr><td class="code"><pre><span class="line"><span class="keyword">target_link_libraries</span>(target_name</span><br><span class="line">...</span><br><span class="line">/usr/local/lib/libcsm.so</span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+]]></content>
+      <categories>
+        <category>slam</category>
+      </categories>
+      <tags>
+        <tag>slam</tag>
+        <tag>ROS</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>lidarSLAM-第二次作业</title>
     <url>/2020/04/23/lidarSLAM-hw1/</url>
-    <content><![CDATA[<p>本文是我在学习深蓝学院的<a href="https://www.shenlanxueyuan.com/course/152" target="_blank" rel="noopener">激光slam课程</a>第二次作业的笔记。本次作业前半部分是通过代码实践熟悉里程计不同标定方法和看下实现的效果；第三题是关于线性方程组不同解法的总结；第四题是扩展题，考虑以下怎么设计里程计和激光雷达外参标定方法。</p>
+    <content><![CDATA[<p>本文是我在学习深蓝学院的<a href="https://www.shenlanxueyuan.com/course/152" target="_blank" rel="noopener">激光slam课程</a>第二次作业的笔记。本次作业前半部分是通过代码实践熟悉里程计不同标定方法和看下实现的效果；第三题是关于线性方程组不同解法的总结；第四题是扩展题，考虑一下怎么设计里程计和激光雷达外参标定方法。</p>
 <a id="more"></a>
 <h2 id="直接线性方法的里程计标定的模块"><a href="#直接线性方法的里程计标定的模块" class="headerlink" title="直接线性方法的里程计标定的模块"></a>直接线性方法的里程计标定的模块</h2><p>这一题老师提供了一个 ROS 的工作空间以及一个 <code>odom_calib</code> 的 package，大致代码框架已经写好，只需要补充一下几个关键函数。</p>
 <h3 id="代码结构"><a href="#代码结构" class="headerlink" title="代码结构"></a>代码结构</h3><p>首先大致了解一下下代码框架，<code>src</code>文件夹里面有一个<code>main.cpp</code>用来初始化节点以及做各个topic之间的数据传递用，<code>odom_calib.cpp</code>和<code>odom_calib.hpp</code>是用来校正里程计数据的类。首先通过<code>main.cpp</code>来了解大致涉及到的 node 、 topic以及大致的工作流程。</p>
