@@ -1,7 +1,104 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
-    <title>ROS melodic 下使用 CSM库</title>
+    <title>lidarSLAM-第三次作业</title>
+    <url>/2020/04/25/lidarSLAM-hw2/</url>
+    <content><![CDATA[<p>本文是我在学习深蓝学院的<a href="https://www.shenlanxueyuan.com/course/152" target="_blank" rel="noopener">激光slam课程</a>第三次作业的笔记。本次作业第一题是通过代码实践课上学习到的用里程计辅助去除激光扫描数据畸变的方法；第二题是补充一下课上提到的 ICP 算法的原理推导；第三题是复习激光雷达的测距原理；第四题是设计用 IMU 去除运动畸变的思路。</p>
+<a id="more"></a>
+<h2 id="结合里程计数据去除激光雷达运动畸变"><a href="#结合里程计数据去除激光雷达运动畸变" class="headerlink" title="结合里程计数据去除激光雷达运动畸变"></a>结合里程计数据去除激光雷达运动畸变</h2><p>作业里已经包括了代码大致框架，只需要补充其中一个函数即可。首先还是来学习一下代码结构，具体推导过程见前文 <a href="https://guoxiaotao.xyz/2020/04/21/lidarSLAM-3/">_激光雷达运动畸变去除_</a>。</p>
+<h3 id="代码结构"><a href="#代码结构" class="headerlink" title="代码结构"></a>代码结构</h3><p>思路和上一次作业差不多，<code>main()</code> 初始化节点和一个用于矫正激光雷达运动畸变的实例 <code>tmpLidarMotionCalib</code>，由该实例完成全部工作。</p>
+<p><code>LidarMotionCalibrator</code> 通过一个 Subscriber 订阅一个自定义的激光扫描类型 <code>ChampionNavLaserScan</code> 话题 <code>champion_scan</code> 来启动 callback 函数，完成后续流程，看了一下 <code>ChampionNavLaserScan</code> 内部，本次作业应该要用到的是扫描时间 <code>scan_time</code>， 距离 <code>ranges</code> 和角度<code>angles</code> 。</p>
+<p>每次收到一帧激光数据时节点会进入 <code>ScanCallBack()</code> 函数，首先通过开始时间和激光束数量获得当前激光帧起止时间，然后将距离和角度数据复制一份用于校正，并将校正前的扫描数据计算成 xyz 坐标（因为是单线激光雷达，这里 z 设为 0）通过 pcl 可视化， 接着进入 <code>Lidar_Calibration()</code> 进行校正。</p>
+<p><code>Lidar_Calibration()</code> 函数主要是将当前激光帧按照一定时间间隔进行分段（这里是取 5ms），每一段分别通过 <code>getLaserPose()</code> 方法取得当前段的起止激光束对应的位姿，通过 <code>Lidar_MotionCalibration()</code> 进行分段线性插值校正。</p>
+<p><code>getLaserPose()</code> 通过 <code>tf_-&gt;waitForTransform(&quot;/odom&quot;, &quot;/base_laser&quot;, dt, ros::Duration(0.5))</code> 找到激光数据到里程计的位姿转换， 并通过 <code>tf_-&gt;transformPose(&quot;/odom&quot;, robot_pose, odom_pose)</code>求出转换后的位姿返回。</p>
+<p><code>Lidar_MotionCalibration()</code> 为要补充的函数，在下一部分记录。</p>
+<h3 id="补充线性插值函数"><a href="#补充线性插值函数" class="headerlink" title="补充线性插值函数"></a>补充线性插值函数</h3><p>通过上一部分的分析，<code>Lidar_MotionCalibration()</code>的思路很明确只需要将给定的一段激光束数据通过起止时间以及对应的位姿进行插值求出该段内每个激光束的位姿，并将其转换到 <code>frame_base_pose</code> 坐标系上，具体代码如下：</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * @brief Lidar_MotionCalibration</span></span><br><span class="line"><span class="comment"> *        激光雷达运动畸变去除分段函数;</span></span><br><span class="line"><span class="comment"> *        在此分段函数中，认为机器人是匀速运动；</span></span><br><span class="line"><span class="comment"> * @param frame_base_pose       标定完毕之后的基准坐标系</span></span><br><span class="line"><span class="comment"> * @param frame_start_pose      本分段第一个激光点对应的位姿</span></span><br><span class="line"><span class="comment"> * @param frame_end_pose        本分段最后一个激光点对应的位姿</span></span><br><span class="line"><span class="comment"> * @param ranges                激光数据－－距离</span></span><br><span class="line"><span class="comment"> * @param angles                激光数据－－角度</span></span><br><span class="line"><span class="comment"> * @param startIndex            本分段第一个激光点在激光帧中的下标</span></span><br><span class="line"><span class="comment"> * @param beam_number           本分段的激光点数量</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">Lidar_MotionCalibration</span><span class="params">(</span></span></span><br><span class="line"><span class="function"><span class="params">        tf::Stamped&lt;tf::Pose&gt; frame_base_pose,</span></span></span><br><span class="line"><span class="function"><span class="params">        tf::Stamped&lt;tf::Pose&gt; frame_start_pose,</span></span></span><br><span class="line"><span class="function"><span class="params">        tf::Stamped&lt;tf::Pose&gt; frame_end_pose,</span></span></span><br><span class="line"><span class="function"><span class="params">        <span class="built_in">std</span>::<span class="built_in">vector</span>&lt;<span class="keyword">double</span>&gt;&amp; ranges,</span></span></span><br><span class="line"><span class="function"><span class="params">        <span class="built_in">std</span>::<span class="built_in">vector</span>&lt;<span class="keyword">double</span>&gt;&amp; angles,</span></span></span><br><span class="line"><span class="function"><span class="params">        <span class="keyword">int</span> startIndex,</span></span></span><br><span class="line"><span class="function"><span class="params">        <span class="keyword">int</span>&amp; beam_number)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">   <span class="comment">// get the transfomation from start/end to base</span></span><br><span class="line">   tf::Pose baseToworld = frame_base_pose.inverse();</span><br><span class="line">   tf::Pose startTobase = baseToworld * frame_start_pose;</span><br><span class="line">   tf::Pose endTobase = baseToworld * frame_end_pose;</span><br><span class="line"></span><br><span class="line">   <span class="comment">// get translation and rotation for start/end pose</span></span><br><span class="line">   tf::Vector3 startTranslation = startTobase.getOrigin();</span><br><span class="line">   tf::Vector3 endTranslation = endTobase.getOrigin();</span><br><span class="line"></span><br><span class="line">   tf::Quaternion startRotation = startTobase.getRotation();</span><br><span class="line">   tf::Quaternion endRotation = endTobase.getRotation();</span><br><span class="line"></span><br><span class="line">   <span class="keyword">int</span> index = startIndex;</span><br><span class="line">   <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; beam_number; i++) &#123;</span><br><span class="line">        <span class="comment">// linear interpolate translation and rotation</span></span><br><span class="line">        tf::Vector3 currTrans = startTranslation.lerp(endTranslation, i / (<span class="number">1.0</span> * beam_number - <span class="number">1</span>));</span><br><span class="line">        tf::Quaternion currRot = startRotation.slerp(endRotation, i / (<span class="number">1.0</span> * beam_number - <span class="number">1</span>));</span><br><span class="line"></span><br><span class="line">        <span class="comment">// get the scan point coordinate before calibration, set Z to 0.00</span></span><br><span class="line">        <span class="keyword">float</span> currX = ranges[index] * <span class="built_in">cos</span>(angles[index]);</span><br><span class="line">        <span class="keyword">float</span> currY = ranges[index] * <span class="built_in">sin</span>(angles[index]);</span><br><span class="line">        <span class="function">tf::Vector3 <span class="title">currXYZ</span><span class="params">(currX, currY, <span class="number">0.00</span>)</span></span>;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// transform coordinates to base coordinates</span></span><br><span class="line">        tf::Transform currTobase;</span><br><span class="line">        currTobase.setOrigin(currTrans);</span><br><span class="line">        currTobase.setRotation(currRot);</span><br><span class="line">        tf::Vector3 baseCoordinates = currTobase * currXYZ;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// update scan data point</span></span><br><span class="line">        ranges[index] = <span class="built_in">sqrt</span>(baseCoordinates[<span class="number">0</span>] * baseCoordinates[<span class="number">0</span>] + baseCoordinates[<span class="number">1</span>] * baseCoordinates[<span class="number">1</span>]);</span><br><span class="line">        angles[index] = <span class="built_in">atan2</span>(baseCoordinates[<span class="number">1</span>], baseCoordinates[<span class="number">0</span>]);</span><br><span class="line">        index++;</span><br><span class="line">   &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>运行结果如下，可以看出校正效果比较好，校正后的激光显示出来的走廊轮廓比较稳定。<br><img src="/2020/04/25/lidarSLAM-hw2/laser_scan_calib.gif" class="" title="lidarSLAM-hw2"></p>
+<h2 id="推导已知对应点的-ICP-求解方法"><a href="#推导已知对应点的-ICP-求解方法" class="headerlink" title="推导已知对应点的 ICP 求解方法"></a>推导已知对应点的 ICP 求解方法</h2><blockquote>
+<p>题目要求：阅读论文 Least-Squares Fitting of Two 3-D Points Sets,推导并证明已知对应点的 ICP 求解方法。</p>
+</blockquote>
+<p>这里主要是归纳一下文章的思路和推导过程。</p>
+<p>首先，<strong>要解决的问题</strong>是：给定两组点 $\{p_i\}$ 和 $\{p’_i\}$，假设他们符合以下关系，其中 $R$ 是 3x3 的旋转矩阵， T 是 3x1 的平移向量， $N_i$ 是噪声：</p>
+<script type="math/tex; mode=display">p_i' = Rp_i + T + N_i</script><p>我们需要找到一个找到一个 R 和 T 使得下式结果最小化：</p>
+<script type="math/tex; mode=display">\Sigma^2 = \sum_{i=1}^N||p_i' - (Rp_i + T)||^2</script><p>作者的思路是首先想办法<strong>将问题解耦成分别求 R 和 T</strong>，使问题简单化，解耦过程如下：</p>
+<p>根据已有结论（在另一篇文章里），假设 $\hat{R}$ 和 $\hat{T}$ 使得要求的的最优解，那么 $\{p_i’\}$ 和 $\{p_i’’\triangleq \hat{R}p_i + T_i \}$ 两组点会有一样的重心（这里表现是几何中心），即满足下列等式：</p>
+<script type="math/tex; mode=display">
+\begin{aligned}
+p'&\triangleq \frac{1}{N}\sum_{i = 1}^{N}p_i'\\
+p &\triangleq \frac{1}{N}\sum_{i = 1}^{N}p_i\\
+p'' &\triangleq \frac{1}{N}\sum_{i = 1}^N p_i'' = \hat{R}p+\hat{T}\\
+\rightarrow p' &= p''
+\end{aligned}</script><p>接下来我们令：</p>
+<script type="math/tex; mode=display">
+\begin{aligned}
+q_i &\triangleq p_i - p\\
+q_i' &\triangleq p_i' - p'
+\end{aligned}</script><p>则有：</p>
+<script type="math/tex; mode=display">
+\begin{aligned}
+p_i' - (Rp_i + T) &= q_i' - (\hat{R}q_i + \hat{T} + \hat{R}p) + p' \\
+                    &= q_i' - \hat{R}q_i + (p' - (\hat{R}p + \hat{T}))\\
+                    &= q_i' - \hat{R}q_i - (p' - p'')\\
+                    &= q_i' - \hat{R}q_i
+\end{aligned}</script><p>所以要求解的问题就变成令下式最小</p>
+<script type="math/tex; mode=display">
+\Sigma^2 = \sum_{i=1}^N||q_i' - Rq_i||^2</script><p>这样问题就变成两个子问题：</p>
+<ul>
+<li>求解一个旋转矩阵 $\hat{R}$ 令上式最小；</li>
+<li>通过 $\hat{T} = p’ - \hat{R}p$ 求解平移向量。</li>
+</ul>
+<p>作者在第三部分分别给出了求解算法和推导过程，这边只讲推导过程具体算法可以参考我的<a href="https://guoxiaotao.xyz/2020/04/21/lidarSLAM-3/">上一篇博文</a>：</p>
+<p>首先将上式展开：</p>
+<script type="math/tex; mode=display">
+\begin{aligned}
+\Sigma^2 &= \sum_{i = 1}^N(q'_i - Rq_i)^T(q_i' - Rq_i)\\
+            &= \sum_{i = 1}^N(q_i'^Tq_i' + q_i^TR^TRq_i - q_i'^TRq_i - q_i^TR^Tq_i')\\
+            &\overset{R^TR = I}{=} \sum_{i = 1}^N(q_i'^Tq_i' + q_i^Tq_i - 2q_i'^TRq_i)
+\end{aligned}</script><p>因为前两项与R无关，所以令上式最小等效于令下式最大，$H = \sum_{i = 1}^N(q_i’^Tq_i)$：</p>
+<script type="math/tex; mode=display">
+\begin{aligned}
+F &= \sum_{i = 1}^Nq_i'^TRq_i\\
+    &= Trace(\sum_{i = 1}^NRq_i'q_i^T)\\
+    &= Trace(RH)
+\end{aligned}</script><p>这里引入一条引理(这里不证了)：对于任何正定矩阵 $AA^T$ 和 任何正交矩阵 $B$，满足以下不等式：</p>
+<script type="math/tex; mode=display">
+Trace(AA^T) \geq Trace(BAA^T)</script><p>令 $H$ 的 SVD 分解如下：</p>
+<script type="math/tex; mode=display">H = U\Lambda V^T</script><p>令 $X = VU^T$, 容易知道 $X$ 也是正交的</p>
+<p>则有：</p>
+<script type="math/tex; mode=display">
+\begin{aligned}
+XH &= VU^TU\Lambda V\\
+    &= V\Lambda V^T
+\end{aligned}</script><p>这个矩阵显然是正定的，从上述引理可得，对于任何一个正交矩阵 $B$， 都有：</p>
+<script type="math/tex; mode=display">
+Trace(XH) \geq Trace(BXH)</script><p>所以可以知道对于我们要求的式子， $X$ 使 $F$ 最大化， 假如 $det(X) = 1$就是我们想取得的 $\hat{R}$， 否则它就是仿射变换矩阵，但是这种情况通常不会发生，作者在后半部分论证了这部分，这里就不赘述了。</p>
+<h2 id="简述激光测距原理"><a href="#简述激光测距原理" class="headerlink" title="简述激光测距原理"></a>简述激光测距原理</h2><blockquote>
+<ol>
+<li>阅读论文 Precise indoor localization for mobile laser scanner 前两章，简述激光雷达测距原理；</li>
+<li>简要介绍一下下图的含义。</li>
+</ol>
+</blockquote>
+<img src="/2020/04/25/lidarSLAM-hw2/%E6%BF%80%E5%85%89%E6%B5%8B%E8%B7%9D%E5%8E%9F%E7%90%86%E5%9B%BE.png" class="" title="lidarSLAM-hw2">
+<p>这一部分的答案大部分都在我的<a href="https://guoxiaotao.xyz/2020/04/21/lidarSLAM-3/">上一篇笔记</a>记录过，这里不再重复。</p>
+<h2 id="使用-IMU-去除激光雷达运动畸变的方法"><a href="#使用-IMU-去除激光雷达运动畸变的方法" class="headerlink" title="使用 IMU 去除激光雷达运动畸变的方法"></a>使用 IMU 去除激光雷达运动畸变的方法</h2><blockquote>
+<ol>
+<li>仅用 IMU 去除运动畸变可能会有哪些不足之处?</li>
+<li>在仅有 IMU 和激光雷达传感器的情况下,你会如何设计运动畸变去除方案(平移+旋转),达到较好的畸变去除效果?</li>
+</ol>
+</blockquote>
+<p>使用 IMU 去除运动畸变的思路同样可以参考运用里程计的方法，通过 IMU 来计算出一个位姿然后，然后同样将一帧数据分段每段取起止时间的对应位姿，然后对应激光束的位姿插值并转换到统一的坐标系下（该帧起始位姿坐标系），但是不足之处也很明显：IMU 的线加速度精度太低，过一段时间很容易偏移。<br>改进方法可以是只用 IMU 进行旋转部分校正，平移部分根据匀速假设进行校正，将校正后的结果于原结果相比得到一个误差然后均分到每一个时刻的 IMU 结果上作为 IMU 的误差，重新修正，直至误差小至合理范围内（收敛为止）。</p>
+]]></content>
+      <categories>
+        <category>激光slam</category>
+      </categories>
+      <tags>
+        <tag>slam</tag>
+        <tag>lidar-slam</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>ROS melodic 下使用 CSM 库</title>
     <url>/2020/04/25/ros-melodic-csm/</url>
     <content><![CDATA[<p>在学习slam的时候偶尔需要用到 CSM 这个库，但是目前这个库最高支持到kinetic可以直接通过 apt install 下载，后来找到几种做法可以通过源码安装 CSM 使用，在这里记录一下，另外注意一下安装csm需要安装一个gsl的库。</p>
 <a id="more"></a>
@@ -16,7 +113,7 @@
 </li>
 <li><p>第二种方式：直接安装到本机上，和上面的过程差不多，在 csm 的目录下执行常规的cmake安装操作：</p>
   <figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">mkdir build</span><br><span class="line"><span class="built_in">cd</span> build</span><br><span class="line">cmake ..</span><br><span class="line">make</span><br><span class="line">sudo make install <span class="comment"># 这一步会安装csm到本机上</span></span><br></pre></td></tr></table></figure>
-<p>  安装完成后应该能找到这几个位置：<code>/usr/local/include/csm</code>，<code>/usr/local/lib/libcsm.so</code>，<code>/usr/local/lib/libcsm-static.a</code>。也是一样在<code>CMakeList.txt</code>做相应修改就可以了：</p>
+<p>  安装完成后应该能找到这几个位置： <code>/usr/local/include/csm</code>，<code>/usr/local/lib/libcsm.so</code>，<code>/usr/local/lib/libcsm-static.a</code>。也是一样在<code>CMakeList.txt</code>做相应修改就可以了：</p>
   <figure class="highlight cmake"><table><tr><td class="code"><pre><span class="line"><span class="keyword">include_directories</span>(</span><br><span class="line">...</span><br><span class="line">/usr/local/<span class="keyword">include</span>/csm</span><br><span class="line">)</span><br></pre></td></tr></table></figure>
   <figure class="highlight cmake"><table><tr><td class="code"><pre><span class="line"><span class="keyword">target_link_libraries</span>(target_name</span><br><span class="line">...</span><br><span class="line">/usr/local/lib/libcsm.so</span><br><span class="line">)</span><br></pre></td></tr></table></figure>
 </li>
