@@ -1,6 +1,111 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>激光SLAM 前端配准方法 - ICP, PL-ICP, NICP, IMLS-ICP</title>
+    <url>/2020/04/28/lidarSLAM-frontend-1/</url>
+    <content><![CDATA[<p>本文是我在学习深蓝学院的<a href="https://www.shenlanxueyuan.com/course/152" target="_blank" rel="noopener">激光slam课程</a>第四章第一部分的学习笔记，前面几次基本把数据的预处理讲完了，本次课开始学习 slam 的内容，这次主要是讲了前端配准算法。</p>
+<p>无论是激光 slam 还是视觉 slam， 大部分都分成两个部分：前端和后端。其中后端的话各种 slam 都差不多，主要是根据数学公式求解类似 $Ax = b$ 的公式，而不同 slam 方法的前端可以有各种方法。前端总体来说无论是视觉还是激光都是起到一个里程计的作用，本次主要是学习帧间匹配算法中类 ICP 的方法，包括：ICP 匹配方法、PL-ICP 匹配方法、NICP 匹配方法和IMLS-ICP 匹配方法。</p>
+<a id="more"></a>
+<h2 id="ICP-匹配方法"><a href="#ICP-匹配方法" class="headerlink" title="ICP 匹配方法"></a>ICP 匹配方法</h2><p>关于原始 ICP 匹配方法算法和原理都在前面的两篇笔记（<a href="https://guoxiaotao.xyz/2020/04/23/lidarSLAM-hw1/">lidarSLAM 第二次作业</a>和<a href="https://guoxiaotao.xyz/2020/04/21/lidarSLAM-3/">激光雷达运动畸变去除</a>）记录过了，这里不再赘述。</p>
+<h2 id="PL-ICP-匹配方法"><a href="#PL-ICP-匹配方法" class="headerlink" title="PL-ICP 匹配方法"></a>PL-ICP 匹配方法</h2><h3 id="基本思想"><a href="#基本思想" class="headerlink" title="基本思想"></a>基本思想</h3><p>相对于原始的 ICP 算法中用点与点之间的距离作为误差， PL-ICP 是把点到线的距离作为误差。PL-ICP 的基本思想是：激光点是对实际环境中曲面的离散采样，在匹配过程中重要的不是激光点，而是隐藏在激光点中的曲面。这个很好理解，因为在前后两帧激光扫描数据中，我们<strong>不一定会准确扫描到上一帧的每个点</strong>（这个时候用点和点的距离作为误差就是有问题的），更大可能是<strong>扫到了同一个物体（曲面）上的不同点</strong>，所以相较于用点对点的距离作为误差，把点到实际曲面的距离作为误差尺度应该是更符合实际的。所以问题就变成了如何恢复曲面。不同算法有不同的恢复方法，PL-ICP 的方法是用<strong>分段线性的方法对实际曲面进行近似</strong>，以此来定义点到曲面的距离，不同方法的误差表示如下图所示。</p>
+<img src="/2020/04/28/lidarSLAM-frontend-1/pl-icp.png" class="" title="lidarSLAM-frontend-1">
+<h3 id="数学描述"><a href="#数学描述" class="headerlink" title="数学描述"></a>数学描述</h3><p>我们可以将原始 ICP 算法的目标函数看成以下形式：</p>
+<script type="math/tex; mode=display">
+\min_{\mathbf{q}}\sum_{i}||\mathbf{p}_i \oplus \mathbf{q} - \prod\{S^{ref}, \mathbf{p}_i \oplus \mathbf{q}\}||^2</script><p>其中，</p>
+<script type="math/tex; mode=display">
+q = (\mathbf{t}, \theta)</script><script type="math/tex; mode=display">
+(\mathbf{p} \oplus (\mathbf{t}, \theta) \triangleq \mathbf{R}(\theta)\mathbf{p} + \mathbf{t})</script><p>$S^{ref}$ 代表参考激光帧生成曲面上的投影，这里我的理解是由于原始 ICP 没有考虑曲面的影响而是直接匹配每一个点，所以对该点处曲面的投影就是该点，所以对 ICP 而言，$||\mathbf{p}_i \oplus \mathbf{q} - \prod\{S^{ref}, \mathbf{p}_i \oplus \mathbf{q}\}|| = ||\mathbf{p}_i \oplus \mathbf{q} - x_i||, x_i$ 就是匹配点。</p>
+<p>然后给定初始解对下式进行迭代：</p>
+<script type="math/tex; mode=display">
+\min_{q_{k+1}}\sum_{i}||\mathbf{p}_i \oplus \mathbf{q}_{k+1} - \prod\{S^{ref}, \mathbf{p}_i \oplus \mathbf{q}_{k}\}||^2</script><p>PL-ICP 目标函数如下：</p>
+<script type="math/tex; mode=display">
+\min_{q_{k+1}}\sum_{i}(\mathbf{n}^T[\mathbf{p}_i \oplus \mathbf{q}_{k+1} - \prod\{S^{ref}, \mathbf{p}_i \oplus \mathbf{q}_{k}\}])^2</script><p>通过引入了法向量将误差从两个点的距离（差）变成了两点连线在曲面上的法向量的投影，即点到线的距离。</p>
+<h3 id="求解过程-amp-具体算法"><a href="#求解过程-amp-具体算法" class="headerlink" title="求解过程 &amp; 具体算法"></a>求解过程 &amp; 具体算法</h3><p>我们的已知数据有：</p>
+<ul>
+<li>参考激光帧 $y_{t-1}$</li>
+<li>当前激光帧 $y_t$</li>
+<li>参考激光帧生成的曲面 $S^{ref}$</li>
+<li>初始解 $q_o$</li>
+</ul>
+<p>需要求解的是两帧激光之间机器人的相对位姿关系 $q^*$</p>
+<p>算法过程跟原始 ICP 类似：</p>
+<ul>
+<li>将当前帧的数据根据初始位姿 $q_k$ 投影到参考帧坐标系下</li>
+<li>对于当前帧的点 $i$， 在参考帧中找到最近的两个点（因为要连成直线）$(j_1, j_2)$</li>
+<li>计算直线误差，去除误差过大的点</li>
+<li>最小化误差函数 $<br>\sum_{i}(\mathbf{n}^T[\mathbf{R}(\theta)\mathbf{p} + \mathbf{t} - p_{j_1^i}])^2<br>$</li>
+</ul>
+<h3 id="跟-ICP-的区别"><a href="#跟-ICP-的区别" class="headerlink" title="跟 ICP 的区别"></a>跟 ICP 的区别</h3><p>首先是<em>误差形式不同</em>，原始 ICP 将点对点的距离作为误差，PL-ICP 对点到线的距离作为误差；</p>
+<p>其次两种算法<em>收敛速度</em>不同， ICP 为一阶收敛， PL-ICP 为二阶收敛，速度更快：</p>
+<script type="math/tex; mode=display">
+||q_{k} - q_{\infty}|| < c ||q_{k-1} - q_{\infty}||</script><script type="math/tex; mode=display">
+||q_{k} - q_{\infty}||^2 < c ||q_{k-1} - q_{\infty}||^2</script><p>PL-ICP 的求解精度更高（更符合实际），尤其是在<em>人工结构化环境</em>中（直线多）；</p>
+<p>PL-ICP 对初值更敏感，通常要结合里程计一起使用</p>
+<h2 id="NICP-匹配方法"><a href="#NICP-匹配方法" class="headerlink" title="NICP 匹配方法"></a>NICP 匹配方法</h2><h3 id="NICP-基本思想"><a href="#NICP-基本思想" class="headerlink" title="NICP 基本思想"></a>NICP 基本思想</h3><p>相较于前两种 ICP 算法而言，他们都是考虑将距离（点到点，点到线）作为误差尺度， NICP 更关注面与面（2d 里是线与线）的误差；因此它还利用实际曲面的特征来对错误匹配点进行过滤，主要考虑的参数为法向量和曲率；因此在误差项里除了考虑对应点的欧氏距离以外，还考虑对应点法向量的角度差。</p>
+<h3 id="NICP-数学描述"><a href="#NICP-数学描述" class="headerlink" title="NICP 数学描述"></a>NICP 数学描述</h3><p>首先有以下变量：</p>
+<p>$p_i$ 表示激光点坐标 $(x, y, z)$</p>
+<p>$n_i$ 表示对应点的法向量</p>
+<p>$\sigma_i$ 对应点曲率</p>
+<p>$\tilde{p}_i = (p_i, n_i)^T$ 为扩展点（坐标加法向量）</p>
+<p>$T$ 表示欧式变换矩阵</p>
+<p>$\oplus$ 对于 $\tilde{p}$ 的操作符（对于法向量只需要考虑旋转）：</p>
+<script type="math/tex; mode=display">
+T\oplus \tilde{p}_i = \begin{bmatrix}Rp_i + t \\ Rn_i\end{bmatrix}</script><p>则 NICP 的误差函数定义为：</p>
+<script type="math/tex; mode=display">
+\mathbf{e}_{ij}(\mathbf{T}) = (\tilde{p}_i^c - \mathbf{T}\oplus \mathbf{\tilde{p}}_j^r)</script><p>目标函数为：</p>
+<script type="math/tex; mode=display">
+\sum_c\mathbf{e}_{ij}(\mathbf{T})^T\mathbf{\tilde{\Omega}}_{ij}\mathbf{e}_{ij}(\mathbf{T})</script><p>其中，$\tilde{\Omega}_{ij}$ 为信息矩阵（表示权重）：</p>
+<script type="math/tex; mode=display">
+\mathbf{\tilde{\Omega}}_{ij} = \begin{bmatrix}\mathbf{\Omega}_i^s & \mathbf{0} \\
+                                    \mathbf{0} & \mathbf{\Omega}_i^n\end{bmatrix}</script><h3 id="法向量和曲率的计算"><a href="#法向量和曲率的计算" class="headerlink" title="法向量和曲率的计算"></a>法向量和曲率的计算</h3><p>先找到点 $p_i$ 周围半径 $R$ 范围内的所有点 $V_i$，然后计算均值和方差</p>
+<script type="math/tex; mode=display">
+\begin{aligned}
+\mu_i^s &= \frac{1}{|V_i|}\sum_{p_j\in V_i}p_j \\
+\Sigma_i^s &= \frac{1}{|V_i|}\sum_{p_j \in V_i}(p_j - \mu_i)^T(p_j - \mu_i)\\
+\end{aligned}</script><p>然后对方差进行特征分解（2维情况下）</p>
+<script type="math/tex; mode=display">
+\Sigma_i^s = R\begin{bmatrix}\lambda_1 & 0 \\0 & \lambda_2\end{bmatrix}R^T</script><p>对曲率的定义为： $\sigma_i = \frac{\lambda_1}{\lambda_1 + \lambda_2}$</p>
+<p>对法向量的定义为：最小特征值对应的特征向量</p>
+<h3 id="对点进行过滤"><a href="#对点进行过滤" class="headerlink" title="对点进行过滤"></a>对点进行过滤</h3><p>如果没有 well-define 的法向量（杂点），拒绝匹配该点</p>
+<p>两点间距离大于阈值，拒绝： $||p_i^c - T\oplus p_j^r|| &gt; \epsilon_d$</p>
+<p>两点曲率之差大于阈值，拒绝： $|\log{\sigma_i^c}-\log{\sigma_j^r}| &gt; \epsilon_\sigma$</p>
+<p>两点法向量角度之差，拒绝： $\mathbf{n}_i^c\mathbf{T}\oplus\mathbf{n}_j^r &lt; \epsilon_n$</p>
+<h3 id="目标函数求解"><a href="#目标函数求解" class="headerlink" title="目标函数求解"></a>目标函数求解</h3><p>目标函数为：</p>
+<script type="math/tex; mode=display">
+\sum_c\mathbf{e}_{ij}(\mathbf{T})^T\mathbf{\tilde{\Omega}}_{ij}\mathbf{e}_{ij}(\mathbf{T})</script><p>没办法求解析解，只能通过 LM 求解，具体求解方法后面讲优化的时候具体讲解。</p>
+<h3 id="NICP-总结"><a href="#NICP-总结" class="headerlink" title="NICP 总结"></a>NICP 总结</h3><p>由于在寻找点匹配过程中考虑了法向量和曲率，可以提前排除一些错误的匹配；在开源领域是效果最好的匹配方法。</p>
+<p>具体算法流程为：</p>
+<p>计算参考激光帧和当前激光帧中每一个点的法向量和曲率（通过特征分解）。</p>
+<p>根据当前解,把当前激光帧的点转换到参考坐标系中,并且根据欧式距离、法向量、曲率等信息来选择匹配点(也有可能没有匹配点)。</p>
+<p>根据上面介绍的方法,用LM方法进行迭代求解,迭代收敛即可得到两帧激光数据之间的相对位姿。</p>
+<h2 id="IMLS-ICP-匹配方法-（Implicit-Moving-Least-Square）"><a href="#IMLS-ICP-匹配方法-（Implicit-Moving-Least-Square）" class="headerlink" title="IMLS-ICP 匹配方法 （Implicit Moving Least Square）"></a>IMLS-ICP 匹配方法 （Implicit Moving Least Square）</h2><h3 id="IMLS-ICP-基本思想"><a href="#IMLS-ICP-基本思想" class="headerlink" title="IMLS-ICP 基本思想"></a>IMLS-ICP 基本思想</h3><p>跟前面两种方法一样，还是考虑从点云重建曲面，重要的是怎么重建平面使其更符合实际； IMLS-ICP 的思想是<strong>选择具有代表性的激光点来进行匹配</strong>,既能减少计算量同时又能减少激光点分布不均匀导致的计算结果出现偏移（在3d情况下尤其重要，因为点太多了）。</p>
+<h3 id="代表点选取"><a href="#代表点选取" class="headerlink" title="代表点选取"></a>代表点选取</h3><p>具有丰富特征的点,即为结构化的点:具有良好的曲率和法向量的定义。</p>
+<p>曲率越小的点越好,因为曲率为0代表着直线,代表着最结构化的点,也代表着具有非常好的法向量定义,能够提供足够的约束。</p>
+<p>选点的时候需要注意选取的激光点的均衡以保证可观性,因为是平面匹配,不存在角度不可观的情况。只需要考虑X方向和Y方向的可观性。要保证两者的约束基本上是一致的,才能让结果不出现偏移。</p>
+<h3 id="曲面重建"><a href="#曲面重建" class="headerlink" title="曲面重建"></a>曲面重建</h3><p>已知点云集合 $P_k$ 中每一个点 $p_i$ 的法向量 $n_i$ , 则 $P_k$ 中隐藏的曲面为:</p>
+<script type="math/tex; mode=display">
+I^{P_k}(x) = \frac{\sum_{p_i\in P_k}W_i(x)((x-p_i)\vec{n_i})}{\sum_{p_j\in P_k}W_j(x)}
+W_i(x) = e^{-||x-p_i||^2/h^2}</script><p>$I^{P_k}(x) = 0$ 对应的集合表示曲面，空间中点到曲面的距离代入方程计算即可，证明过程看参考文献 <a href="http://graphics.berkeley.edu/papers/Kolluri-PGM-2005-08/sodatalk.pdf" target="_blank" rel="noopener">Provably good moving least square</a>。</p>
+<h3 id="匹配求解"><a href="#匹配求解" class="headerlink" title="匹配求解"></a>匹配求解</h3><ul>
+<li>当前帧中一点 $x_i$ 到曲面的距离为$I^{P_k}(x_i)$</li>
+<li>$P_k$ 中离点 $x_i$ 最近点的法向量为 $n_i$</li>
+<li>点 $x_i$ 在曲面的投影为：$y_i = x_i - I^{P_k}(x_i)n_i$</li>
+<li>点 $x_i$ 和 点 $y_i$ 为对应的匹配点，求解误差： $\sum((Rx_i + t - y_i)n_i)^2$</li>
+</ul>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
+<li><a href="https://ieeexplore.ieee.org/document/7353455" target="_blank" rel="noopener">NICP:Dense Normal Based Point Cloud Registration</a></li>
+<li><a href="https://arxiv.org/abs/1802.08633" target="_blank" rel="noopener">IMLS:SLAM-scan-to-model matching based on 3D data</a></li>
+</ul>
+]]></content>
+      <categories>
+        <category>激光slam</category>
+      </categories>
+      <tags>
+        <tag>slam</tag>
+        <tag>lidar-slam</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>[CMU-15-445/645] Database Storage - Part 2</title>
     <url>/2020/04/26/CMU-DB-5-database-storage-2/</url>
     <content><![CDATA[<p>这是我在学习<a href="https://15445.courses.cs.cmu.edu/fall2019/" target="_blank" rel="noopener">Databases Systems CMU 15-445/645/ Fall 2019</a>过程记录的一些笔记，这次学习的第四课，主要是关于数据库存储的第二部分。</p>

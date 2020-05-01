@@ -21,27 +21,23 @@
     var CONFIG = {"hostname":"guoxiaotao.xyz","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
   </script>
 
-  <meta name="description" content="本文是我在上UCSD的 CSE 120: Principles of Operating Systems (Winter 2020) 整理的笔记，第三课主要介绍了操作系统里面进程调度的一些基本算法以及相关的一些分类。">
+  <meta name="description" content="本文是我在学习深蓝学院的激光slam课程第四章第一部分的学习笔记，前面几次基本把数据的预处理讲完了，本次课开始学习 slam 的内容，这次主要是讲了前端配准算法。 无论是激光 slam 还是视觉 slam， 大部分都分成两个部分：前端和后端。其中后端的话各种 slam 都差不多，主要是根据数学公式求解类似 $Ax &#x3D; b$ 的公式，而不同 slam 方法的前端可以有各种方法。前端总体来说无论是视觉">
 <meta property="og:type" content="article">
-<meta property="og:title" content="[UCSD CSE120]进程调度-scheduling">
-<meta property="og:url" content="https://guoxiaotao.xyz/2020/04/19/scheduling/index.html">
+<meta property="og:title" content="激光SLAM 前端配准方法 - ICP, PL-ICP, NICP, IMLS-ICP">
+<meta property="og:url" content="https://guoxiaotao.xyz/2020/04/28/lidarSLAM-frontend-1/index.html">
 <meta property="og:site_name" content="Tao&#39;s Blog">
-<meta property="og:description" content="本文是我在上UCSD的 CSE 120: Principles of Operating Systems (Winter 2020) 整理的笔记，第三课主要介绍了操作系统里面进程调度的一些基本算法以及相关的一些分类。">
+<meta property="og:description" content="本文是我在学习深蓝学院的激光slam课程第四章第一部分的学习笔记，前面几次基本把数据的预处理讲完了，本次课开始学习 slam 的内容，这次主要是讲了前端配准算法。 无论是激光 slam 还是视觉 slam， 大部分都分成两个部分：前端和后端。其中后端的话各种 slam 都差不多，主要是根据数学公式求解类似 $Ax &#x3D; b$ 的公式，而不同 slam 方法的前端可以有各种方法。前端总体来说无论是视觉">
 <meta property="og:locale" content="en_US">
-<meta property="og:image" content="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/MLFQ.png">
-<meta property="og:image" content="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/MLFQ_example.png">
-<meta property="og:image" content="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/PP_exp.png">
-<meta property="og:image" content="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/EDF.png">
-<meta property="og:image" content="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/RMS.png">
-<meta property="article:published_time" content="2020-04-19T17:25:16.000Z">
-<meta property="article:modified_time" content="2020-04-21T06:01:16.273Z">
+<meta property="og:image" content="https://guoxiaotao.xyz/2020/04/28/lidarSLAM-frontend-1/pl-icp.png">
+<meta property="article:published_time" content="2020-04-29T02:55:43.000Z">
+<meta property="article:modified_time" content="2020-05-01T03:27:59.420Z">
 <meta property="article:author" content="Xiaotao Guo">
-<meta property="article:tag" content="OS">
-<meta property="article:tag" content="操作系统">
+<meta property="article:tag" content="slam">
+<meta property="article:tag" content="lidar-slam">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/MLFQ.png">
+<meta name="twitter:image" content="https://guoxiaotao.xyz/2020/04/28/lidarSLAM-frontend-1/pl-icp.png">
 
-<link rel="canonical" href="https://guoxiaotao.xyz/2020/04/19/scheduling/">
+<link rel="canonical" href="https://guoxiaotao.xyz/2020/04/28/lidarSLAM-frontend-1/">
 
 
 <script id="page-configurations">
@@ -54,7 +50,7 @@
   };
 </script>
 
-  <title>[UCSD CSE120]进程调度-scheduling | Tao's Blog</title>
+  <title>激光SLAM 前端配准方法 - ICP, PL-ICP, NICP, IMLS-ICP | Tao's Blog</title>
   
 
 
@@ -202,7 +198,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="https://guoxiaotao.xyz/2020/04/19/scheduling/">
+    <link itemprop="mainEntityOfPage" href="https://guoxiaotao.xyz/2020/04/28/lidarSLAM-frontend-1/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="https://avatars3.githubusercontent.com/u/45047478?s=460&u=3be5d506be9a30bd6eadfd29cd36c61e30833bb2&v=4">
@@ -215,7 +211,7 @@
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
-          [UCSD CSE120]进程调度-scheduling
+          激光SLAM 前端配准方法 - ICP, PL-ICP, NICP, IMLS-ICP
         </h1>
 
         <div class="post-meta">
@@ -225,14 +221,14 @@
               </span>
               <span class="post-meta-item-text">Posted on</span>
 
-              <time title="Created: 2020-04-19 13:25:16" itemprop="dateCreated datePublished" datetime="2020-04-19T13:25:16-04:00">2020-04-19</time>
+              <time title="Created: 2020-04-28 22:55:43" itemprop="dateCreated datePublished" datetime="2020-04-28T22:55:43-04:00">2020-04-28</time>
             </span>
               <span class="post-meta-item">
                 <span class="post-meta-item-icon">
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2020-04-21 02:01:16" itemprop="dateModified" datetime="2020-04-21T02:01:16-04:00">2020-04-21</time>
+                <time title="Modified: 2020-04-30 23:27:59" itemprop="dateModified" datetime="2020-04-30T23:27:59-04:00">2020-04-30</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -240,7 +236,7 @@
               </span>
               <span class="post-meta-item-text">In</span>
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Operating-Systems/" itemprop="url" rel="index"><span itemprop="name">Operating Systems</span></a>
+                  <a href="/categories/%E6%BF%80%E5%85%89slam/" itemprop="url" rel="index"><span itemprop="name">激光slam</span></a>
                 </span>
             </span>
 
@@ -260,8 +256,8 @@
       </span>
       <span class="post-meta-item-text">Comment Counts: </span>
     
-    <a title="valine" href="/2020/04/19/scheduling/#valine-comments" itemprop="discussionUrl">
-      <span class="post-comments-count valine-comment-count" data-xid="/2020/04/19/scheduling/" itemprop="commentCount"></span>
+    <a title="valine" href="/2020/04/28/lidarSLAM-frontend-1/#valine-comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2020/04/28/lidarSLAM-frontend-1/" itemprop="commentCount"></span>
     </a>
   </span>
   
@@ -271,13 +267,13 @@
               <span class="post-meta-item-icon">
                 <i class="far fa-file-word"></i>
               </span>
-              <span>5k</span>
+              <span>4.4k</span>
             </span>
             <span class="post-meta-item" title="Reading time">
               <span class="post-meta-item-icon">
                 <i class="far fa-clock"></i>
               </span>
-              <span>5 mins.</span>
+              <span>4 mins.</span>
             </span>
 
         </div>
@@ -289,272 +285,99 @@
     <div class="post-body" itemprop="articleBody">
 
       
-        <p>本文是我在上UCSD的 <a href="http://cseweb.ucsd.edu/classes/wi20/cse120-a/" target="_blank" rel="noopener">CSE 120: Principles of Operating Systems (Winter 2020)</a> 整理的笔记，第三课主要介绍了操作系统里面进程调度的一些基本算法以及相关的一些分类。</p>
+        <p>本文是我在学习深蓝学院的<a href="https://www.shenlanxueyuan.com/course/152" target="_blank" rel="noopener">激光slam课程</a>第四章第一部分的学习笔记，前面几次基本把数据的预处理讲完了，本次课开始学习 slam 的内容，这次主要是讲了前端配准算法。</p>
+<p>无论是激光 slam 还是视觉 slam， 大部分都分成两个部分：前端和后端。其中后端的话各种 slam 都差不多，主要是根据数学公式求解类似 $Ax = b$ 的公式，而不同 slam 方法的前端可以有各种方法。前端总体来说无论是视觉还是激光都是起到一个里程计的作用，本次主要是学习帧间匹配算法中类 ICP 的方法，包括：ICP 匹配方法、PL-ICP 匹配方法、NICP 匹配方法和IMLS-ICP 匹配方法。</p>
 <a id="more"></a>
-<h2 id="Basic-problem-and-goal"><a href="#Basic-problem-and-goal" class="headerlink" title="Basic problem and goal"></a>Basic problem and goal</h2><ol>
-<li><p>Problem introduction</p>
+<h2 id="ICP-匹配方法"><a href="#ICP-匹配方法" class="headerlink" title="ICP 匹配方法"></a>ICP 匹配方法</h2><p>关于原始 ICP 匹配方法算法和原理都在前面的两篇笔记（<a href="https://guoxiaotao.xyz/2020/04/23/lidarSLAM-hw1/">lidarSLAM 第二次作业</a>和<a href="https://guoxiaotao.xyz/2020/04/21/lidarSLAM-3/">激光雷达运动畸变去除</a>）记录过了，这里不再赘述。</p>
+<h2 id="PL-ICP-匹配方法"><a href="#PL-ICP-匹配方法" class="headerlink" title="PL-ICP 匹配方法"></a>PL-ICP 匹配方法</h2><h3 id="基本思想"><a href="#基本思想" class="headerlink" title="基本思想"></a>基本思想</h3><p>相对于原始的 ICP 算法中用点与点之间的距离作为误差， PL-ICP 是把点到线的距离作为误差。PL-ICP 的基本思想是：激光点是对实际环境中曲面的离散采样，在匹配过程中重要的不是激光点，而是隐藏在激光点中的曲面。这个很好理解，因为在前后两帧激光扫描数据中，我们<strong>不一定会准确扫描到上一帧的每个点</strong>（这个时候用点和点的距离作为误差就是有问题的），更大可能是<strong>扫到了同一个物体（曲面）上的不同点</strong>，所以相较于用点对点的距离作为误差，把点到实际曲面的距离作为误差尺度应该是更符合实际的。所以问题就变成了如何恢复曲面。不同算法有不同的恢复方法，PL-ICP 的方法是用<strong>分段线性的方法对实际曲面进行近似</strong>，以此来定义点到曲面的距离，不同方法的误差表示如下图所示。</p>
+<img src="/2020/04/28/lidarSLAM-frontend-1/pl-icp.png" class="" title="lidarSLAM-frontend-1">
+<h3 id="数学描述"><a href="#数学描述" class="headerlink" title="数学描述"></a>数学描述</h3><p>我们可以将原始 ICP 算法的目标函数看成以下形式：</p>
+<script type="math/tex; mode=display">
+\min_{\mathbf{q}}\sum_{i}||\mathbf{p}_i \oplus \mathbf{q} - \prod\{S^{ref}, \mathbf{p}_i \oplus \mathbf{q}\}||^2</script><p>其中，</p>
+<script type="math/tex; mode=display">
+q = (\mathbf{t}, \theta)</script><script type="math/tex; mode=display">
+(\mathbf{p} \oplus (\mathbf{t}, \theta) \triangleq \mathbf{R}(\theta)\mathbf{p} + \mathbf{t})</script><p>$S^{ref}$ 代表参考激光帧生成曲面上的投影，这里我的理解是由于原始 ICP 没有考虑曲面的影响而是直接匹配每一个点，所以对该点处曲面的投影就是该点，所以对 ICP 而言，$||\mathbf{p}_i \oplus \mathbf{q} - \prod\{S^{ref}, \mathbf{p}_i \oplus \mathbf{q}\}|| = ||\mathbf{p}_i \oplus \mathbf{q} - x_i||, x_i$ 就是匹配点。</p>
+<p>然后给定初始解对下式进行迭代：</p>
+<script type="math/tex; mode=display">
+\min_{q_{k+1}}\sum_{i}||\mathbf{p}_i \oplus \mathbf{q}_{k+1} - \prod\{S^{ref}, \mathbf{p}_i \oplus \mathbf{q}_{k}\}||^2</script><p>PL-ICP 目标函数如下：</p>
+<script type="math/tex; mode=display">
+\min_{q_{k+1}}\sum_{i}(\mathbf{n}^T[\mathbf{p}_i \oplus \mathbf{q}_{k+1} - \prod\{S^{ref}, \mathbf{p}_i \oplus \mathbf{q}_{k}\}])^2</script><p>通过引入了法向量将误差从两个点的距离（差）变成了两点连线在曲面上的法向量的投影，即点到线的距离。</p>
+<h3 id="求解过程-amp-具体算法"><a href="#求解过程-amp-具体算法" class="headerlink" title="求解过程 &amp; 具体算法"></a>求解过程 &amp; 具体算法</h3><p>我们的已知数据有：</p>
 <ul>
-<li>Given multiple processes and one CPU, which process gets CPU and when?</li>
-<li>How much CPU time does each process get?</li>
-<li>Possible approaches:<ul>
-<li>Let one process keep CPU till done then switch to another</li>
-<li>Each process uses CPU a bit and passed it on</li>
-<li>Ech process gets proportinal to what they pay (demand)</li>
+<li>参考激光帧 $y_{t-1}$</li>
+<li>当前激光帧 $y_t$</li>
+<li>参考激光帧生成的曲面 $S^{ref}$</li>
+<li>初始解 $q_o$</li>
 </ul>
-</li>
-<li>Which policy(ies) is the best?<ul>
-<li>Depends on the goals of the system<ul>
-<li>Personal computer</li>
-<li>Large time-shared computer</li>
-<li>computer controlling a nuclear power plant…</li>
-</ul>
-</li>
-<li>Even one system might have multiple(and somtimes conflicting) goals</li>
-</ul>
-</li>
-</ul>
-</li>
-<li><p>Some parameters needed in scheduling</p>
+<p>需要求解的是两帧激光之间机器人的相对位姿关系 $q^*$</p>
+<p>算法过程跟原始 ICP 类似：</p>
 <ul>
-<li>Arrival time: time that process is created</li>
-<li>Service time: CPU time needed to complete (most time unknown to the kernel)</li>
-<li>Turnaround time: from arrival to departure (actually time needed to finish the process, including running time and waiting time)</li>
-<li>Try to minimizes average turnaround time</li>
+<li>将当前帧的数据根据初始位姿 $q_k$ 投影到参考帧坐标系下</li>
+<li>对于当前帧的点 $i$， 在参考帧中找到最近的两个点（因为要连成直线）$(j_1, j_2)$</li>
+<li>计算直线误差，去除误差过大的点</li>
+<li>最小化误差函数 $<br>\sum_{i}(\mathbf{n}^T[\mathbf{R}(\theta)\mathbf{p} + \mathbf{t} - p_{j_1^i}])^2<br>$</li>
 </ul>
-</li>
-</ol>
-<h2 id="Different-scheduling-policies"><a href="#Different-scheduling-policies" class="headerlink" title="Different scheduling policies"></a>Different scheduling policies</h2><h3 id="Let-one-process-run-till-done-non-preemptive"><a href="#Let-one-process-run-till-done-non-preemptive" class="headerlink" title="Let one process run till done (non-preemptive)"></a>Let one process run till done (non-preemptive)</h3><ol>
-<li><p>Consider the service time for each process (suppose each process arrived at the same time)</p>
-<ul>
-<li><em>Longest first vs shortest first</em>: Let the longest/shortest processes among all the process created and not yet exit to run till done and then decide the next</li>
-<li><strong>Proven: Shortest first is optimal</strong></li>
-<li>However, the service time is unknown to the kernel in most of the time</li>
+<h3 id="跟-ICP-的区别"><a href="#跟-ICP-的区别" class="headerlink" title="跟 ICP 的区别"></a>跟 ICP 的区别</h3><p>首先是<em>误差形式不同</em>，原始 ICP 将点对点的距离作为误差，PL-ICP 对点到线的距离作为误差；</p>
+<p>其次两种算法<em>收敛速度</em>不同， ICP 为一阶收敛， PL-ICP 为二阶收敛，速度更快：</p>
+<script type="math/tex; mode=display">
+||q_{k} - q_{\infty}|| < c ||q_{k-1} - q_{\infty}||</script><script type="math/tex; mode=display">
+||q_{k} - q_{\infty}||^2 < c ||q_{k-1} - q_{\infty}||^2</script><p>PL-ICP 的求解精度更高（更符合实际），尤其是在<em>人工结构化环境</em>中（直线多）；</p>
+<p>PL-ICP 对初值更敏感，通常要结合里程计一起使用</p>
+<h2 id="NICP-匹配方法"><a href="#NICP-匹配方法" class="headerlink" title="NICP 匹配方法"></a>NICP 匹配方法</h2><h3 id="NICP-基本思想"><a href="#NICP-基本思想" class="headerlink" title="NICP 基本思想"></a>NICP 基本思想</h3><p>相较于前两种 ICP 算法而言，他们都是考虑将距离（点到点，点到线）作为误差尺度， NICP 更关注面与面（2d 里是线与线）的误差；因此它还利用实际曲面的特征来对错误匹配点进行过滤，主要考虑的参数为法向量和曲率；因此在误差项里除了考虑对应点的欧氏距离以外，还考虑对应点法向量的角度差。</p>
+<h3 id="NICP-数学描述"><a href="#NICP-数学描述" class="headerlink" title="NICP 数学描述"></a>NICP 数学描述</h3><p>首先有以下变量：</p>
+<p>$p_i$ 表示激光点坐标 $(x, y, z)$</p>
+<p>$n_i$ 表示对应点的法向量</p>
+<p>$\sigma_i$ 对应点曲率</p>
+<p>$\tilde{p}_i = (p_i, n_i)^T$ 为扩展点（坐标加法向量）</p>
+<p>$T$ 表示欧式变换矩阵</p>
+<p>$\oplus$ 对于 $\tilde{p}$ 的操作符（对于法向量只需要考虑旋转）：</p>
+<script type="math/tex; mode=display">
+T\oplus \tilde{p}_i = \begin{bmatrix}Rp_i + t \\ Rn_i\end{bmatrix}</script><p>则 NICP 的误差函数定义为：</p>
+<script type="math/tex; mode=display">
+\mathbf{e}_{ij}(\mathbf{T}) = (\tilde{p}_i^c - \mathbf{T}\oplus \mathbf{\tilde{p}}_j^r)</script><p>目标函数为：</p>
+<script type="math/tex; mode=display">
+\sum_c\mathbf{e}_{ij}(\mathbf{T})^T\mathbf{\tilde{\Omega}}_{ij}\mathbf{e}_{ij}(\mathbf{T})</script><p>其中，$\tilde{\Omega}_{ij}$ 为信息矩阵（表示权重）：</p>
+<script type="math/tex; mode=display">
+\mathbf{\tilde{\Omega}}_{ij} = \begin{bmatrix}\mathbf{\Omega}_i^s & \mathbf{0} \\
+                                    \mathbf{0} & \mathbf{\Omega}_i^n\end{bmatrix}</script><h3 id="法向量和曲率的计算"><a href="#法向量和曲率的计算" class="headerlink" title="法向量和曲率的计算"></a>法向量和曲率的计算</h3><p>先找到点 $p_i$ 周围半径 $R$ 范围内的所有点 $V_i$，然后计算均值和方差</p>
+<script type="math/tex; mode=display">
+\begin{aligned}
+\mu_i^s &= \frac{1}{|V_i|}\sum_{p_j\in V_i}p_j \\
+\Sigma_i^s &= \frac{1}{|V_i|}\sum_{p_j \in V_i}(p_j - \mu_i)^T(p_j - \mu_i)\\
+\end{aligned}</script><p>然后对方差进行特征分解（2维情况下）</p>
+<script type="math/tex; mode=display">
+\Sigma_i^s = R\begin{bmatrix}\lambda_1 & 0 \\0 & \lambda_2\end{bmatrix}R^T</script><p>对曲率的定义为： $\sigma_i = \frac{\lambda_1}{\lambda_1 + \lambda_2}$</p>
+<p>对法向量的定义为：最小特征值对应的特征向量</p>
+<h3 id="对点进行过滤"><a href="#对点进行过滤" class="headerlink" title="对点进行过滤"></a>对点进行过滤</h3><p>如果没有 well-define 的法向量（杂点），拒绝匹配该点</p>
+<p>两点间距离大于阈值，拒绝： $||p_i^c - T\oplus p_j^r|| &gt; \epsilon_d$</p>
+<p>两点曲率之差大于阈值，拒绝： $|\log{\sigma_i^c}-\log{\sigma_j^r}| &gt; \epsilon_\sigma$</p>
+<p>两点法向量角度之差，拒绝： $\mathbf{n}_i^c\mathbf{T}\oplus\mathbf{n}_j^r &lt; \epsilon_n$</p>
+<h3 id="目标函数求解"><a href="#目标函数求解" class="headerlink" title="目标函数求解"></a>目标函数求解</h3><p>目标函数为：</p>
+<script type="math/tex; mode=display">
+\sum_c\mathbf{e}_{ij}(\mathbf{T})^T\mathbf{\tilde{\Omega}}_{ij}\mathbf{e}_{ij}(\mathbf{T})</script><p>没办法求解析解，只能通过 LM 求解，具体求解方法后面讲优化的时候具体讲解。</p>
+<h3 id="NICP-总结"><a href="#NICP-总结" class="headerlink" title="NICP 总结"></a>NICP 总结</h3><p>由于在寻找点匹配过程中考虑了法向量和曲率，可以提前排除一些错误的匹配；在开源领域是效果最好的匹配方法。</p>
+<p>具体算法流程为：</p>
+<p>计算参考激光帧和当前激光帧中每一个点的法向量和曲率（通过特征分解）。</p>
+<p>根据当前解,把当前激光帧的点转换到参考坐标系中,并且根据欧式距离、法向量、曲率等信息来选择匹配点(也有可能没有匹配点)。</p>
+<p>根据上面介绍的方法,用LM方法进行迭代求解,迭代收敛即可得到两帧激光数据之间的相对位姿。</p>
+<h2 id="IMLS-ICP-匹配方法-（Implicit-Moving-Least-Square）"><a href="#IMLS-ICP-匹配方法-（Implicit-Moving-Least-Square）" class="headerlink" title="IMLS-ICP 匹配方法 （Implicit Moving Least Square）"></a>IMLS-ICP 匹配方法 （Implicit Moving Least Square）</h2><h3 id="IMLS-ICP-基本思想"><a href="#IMLS-ICP-基本思想" class="headerlink" title="IMLS-ICP 基本思想"></a>IMLS-ICP 基本思想</h3><p>跟前面两种方法一样，还是考虑从点云重建曲面，重要的是怎么重建平面使其更符合实际； IMLS-ICP 的思想是<strong>选择具有代表性的激光点来进行匹配</strong>,既能减少计算量同时又能减少激光点分布不均匀导致的计算结果出现偏移（在3d情况下尤其重要，因为点太多了）。</p>
+<h3 id="代表点选取"><a href="#代表点选取" class="headerlink" title="代表点选取"></a>代表点选取</h3><p>具有丰富特征的点,即为结构化的点:具有良好的曲率和法向量的定义。</p>
+<p>曲率越小的点越好,因为曲率为0代表着直线,代表着最结构化的点,也代表着具有非常好的法向量定义,能够提供足够的约束。</p>
+<p>选点的时候需要注意选取的激光点的均衡以保证可观性,因为是平面匹配,不存在角度不可观的情况。只需要考虑X方向和Y方向的可观性。要保证两者的约束基本上是一致的,才能让结果不出现偏移。</p>
+<h3 id="曲面重建"><a href="#曲面重建" class="headerlink" title="曲面重建"></a>曲面重建</h3><p>已知点云集合 $P_k$ 中每一个点 $p_i$ 的法向量 $n_i$ , 则 $P_k$ 中隐藏的曲面为:</p>
+<script type="math/tex; mode=display">
+I^{P_k}(x) = \frac{\sum_{p_i\in P_k}W_i(x)((x-p_i)\vec{n_i})}{\sum_{p_j\in P_k}W_j(x)}
+W_i(x) = e^{-||x-p_i||^2/h^2}</script><p>$I^{P_k}(x) = 0$ 对应的集合表示曲面，空间中点到曲面的距离代入方程计算即可，证明过程看参考文献 <a href="http://graphics.berkeley.edu/papers/Kolluri-PGM-2005-08/sodatalk.pdf" target="_blank" rel="noopener">Provably good moving least square</a>。</p>
+<h3 id="匹配求解"><a href="#匹配求解" class="headerlink" title="匹配求解"></a>匹配求解</h3><ul>
+<li>当前帧中一点 $x_i$ 到曲面的距离为$I^{P_k}(x_i)$</li>
+<li>$P_k$ 中离点 $x_i$ 最近点的法向量为 $n_i$</li>
+<li>点 $x_i$ 在曲面的投影为：$y_i = x_i - I^{P_k}(x_i)n_i$</li>
+<li>点 $x_i$ 和 点 $y_i$ 为对应的匹配点，求解误差： $\sum((Rx_i + t - y_i)n_i)^2$</li>
 </ul>
-</li>
-<li><p>Consider the arrival time</p>
-<ul>
-<li><em>First come first serve(FCFS) vs Last come first serve(LCFS)</em>: Allocate the CPU to process arrived earliest or latest.</li>
-<li>First come first serve(FCFS)<ul>
-<li>non-preemptive, simple, no stavation</li>
-<li>poor for short process arrived late</li>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
+<li><a href="https://ieeexplore.ieee.org/document/7353455" target="_blank" rel="noopener">NICP:Dense Normal Based Point Cloud Registration</a></li>
+<li><a href="https://arxiv.org/abs/1802.08633" target="_blank" rel="noopener">IMLS:SLAM-scan-to-model matching based on 3D data</a></li>
 </ul>
-</li>
-<li>Last come first serve(LCFS)<ul>
-<li>simple</li>
-<li>starvation, poor for short process arrived early</li>
-</ul>
-</li>
-</ul>
-</li>
-<li><p>Shortest process next (SPN)</p>
-<ul>
-<li>when one process finish, select the process with shortest service time</li>
-<li><strong>Proven: optimal for non-preemptive policies</strong></li>
-<li>may cause starvation (when short process keep arriving, long process get no chance to run)</li>
-<li>However, the service time is unknown to the kernel in most of the time</li>
-</ul>
-</li>
-</ol>
-<h3 id="Select-process-when-each-quantum-end-preemptive"><a href="#Select-process-when-each-quantum-end-preemptive" class="headerlink" title="Select process when each quantum end (preemptive)"></a>Select process when each quantum end (preemptive)</h3><ol>
-<li><p>Round Robin (RR)</p>
-<ul>
-<li>Time-slice: each process gets quantum in turn</li>
-<li>Preemptive, simple, no starvation</li>
-<li>Each process waits at most (n - 1) x quantum (supposed n is fixed)</li>
-</ul>
-</li>
-<li><p>Shortest remaing time (SRT)</p>
-<ul>
-<li>At the end of each quantum, select process with shortest remaining time</li>
-<li><strong>Proven: optimal for preemptive policies</strong></li>
-<li>may cause starvation (same case as SPN)</li>
-<li>Assumes service times are known (which is difficult)</li>
-</ul>
-</li>
-<li><p>Multi-level feedback queues <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/MLFQ.png" width="120" style="float: right;"></p>
-<ul>
-<li>Priority queues 0 to N (from high to low)</li>
-<li>new processes enter queue 0 (highest priority)</li>
-<li>Each quantum select from highest priority queue (FIFO within the queue)</li>
-<li>For each process selected, run it for $T = 2^k$ quantums<ul>
-<li>if the process used T quantums, move it next loewer queue</li>
-<li>if the process used less than T quantums, back to same queue<ul>
-<li>due to yield or higher priority arrival</li>
-</ul>
-</li>
-</ul>
-</li>
-<li>Periodically boost (all to the queue 0)</li>
-<li>Features:<ul>
-<li>Complex, adaptive, highly responsive</li>
-<li>Favors shorter over longer, possible starvation (higher priority queue run shorter time)</li>
-</ul>
-</li>
-<li><p>Example</p>
-<p>  <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/MLFQ_example.png" width="320"></p>
-</li>
-</ul>
-</li>
-<li><p>Priority scheduling</p>
-<ul>
-<li>Select process with highest priority</li>
-<li>Calculate priority based some external criteria<ul>
-<li>E.g., priority = $\frac{1}{CPU_{time used}}$</li>
-</ul>
-</li>
-</ul>
-</li>
-<li><p>Fair share (Proportional share)</p>
-<ul>
-<li>Assumed ach process requests ome CPU utilization</li>
-<li>Goal: utilization over long run, actual $\approx$ request</li>
-<li>Select process with minimum actual/request ratio, when some processes have same minumum ratio, randomly choose one.</li>
-<li>involving float number calculation in each quantum, maybe over head.</li>
-</ul>
-</li>
-<li><p>Stride shceduling (practical implementation for Fair share)</p>
-<ul>
-<li>For each process x with certain CPU utilization requested, calculate strides: $S_x = \frac{1}{R_x}$</li>
-<li>For each process x maintain pass value $P_x$ (initialized 0)</li>
-<li>In each quantum:<ul>
-<li>Select process x with minimum pass value P to run</li>
-<li>Increment pass value with selected process by its stride value: $P_x = P_x + S_x$</li>
-</ul>
-</li>
-<li>Optimization: use only intergers for $R_x, S_x, P_x$<ul>
-<li>Calucalte $S_x = \frac{L}{R_x}$, where L is very large like 1000000.</li>
-</ul>
-</li>
-</ul>
-</li>
-</ol>
-<h3 id="Real-Time-Scheduling"><a href="#Real-Time-Scheduling" class="headerlink" title="Real Time Scheduling"></a>Real Time Scheduling</h3><h4 id="Basics"><a href="#Basics" class="headerlink" title="Basics"></a>Basics</h4><ul>
-<li><p>Reason (correctness) for real-time scheduling</p>
-<ul>
-<li>depends on logical result of computations</li>
-<li>timeing for these result</li>
-</ul>
-</li>
-<li><p>Type of real-time systems</p>
-<ul>
-<li>hard vs. soft real-time</li>
-<li>Periodic vs. aperiodic</li>
-</ul>
-</li>
-</ul>
-<h4 id="Type-of-processes"><a href="#Type-of-processes" class="headerlink" title="Type of processes"></a>Type of processes</h4><ul>
-<li><p>Periodic Process (Tasks)</p>
-<ul>
-<li>A periodic process has a fixed frequency at which it needs to run.</li>
-<li>Before each deadline it must run for a certain CPU time</li>
-<li>For each process with a period, we have C (CPU burst needed), T (period), U (C/T, utilization)</li>
-<li><p>Example</p>
-<p><img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/PP_exp.png" width="320"></p>
-</li>
-</ul>
-</li>
-<li><p>Aperiodic Process</p>
-<ul>
-<li>Aperiodic processes have no fixed, cyclical, frequency between events.</li>
-<li>For this type of process, real-time scheduling is not necessary</li>
-</ul>
-</li>
-</ul>
-<h4 id="Different-real-time-Scheduling"><a href="#Different-real-time-Scheduling" class="headerlink" title="Different real-time Scheduling"></a>Different real-time Scheduling</h4><ol>
-<li><p>Earliest Deadline First (EDF)</p>
-<ul>
-<li>schedule process with earliest deadline</li>
-<li><em>if a earlier deadline process appears, preempt</em></li>
-<li>Pros:<ul>
-<li>works for periodic and aperiodic processes</li>
-<li>Achieve 100% utilization (igoniring overhead)</li>
-</ul>
-</li>
-<li>Cons:<ul>
-<li>Expensive: requires ordering by deadline frequently</li>
-</ul>
-</li>
-<li><p>Example:</p>
-<p>  <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/EDF.png" width="320"></p>
-</li>
-</ul>
-</li>
-<li><p>Rate Monotonoic Scheduling (RMS)</p>
-<ul>
-<li>If periodic processes exist, priorityize based on rates</li>
-<li>At start of period, select highest priority</li>
-<li>Preempty if necessary</li>
-<li>When burst done, wait till next period</li>
-<li>Deadline met require:  <strong>$U_1 + … + U_n \leq n (2 ^ {1/n} - 1)$</strong></li>
-<li><p>Example:</p>
-<p>  <img src="https://raw.githubusercontent.com/XiaotaoGuo/OS-Notes/master/imgs/RMS.png" width="320"></p>
-</li>
-</ul>
-</li>
-<li><p>More on RMS</p>
-<ul>
-<li>RMS is simple and efficient (static priority)</li>
-<li>RMS is <strong>optimal for static priority algorithms</strong><ul>
-<li>if RMS can’t schedule, no other static priority can</li>
-</ul>
-</li>
-<li>RMS is limited in what it guarantees<ul>
-<li><strong>Utilization bounded by $n(2^{1/n}-1) &gt; \ln{2}$ ~ 69%</strong></li>
-<li>if bounded exceeded, no guarantess (but may not fail)</li>
-</ul>
-</li>
-<li>RMS is limited to periodic processes</li>
-</ul>
-</li>
-</ol>
-<h3 id="Summary"><a href="#Summary" class="headerlink" title="Summary"></a>Summary</h3><div class="table-container">
-<table>
-<thead>
-<tr>
-<th style="text-align:left">scheduling policy</th>
-<th style="text-align:left">feature</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align:left">FCFS</td>
-<td style="text-align:left">very simple, non-preemptive</td>
-</tr>
-<tr>
-<td style="text-align:left">RR</td>
-<td style="text-align:left">simple, preemptive</td>
-</tr>
-<tr>
-<td style="text-align:left">SPN</td>
-<td style="text-align:left">threoretical, non-preemptive</td>
-</tr>
-<tr>
-<td style="text-align:left">SRT</td>
-<td style="text-align:left">threoretical, preemptive</td>
-</tr>
-<tr>
-<td style="text-align:left">MLFQ</td>
-<td style="text-align:left">adaptive, reponsive, complex</td>
-</tr>
-<tr>
-<td style="text-align:left">Priority</td>
-<td style="text-align:left">external criteria</td>
-</tr>
-<tr>
-<td style="text-align:left">FS</td>
-<td style="text-align:left">proportional allocation</td>
-</tr>
-<tr>
-<td style="text-align:left">EDF</td>
-<td style="text-align:left">100% utilization, high overhead</td>
-</tr>
-<tr>
-<td style="text-align:left">RMS</td>
-<td style="text-align:left">&lt; 100%, low overhead</td>
-</tr>
-</tbody>
-</table>
-</div>
 
     </div>
 
@@ -570,7 +393,7 @@
   </li>
   <li class="post-copyright-link">
     <strong>Post link: </strong>
-    <a href="https://guoxiaotao.xyz/2020/04/19/scheduling/" title="[UCSD CSE120]进程调度-scheduling">https://guoxiaotao.xyz/2020/04/19/scheduling/</a>
+    <a href="https://guoxiaotao.xyz/2020/04/28/lidarSLAM-frontend-1/" title="激光SLAM 前端配准方法 - ICP, PL-ICP, NICP, IMLS-ICP">https://guoxiaotao.xyz/2020/04/28/lidarSLAM-frontend-1/</a>
   </li>
   <li class="post-copyright-license">
     <strong>Copyright Notice:  </strong>All articles in this blog are licensed under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> unless stating additionally.
@@ -582,8 +405,8 @@
       <footer class="post-footer">
           
           <div class="post-tags">
-              <a href="/tags/OS/" rel="tag"><i class="fa fa-tag"></i> OS</a>
-              <a href="/tags/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/" rel="tag"><i class="fa fa-tag"></i> 操作系统</a>
+              <a href="/tags/slam/" rel="tag"><i class="fa fa-tag"></i> slam</a>
+              <a href="/tags/lidar-slam/" rel="tag"><i class="fa fa-tag"></i> lidar-slam</a>
           </div>
 
         
@@ -592,13 +415,10 @@
         
     <div class="post-nav">
       <div class="post-nav-item">
-    <a href="/2020/04/19/timesharing/" rel="prev" title="[UCSD CSE120]分时系统-timesharing">
-      <i class="fa fa-chevron-left"></i> [UCSD CSE120]分时系统-timesharing
+    <a href="/2020/04/26/CMU-DB-5-database-storage-2/" rel="prev" title="[CMU-15-445/645] Database Storage - Part 2">
+      <i class="fa fa-chevron-left"></i> [CMU-15-445/645] Database Storage - Part 2
     </a></div>
-      <div class="post-nav-item">
-    <a href="/2020/04/19/synchronization/" rel="next" title="[UCSD CSE120]同步-synchronization">
-      [UCSD CSE120]同步-synchronization <i class="fa fa-chevron-right"></i>
-    </a></div>
+      <div class="post-nav-item"></div>
     </div>
       </footer>
     
@@ -660,7 +480,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Basic-problem-and-goal"><span class="nav-number">1.</span> <span class="nav-text">Basic problem and goal</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Different-scheduling-policies"><span class="nav-number">2.</span> <span class="nav-text">Different scheduling policies</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Let-one-process-run-till-done-non-preemptive"><span class="nav-number">2.1.</span> <span class="nav-text">Let one process run till done (non-preemptive)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Select-process-when-each-quantum-end-preemptive"><span class="nav-number">2.2.</span> <span class="nav-text">Select process when each quantum end (preemptive)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Real-Time-Scheduling"><span class="nav-number">2.3.</span> <span class="nav-text">Real Time Scheduling</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Basics"><span class="nav-number">2.3.1.</span> <span class="nav-text">Basics</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Type-of-processes"><span class="nav-number">2.3.2.</span> <span class="nav-text">Type of processes</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Different-real-time-Scheduling"><span class="nav-number">2.3.3.</span> <span class="nav-text">Different real-time Scheduling</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Summary"><span class="nav-number">2.4.</span> <span class="nav-text">Summary</span></a></li></ol></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#ICP-匹配方法"><span class="nav-number">1.</span> <span class="nav-text">ICP 匹配方法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#PL-ICP-匹配方法"><span class="nav-number">2.</span> <span class="nav-text">PL-ICP 匹配方法</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#基本思想"><span class="nav-number">2.1.</span> <span class="nav-text">基本思想</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#数学描述"><span class="nav-number">2.2.</span> <span class="nav-text">数学描述</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#求解过程-amp-具体算法"><span class="nav-number">2.3.</span> <span class="nav-text">求解过程 &amp; 具体算法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#跟-ICP-的区别"><span class="nav-number">2.4.</span> <span class="nav-text">跟 ICP 的区别</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#NICP-匹配方法"><span class="nav-number">3.</span> <span class="nav-text">NICP 匹配方法</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#NICP-基本思想"><span class="nav-number">3.1.</span> <span class="nav-text">NICP 基本思想</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#NICP-数学描述"><span class="nav-number">3.2.</span> <span class="nav-text">NICP 数学描述</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#法向量和曲率的计算"><span class="nav-number">3.3.</span> <span class="nav-text">法向量和曲率的计算</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#对点进行过滤"><span class="nav-number">3.4.</span> <span class="nav-text">对点进行过滤</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#目标函数求解"><span class="nav-number">3.5.</span> <span class="nav-text">目标函数求解</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#NICP-总结"><span class="nav-number">3.6.</span> <span class="nav-text">NICP 总结</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#IMLS-ICP-匹配方法-（Implicit-Moving-Least-Square）"><span class="nav-number">4.</span> <span class="nav-text">IMLS-ICP 匹配方法 （Implicit Moving Least Square）</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#IMLS-ICP-基本思想"><span class="nav-number">4.1.</span> <span class="nav-text">IMLS-ICP 基本思想</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#代表点选取"><span class="nav-number">4.2.</span> <span class="nav-text">代表点选取</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#曲面重建"><span class="nav-number">4.3.</span> <span class="nav-text">曲面重建</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#匹配求解"><span class="nav-number">4.4.</span> <span class="nav-text">匹配求解</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考资料"><span class="nav-number">5.</span> <span class="nav-text">参考资料</span></a></li></ol></div>
       </div>
       <!--/noindex-->
 
