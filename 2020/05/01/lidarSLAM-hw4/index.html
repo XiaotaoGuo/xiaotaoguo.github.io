@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon32.ico">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon16.ico">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"guoxiaotao.xyz","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="本文是我在学习深蓝学院的激光slam课程第四次作业的笔记。本次作业主要是熟悉 imls-icp 的过程以及对 csm 接口调用，除此之外还有对课上讲的四种 icp 算法进行总结以及想一下 icp 的改进思路。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="lidarSLAM - 第四次作业">
+<meta property="og:url" content="https://guoxiaotao.xyz/2020/05/01/lidarSLAM-hw4/index.html">
+<meta property="og:site_name" content="Tao&#39;s Blog">
+<meta property="og:description" content="本文是我在学习深蓝学院的激光slam课程第四次作业的笔记。本次作业主要是熟悉 imls-icp 的过程以及对 csm 接口调用，除此之外还有对课上讲的四种 icp 算法进行总结以及想一下 icp 的改进思路。">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://guoxiaotao.xyz/2020/05/01/lidarSLAM-hw4/%E8%BF%90%E8%A1%8C%E7%BB%93%E6%9E%9C1.png">
+<meta property="og:image" content="https://guoxiaotao.xyz/2020/05/01/lidarSLAM-hw4/%E8%BF%90%E8%A1%8C%E7%BB%93%E6%9E%9C2.png">
+<meta property="article:published_time" content="2020-05-02T01:40:09.000Z">
+<meta property="article:modified_time" content="2020-05-02T21:18:03.615Z">
+<meta property="article:author" content="Xiaotao Guo">
+<meta property="article:tag" content="slam">
+<meta property="article:tag" content="lidar-slam">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://guoxiaotao.xyz/2020/05/01/lidarSLAM-hw4/%E8%BF%90%E8%A1%8C%E7%BB%93%E6%9E%9C1.png">
+
+<link rel="canonical" href="https://guoxiaotao.xyz/2020/05/01/lidarSLAM-hw4/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en'
+  };
+</script>
+
+  <title>lidarSLAM - 第四次作业 | Tao's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Tao's Blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fas fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fas fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fas fa-tags fa-fw"></i>Tags<span class="badge">8</span></a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fas fa-th-list fa-fw"></i>Categories<span class="badge">5</span></a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fas fa-archive fa-fw"></i>Archives<span class="badge">29</span></a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://guoxiaotao.xyz/2020/05/01/lidarSLAM-hw4/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://avatars3.githubusercontent.com/u/45047478?s=460&u=3be5d506be9a30bd6eadfd29cd36c61e30833bb2&v=4">
+      <meta itemprop="name" content="Xiaotao Guo">
+      <meta itemprop="description" content="Stay hungry, stay foolish">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Tao's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          lidarSLAM - 第四次作业
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2020-05-01 21:40:09" itemprop="dateCreated datePublished" datetime="2020-05-01T21:40:09-04:00">2020-05-01</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-05-02 17:18:03" itemprop="dateModified" datetime="2020-05-02T17:18:03-04:00">2020-05-02</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%BF%80%E5%85%89slam/" itemprop="url" rel="index"><span itemprop="name">激光slam</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="Views" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="eye"></i>
+              </span>
+              <span class="post-meta-item-text">Views: </span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Comment Counts: </span>
+    
+    <a title="valine" href="/2020/05/01/lidarSLAM-hw4/#valine-comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2020/05/01/lidarSLAM-hw4/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+<br>
+            <span class="post-meta-item" title="Symbols count in article">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+              <span>5.8k</span>
+            </span>
+            <span class="post-meta-item" title="Reading time">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+              <span>5 mins.</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>本文是我在学习深蓝学院的<a href="https://www.shenlanxueyuan.com/course/152" target="_blank" rel="noopener">激光slam课程</a>第四次作业的笔记。本次作业主要是熟悉 imls-icp 的过程以及对 csm 接口调用，除此之外还有对课上讲的四种 icp 算法进行总结以及想一下 icp 的改进思路。</p>
+<a id="more"></a>
+<h2 id="实现两帧之间的-IMLS-ICP-激光匹配"><a href="#实现两帧之间的-IMLS-ICP-激光匹配" class="headerlink" title="实现两帧之间的 IMLS-ICP 激光匹配"></a>实现两帧之间的 IMLS-ICP 激光匹配</h2><blockquote>
+<p>补充代码,实现两帧间的 IMLS-ICP 激光匹配;</p>
+</blockquote>
+<h3 id="前提准备"><a href="#前提准备" class="headerlink" title="前提准备"></a>前提准备</h3><p>编程环境： <code>ubuntu 18.04 + ROS medodic</code><br>IDE: CLion, 安装官方教程配置：</p>
+<ul>
+<li>以项目方式打开想要编译的 package 文件夹中的 <code>CMakeLists.txt</code></li>
+<li>CMake设置中： Generation path 设置成 <code>WORKSPACE_PATH/build</code></li>
+<li>Cmake Option: <code>-DCATKIN_DEVEL_PREFIX:PATH=WORKSPACE_PATH/devel</code></li>
+</ul>
+<p>本次作业只给了模块代码，所以可以放在上次给的工作空间/自己的工作空间里编译运行。首先，需要安装好一些需要的模块：</p>
+<ul>
+<li>champion_nav_msgs：这个模块在上一次作业也有用到，如果上次安装了这次就不用了，否则可以根据内部的 <code>readme.md</code> 自行编译安装，注意 ros 版本的差异更改对应文件的对应位置。</li>
+<li>libnabo: 参考<a href="https://blog.csdn.net/qq_36501182/article/details/79043592" target="_blank" rel="noopener">这篇教程</a></li>
+<li>csm：第二次作业有用到，可以根据<a href="https://guoxiaotao.xyz/2020/04/25/ros-melodic-csm/">这篇教程</a>选择自己喜欢的方式安装，安装完成后在 <code>CMakeLists.txt</code> 修改csm的对应路径位置。</li>
+</ul>
+<p>另外注意一下 melodic 下安装的 pcl 版本貌似是1.8的，需要在对应 <code>hpp</code>， <code>CMakeLists.txt</code> 下修改需要的 pcl 版本。</p>
+<h3 id="代码结构"><a href="#代码结构" class="headerlink" title="代码结构"></a>代码结构</h3><p>老规矩，还是先阅读给定的框架代码，了解代码结构再考虑补全。</p>
+<p><code>main.cpp</code>：和之前的作业类似，在一个定义好的类 <code>imlsDebug</code> 里面完成所有项目需要的基本函数（数据读取、初始化、话题订阅/发布），用另一个类 <code>imls_icp</code> 完成作业需要的功能（针对这次作业而言，就是激光数据配准）。</p>
+<p><code>imlsDebug</code>：六个函数和一些成员变量，主要功能如下：</p>
+<ul>
+<li><p>构造函数：初始化两条路径的发布话题信息（ imls-icp 生成的和 odom 生成的）、利用<code>rosbag:View</code> 来读取 rosbag 中的话题信息（激光和里程计数据），并逐条处理，手动进入相应的 callback函数。（rosbag 读取的 api 可以参考<a href="http://wiki.ros.org/rosbag/Code%20API" target="_blank" rel="noopener">官方文档</a>）</p>
+</li>
+<li><p><code>void odomCallback(...)</code> 和 <code>pubPath(const nav_msgs::OdometryConstPtr&amp; msg, ...)</code> : 简单的接收里程计数据并发布</p>
+</li>
+<li><p><code>void ConvertChampionLaserScanToEigenPointCloud(...)</code>：工具函数，将激光扫描数据（距离，角度）换算成2d坐标（x, y）</p>
+</li>
+<li><p><code>void championLaserScanCallback(...)</code>：先将激光数据转换成点云，调用 <code>imls_icp</code> 中的方法对上一阵点云数据进行匹配，匹配成功的话输出当前帧位姿（通过上一阵位姿乘相对位姿变换）并发布</p>
+</li>
+<li><p><code>void pubPath(Eigen::Vector3d&amp; pose, nav_msgs::Path &amp;path, ros::Publisher &amp;mcu_path_pub_)</code>：发布由 imls-icp 生成的位姿</p>
+</li>
+</ul>
+<p><code>imls_icp</code>类中功能函数比较多，大部分函数名字和注释都能说明功能，这里不赘述，只介绍一下几个核心的功能函数：</p>
+<ul>
+<li><p><code>projSourcePtToSurface(...)</code> ：将当前帧点云投影到上一阵点云构造的曲面上（对每个店调用下面的函数），并去除匹配不合格的点，计算输出匹配后的点云和法向量</p>
+</li>
+<li><p><code>bool ImplicitMLSFunction(Eigen::Vector2d x, double&amp; height)</code>：将当前激光点投影到上一帧曲面上，计算高度；大致流程是利用 kd 数搜索距离当前点最近的三个点（需要具有代表性）构造平面，进行投影。</p>
+</li>
+<li><p><code>SolveMotionEstimationProblem()</code>：已知匹配后的对应点和法向量，计算相对位姿，这部分已经写好了</p>
+</li>
+</ul>
+<p>我们需要完成的有三个函数：<code>computeNormal()</code>（给定某个点周围的 n 个点，计算法向量），<code>ImplictMLSFunction()</code> 的高度计算部分（参考课上学习的公式），<code>projSourcePtToSurface()</code>将匹配后的点转换成点云和法向量输出。</p>
+<h3 id="代码补充"><a href="#代码补充" class="headerlink" title="代码补充"></a>代码补充</h3><ul>
+<li><code>ComputeNormal</code>：补充如下，基本参考课上内容，利用 pca 求解法向量</li>
+</ul>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * @brief IMLSICPMatcher::ComputeNormal</span></span><br><span class="line"><span class="comment"> * 计算法向量</span></span><br><span class="line"><span class="comment"> * @param nearPoints    某个点周围的所有激光点</span></span><br><span class="line"><span class="comment"> * @return</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="function">Eigen::Vector2d <span class="title">IMLSICPMatcher::ComputeNormal</span><span class="params">(<span class="built_in">std</span>::<span class="built_in">vector</span>&lt;Eigen::Vector2d&gt; &amp;nearPoints)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    Eigen::Vector2d normal;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//根据周围的激光点计算法向量，参考ppt中NICP计算法向量的方法</span></span><br><span class="line">    <span class="comment">// 计算周围点的几何中心</span></span><br><span class="line">    Eigen::Vector2d meanPoints = Eigen::Vector2d::Zero();</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">auto</span> p: nearPoints) &#123;</span><br><span class="line">        meanPoints += p;</span><br><span class="line">    &#125;</span><br><span class="line">    meanPoints /= nearPoints.<span class="built_in">size</span>();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 计算方差</span></span><br><span class="line">    Eigen::Matrix2d sigma = Eigen::Matrix2d::Zero();</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">auto</span> p: nearPoints) &#123;</span><br><span class="line">        Eigen::Vector2d diff = p - meanPoints;</span><br><span class="line">        sigma += diff * diff.transpose();</span><br><span class="line">    &#125;</span><br><span class="line">    sigma /= nearPoints.<span class="built_in">size</span>();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 特征分解</span></span><br><span class="line">    <span class="function">Eigen::EigenSolver&lt;Eigen::Matrix2d&gt; <span class="title">solver</span><span class="params">(sigma)</span></span>;</span><br><span class="line">    <span class="comment">// 取出特征值和特征向量</span></span><br><span class="line">    Eigen::MatrixXd eigenvalue = solver.eigenvalues().real();</span><br><span class="line">    Eigen::MatrixXd eigenvector = solver.eigenvectors().real();</span><br><span class="line">    Eigen::Index evalsMin;</span><br><span class="line">    <span class="comment">// 找到最小特征值的位置</span></span><br><span class="line">    eigenvalue.rowwise().sum().minCoeff(&amp;evalsMin);</span><br><span class="line">    <span class="comment">// 取出该列</span></span><br><span class="line">    normal &lt;&lt; eigenvector(<span class="number">0</span>, evalsMin), eigenvector(<span class="number">1</span>, evalsMin);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> normal;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<ul>
+<li><code>ImplicitMLSFunction</code>：这个函数主要是补充高度计算部分，按照论文里的公式计算即可：</li>
+</ul>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//TODO</span></span><br><span class="line"><span class="comment">//根据函数进行投影．计算height，即ppt中的I(x)</span></span><br><span class="line"><span class="keyword">double</span> sum1 = <span class="number">0.0</span>, sum2 = <span class="number">0.0</span>;</span><br><span class="line"><span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; nearPoints.<span class="built_in">size</span>(); i++) &#123;</span><br><span class="line">    <span class="keyword">auto</span> p_i = nearPoints[i];</span><br><span class="line">    <span class="keyword">auto</span> normal_i = nearNormals[i];</span><br><span class="line">    <span class="keyword">auto</span> diff = x - p_i;</span><br><span class="line">    <span class="keyword">double</span> wi = <span class="built_in">exp</span>(- (diff.squaredNorm()) / (m_h * m_h));</span><br><span class="line">    sum1 += (wi * (diff.dot(normal_i)));</span><br><span class="line">    sum2 += wi;</span><br><span class="line">&#125;</span><br><span class="line"><span class="built_in">height</span> = sum1 / sum2;</span><br><span class="line"><span class="comment">//end of TODO</span></span><br></pre></td></tr></table></figure>
+<ul>
+<li><code>projSourcePtToSurface</code> 这个主要是补充计算匹配后的点云 <code>yi</code>，同样按照论文公式计算即可</li>
+</ul>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//TODO</span></span><br><span class="line"><span class="comment">//计算yi．</span></span><br><span class="line">yi = xi - <span class="built_in">height</span> * nearNormal;</span><br><span class="line"><span class="comment">//end of TODO</span></span><br></pre></td></tr></table></figure>
+<h3 id="运行结果"><a href="#运行结果" class="headerlink" title="运行结果"></a>运行结果</h3><p>补充完成后运行结果如下所示：红色为根据 imls 算出的位姿轨迹，蓝色为 odom 的位姿轨迹。虽然由于没有进行后端优化导致后面轨迹飘了，但是整体来看大致方向是对的。</p>
+<img src="/2020/05/01/lidarSLAM-hw4/%E8%BF%90%E8%A1%8C%E7%BB%93%E6%9E%9C1.png" class="" title="lidarSLAM-hw4">
+<h2 id="用-csm-进行激光匹配比较结果"><a href="#用-csm-进行激光匹配比较结果" class="headerlink" title="用 csm 进行激光匹配比较结果"></a>用 csm 进行激光匹配比较结果</h2><blockquote>
+<p>将第一题 IMLS-ICP 匹配的接口换成第二次作业中 CSM 库的 ICP 匹配接口,并生成激光匹配的轨迹</p>
+</blockquote>
+<h3 id="代码修改"><a href="#代码修改" class="headerlink" title="代码修改"></a>代码修改</h3><p>这一题主要是熟悉 csm 的接口并调用，主要是以下几个部分：</p>
+<p>添加以下成员变量：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// csm 进行 pl-icp 需要的变量</span></span><br><span class="line"><span class="keyword">bool</span> run_pl_icp = <span class="literal">true</span>;</span><br><span class="line">LDP m_prevLDP;</span><br><span class="line">sm_params m_PIICPParams;</span><br><span class="line">sm_result m_OutputResult;</span><br></pre></td></tr></table></figure>
+<p>添加 csm 相关的函数，注意部分变量的修改以及 <code>LaserScan</code> 和 <code>ChampionNavLaserScan</code> 之间的差异</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 进行pl-icp的相关函数</span></span><br><span class="line">    <span class="function"><span class="keyword">void</span> <span class="title">SetPIICPParams</span><span class="params">()</span> </span>&#123;...&#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">void</span> <span class="title">LaserScanToLDP</span><span class="params">(<span class="keyword">const</span> champion_nav_msgs::ChampionNavLaserScanConstPtr&amp; pScan,</span></span></span><br><span class="line"><span class="function"><span class="params">                        LDP&amp; ldp)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">int</span> nPts = pScan-&gt;ranges.<span class="built_in">size</span>(); <span class="comment">// intensity 在 ChampionNavLaserScan 没用</span></span><br><span class="line">        ...</span><br><span class="line">        ldp-&gt;theta[i] = pScan-&gt;angles[i]; <span class="comment">// ChampionNavLaserScan 不规定统一角度间隔，所以可以直接取</span></span><br><span class="line">        ...</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function">Eigen::Vector3d  <span class="title">PIICPBetweenTwoFrames</span><span class="params">(LDP&amp; currentLDPScan,</span></span></span><br><span class="line"><span class="function"><span class="params">                                           Eigen::Vector3d tmprPose)</span> </span>&#123;...&#125;</span><br></pre></td></tr></table></figure>
+<p>然后在构造函数中进行 csm 的相关设置：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">imlsDebug()</span><br><span class="line">    &#123;</span><br><span class="line">        ...</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 进行 pl-icp 相关设置</span></span><br><span class="line">        m_prevLDP = <span class="literal">NULL</span>;</span><br><span class="line">        SetPIICPParams();</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 读取 rosbag 信息</span></span><br><span class="line">        rosbag::Bag bag;</span><br><span class="line">        bag.<span class="built_in">open</span>(bagfile, rosbag::bagmode::Read);</span><br><span class="line"></span><br><span class="line">        ...</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<p>最后在激光数据的 <code>callback</code> 函数中增加使用 pl-icp 匹配的分支：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span>(m_isFirstFrame == <span class="literal">true</span>)</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="built_in">std</span>::<span class="built_in">cout</span> &lt;&lt;<span class="string">"First Frame"</span>&lt;&lt;<span class="built_in">std</span>::<span class="built_in">endl</span>;</span><br><span class="line">            m_isFirstFrame = <span class="literal">false</span>;</span><br><span class="line">            m_prevLaserPose = Eigen::Vector3d(<span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>);</span><br><span class="line">            pubPath(m_prevLaserPose, m_imlsPath, m_imlsPathPub);</span><br><span class="line">            <span class="comment">// 针对不同匹配算法做不一样的设置</span></span><br><span class="line">            <span class="keyword">if</span> (!run_pl_icp) &#123;</span><br><span class="line">                ConvertChampionLaserScanToEigenPointCloud(msg, m_prevPointCloud);</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                LaserScanToLDP(msg, m_prevLDP);</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">return</span> ;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (!run_pl_icp) &#123; <span class="comment">// 使用 imls-icp 匹配</span></span><br><span class="line"></span><br><span class="line">            ...</span><br><span class="line"></span><br><span class="line">        &#125; <span class="keyword">else</span> &#123; <span class="comment">// 用 csm 进行 pl-icp</span></span><br><span class="line"></span><br><span class="line">            <span class="comment">//把当前的激光数据转换为 pl-icp能识别的数据 &amp; 进行矫正</span></span><br><span class="line">            <span class="comment">//d_point_scan就是用激光计算得到的两帧数据之间的旋转 &amp; 平移</span></span><br><span class="line">            LDP currentLDP;</span><br><span class="line">            LaserScanToLDP(msg, currentLDP);</span><br><span class="line">            Eigen::Vector3d d_point_scan = PIICPBetweenTwoFrames(currentLDP, Eigen::Vector3d::Zero());</span><br><span class="line">            Eigen::Matrix3d lastPose, rPose;</span><br><span class="line"></span><br><span class="line">            lastPose &lt;&lt; <span class="built_in">cos</span>(m_prevLaserPose(<span class="number">2</span>)), -<span class="built_in">sin</span>(m_prevLaserPose(<span class="number">2</span>)), m_prevLaserPose(<span class="number">0</span>),</span><br><span class="line">                        <span class="built_in">sin</span>(m_prevLaserPose(<span class="number">2</span>)),  <span class="built_in">cos</span>(m_prevLaserPose(<span class="number">2</span>)), m_prevLaserPose(<span class="number">1</span>),</span><br><span class="line">                        <span class="number">0</span>,  <span class="number">0</span>,  <span class="number">1</span>;</span><br><span class="line"></span><br><span class="line">            rPose &lt;&lt; <span class="built_in">cos</span>(d_point_scan(<span class="number">2</span>)), -<span class="built_in">sin</span>(d_point_scan(<span class="number">2</span>)), d_point_scan(<span class="number">0</span>),</span><br><span class="line">                    <span class="built_in">sin</span>(d_point_scan(<span class="number">2</span>)),  <span class="built_in">cos</span>(d_point_scan(<span class="number">2</span>)), d_point_scan(<span class="number">1</span>),</span><br><span class="line">                    <span class="number">0</span>,  <span class="number">0</span>,  <span class="number">1</span>;</span><br><span class="line"></span><br><span class="line">            Eigen::Matrix3d nowPose = lastPose * rPose;</span><br><span class="line">            m_prevLaserPose &lt;&lt; nowPose(<span class="number">0</span>, <span class="number">2</span>) , nowPose(<span class="number">1</span>, <span class="number">2</span>), <span class="built_in">atan2</span>(nowPose(<span class="number">1</span>, <span class="number">0</span>), nowPose(<span class="number">0</span>, <span class="number">0</span>));</span><br><span class="line">            pubPath(m_prevLaserPose, m_imlsPath, m_imlsPathPub);</span><br><span class="line"></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<h3 id="pl-icp-运行结果"><a href="#pl-icp-运行结果" class="headerlink" title="pl-icp 运行结果"></a>pl-icp 运行结果</h3><p>运行结果如下所示，使用 pl-icp 的速度明显变快，但由于没有优化结果同样也发生了漂移。</p>
+<img src="/2020/05/01/lidarSLAM-hw4/%E8%BF%90%E8%A1%8C%E7%BB%93%E6%9E%9C2.png" class="" title="lidarSLAM-hw4">
+<h2 id="比较各类-ICP-算法的特点以及异同"><a href="#比较各类-ICP-算法的特点以及异同" class="headerlink" title="比较各类 ICP 算法的特点以及异同"></a>比较各类 ICP 算法的特点以及异同</h2><blockquote>
+<p>阅读 ICP 相关论文,总结课上所学的几种 ICP 及其相关变型并简述其异同(ICP,PL-ICL,NICP,<br>IMLS-ICP)</p>
+</blockquote>
+<p>课上讲解的几种 ICP 算法的基本思路都是类似的：找到前后两帧激光扫描数据的匹配关系，并根据匹配关系迭代找到相对位姿的最优值，主要的差异就是<strong>寻找对应点（匹配关系）</strong>以及<strong>计算误差</strong>两方面，几种 ICP 算法的详细说明可以参考我的<a href="https://guoxiaotao.xyz/2020/04/28/lidarSLAM-frontend-1/">上篇博客</a>。</p>
+<h2 id="ICP-算法改进思路"><a href="#ICP-算法改进思路" class="headerlink" title="ICP 算法改进思路"></a>ICP 算法改进思路</h2><blockquote>
+<p>简答题,开放性答案:现在你已经了解了多种 ICP 算法,你是否也能提出一种改进的 ICP 算法,或能提<br>升 ICP 总体匹配精度或速度的技巧?请简述你的改进策略。</p>
+</blockquote>
+<p>两个方面：</p>
+<ul>
+<li>精度上可以采用合理的方法提供初值（目前是人工设置）：其他传感器（odom等），用 Ransac 去除 outlier</li>
+<li>效率上可以对点云采样（提高匹配速度）</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>Post author:  </strong>Xiaotao Guo
+  </li>
+  <li class="post-copyright-link">
+    <strong>Post link: </strong>
+    <a href="https://guoxiaotao.xyz/2020/05/01/lidarSLAM-hw4/" title="lidarSLAM - 第四次作业">https://guoxiaotao.xyz/2020/05/01/lidarSLAM-hw4/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>Copyright Notice:  </strong>All articles in this blog are licensed under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> unless stating additionally.
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+          
+          <div class="post-tags">
+              <a href="/tags/slam/" rel="tag"><i class="fa fa-tag"></i> slam</a>
+              <a href="/tags/lidar-slam/" rel="tag"><i class="fa fa-tag"></i> lidar-slam</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/04/28/lidarSLAM-frontend-1/" rel="prev" title="激光SLAM 前端配准方法 - ICP, PL-ICP, NICP, IMLS-ICP">
+      <i class="fa fa-chevron-left"></i> 激光SLAM 前端配准方法 - ICP, PL-ICP, NICP, IMLS-ICP
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    <div class="comments" id="valine-comments"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#实现两帧之间的-IMLS-ICP-激光匹配"><span class="nav-number">1.</span> <span class="nav-text">实现两帧之间的 IMLS-ICP 激光匹配</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#前提准备"><span class="nav-number">1.1.</span> <span class="nav-text">前提准备</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#代码结构"><span class="nav-number">1.2.</span> <span class="nav-text">代码结构</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#代码补充"><span class="nav-number">1.3.</span> <span class="nav-text">代码补充</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#运行结果"><span class="nav-number">1.4.</span> <span class="nav-text">运行结果</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#用-csm-进行激光匹配比较结果"><span class="nav-number">2.</span> <span class="nav-text">用 csm 进行激光匹配比较结果</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#代码修改"><span class="nav-number">2.1.</span> <span class="nav-text">代码修改</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#pl-icp-运行结果"><span class="nav-number">2.2.</span> <span class="nav-text">pl-icp 运行结果</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#比较各类-ICP-算法的特点以及异同"><span class="nav-number">3.</span> <span class="nav-text">比较各类 ICP 算法的特点以及异同</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ICP-算法改进思路"><span class="nav-number">4.</span> <span class="nav-text">ICP 算法改进思路</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Xiaotao Guo"
+      src="https://avatars3.githubusercontent.com/u/45047478?s=460&u=3be5d506be9a30bd6eadfd29cd36c61e30833bb2&v=4">
+  <p class="site-author-name" itemprop="name">Xiaotao Guo</p>
+  <div class="site-description" itemprop="description">Stay hungry, stay foolish</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">29</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">8</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/XiaotaoGuo" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;XiaotaoGuo" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.google.com/maps/place/Virginia/@37.9179474,-83.9116557,6z/data=!3m1!4b1!4m5!3m4!1s0x884cd670bdbcb2cd:0xc04e4149b746a695!8m2!3d37.4315734!4d-78.6568942" title="Virginia, USA → https:&#x2F;&#x2F;www.google.com&#x2F;maps&#x2F;place&#x2F;Virginia&#x2F;@37.9179474,-83.9116557,6z&#x2F;data&#x3D;!3m1!4b1!4m5!3m4!1s0x884cd670bdbcb2cd:0xc04e4149b746a695!8m2!3d37.4315734!4d-78.6568942" rel="noopener" target="_blank"><i class="fa fa-map-marker fa-fw"></i>Virginia, USA</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.linkedin.com/in/xiaotaoguo/" title="LinkedIn → https:&#x2F;&#x2F;www.linkedin.com&#x2F;in&#x2F;xiaotaoguo&#x2F;" rel="noopener" target="_blank"><i class="fab fa-linkedin fa-fw"></i>LinkedIn</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:guoxiaotao0819@gmail.com" title="E-Mail → mailto:guoxiaotao0819@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://ucsd.edu/" title="UC San Diego → https:&#x2F;&#x2F;ucsd.edu&#x2F;" rel="noopener" target="_blank"><i class="fa fa-graduation-cap fa-fw"></i>UC San Diego</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zju.edu.cn/" title="ZJU → https:&#x2F;&#x2F;www.zju.edu.cn&#x2F;" rel="noopener" target="_blank"><i class="fa fa-graduation-cap fa-fw"></i>ZJU</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://torc.ai/" title="Torc Robotics → https:&#x2F;&#x2F;torc.ai&#x2F;" rel="noopener" target="_blank"><i class="fa fa-briefcase fa-fw"></i>Torc Robotics</a>
+      </span>
+  </div>
+
+
+
+    <div class="links-of-blogroll motion-element links-of-blogroll-block">
+      <div class="links-of-blogroll-title">
+        <!-- modify icon to fire by szw -->
+        <i class="fa fa-history fa-" aria-hidden="true"></i>
+        recent posts
+      </div>
+      <ul class="links-of-blogroll-list">
+        
+        
+          <li>
+            <a href="/2020/05/01/lidarSLAM-hw4/" title="lidarSLAM - 第四次作业" target="_blank">lidarSLAM - 第四次作业</a>
+          </li>
+        
+          <li>
+            <a href="/2020/04/28/lidarSLAM-frontend-1/" title="激光SLAM 前端配准方法 - ICP, PL-ICP, NICP, IMLS-ICP" target="_blank">激光SLAM 前端配准方法 - ICP, PL-ICP, NICP, IMLS-ICP</a>
+          </li>
+        
+          <li>
+            <a href="/2020/04/26/CMU-DB-5-database-storage-2/" title="[CMU-15-445/645] Database Storage - Part 2" target="_blank">[CMU-15-445/645] Database Storage - Part 2</a>
+          </li>
+        
+          <li>
+            <a href="/2020/04/25/lidarSLAM-hw2/" title="lidarSLAM-第三次作业" target="_blank">lidarSLAM-第三次作业</a>
+          </li>
+        
+          <li>
+            <a href="/2020/04/25/ros-melodic-csm/" title="ROS melodic 下使用 CSM 库" target="_blank">ROS melodic 下使用 CSM 库</a>
+          </li>
+        
+      </ul>
+    </div>
+
+
+      </div>
+
+      <script type="text/javascript" id="clustrmaps" src="//cdn.clustrmaps.com/map_v2.js?d=3IgjZ2nwFXDxOcZaq3bMwhX63fbnM0O-5aVh7uWblik&cl=ffffff&w=a"></script>
+      
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fab fa-cog"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Xiaotao Guo</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a>
+  </div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="Total Visitors">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="Total Views">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+  <script>
+    (function(){
+      var bp = document.createElement('script');
+      var curProtocol = window.location.protocol.split(':')[0];
+      bp.src = (curProtocol === 'https') ? 'https://zz.bdstatic.com/linksubmit/push.js' : 'http://push.zhanzhang.baidu.com/push.js';
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(bp, s);
+    })();
+  </script>
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//unpkg.com/valine/dist/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : true,
+      appId      : 'gyDhE6WmYReAVJr69uuRmqab-gzGzoHsz',
+      appKey     : 'EEq9PxLIVddyewEdu9gUytK2',
+      placeholder: "Your comment makes this site better!",
+      avatar     : 'mm',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : false,
+      lang       : '' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : false,
+      serverURLs : ''
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>

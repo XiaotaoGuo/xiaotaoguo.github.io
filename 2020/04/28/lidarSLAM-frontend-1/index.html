@@ -30,7 +30,7 @@
 <meta property="og:locale" content="en_US">
 <meta property="og:image" content="https://guoxiaotao.xyz/2020/04/28/lidarSLAM-frontend-1/pl-icp.png">
 <meta property="article:published_time" content="2020-04-29T02:55:43.000Z">
-<meta property="article:modified_time" content="2020-05-01T03:27:59.420Z">
+<meta property="article:modified_time" content="2020-05-02T18:58:39.434Z">
 <meta property="article:author" content="Xiaotao Guo">
 <meta property="article:tag" content="slam">
 <meta property="article:tag" content="lidar-slam">
@@ -140,7 +140,7 @@
   </li>
         <li class="menu-item menu-item-archives">
 
-    <a href="/archives/" rel="section"><i class="fas fa-archive fa-fw"></i>Archives<span class="badge">28</span></a>
+    <a href="/archives/" rel="section"><i class="fas fa-archive fa-fw"></i>Archives<span class="badge">29</span></a>
 
   </li>
       <li class="menu-item menu-item-search">
@@ -228,7 +228,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2020-04-30 23:27:59" itemprop="dateModified" datetime="2020-04-30T23:27:59-04:00">2020-04-30</time>
+                <time title="Modified: 2020-05-02 14:58:39" itemprop="dateModified" datetime="2020-05-02T14:58:39-04:00">2020-05-02</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -267,7 +267,7 @@
               <span class="post-meta-item-icon">
                 <i class="far fa-file-word"></i>
               </span>
-              <span>4.4k</span>
+              <span>4.5k</span>
             </span>
             <span class="post-meta-item" title="Reading time">
               <span class="post-meta-item-icon">
@@ -343,8 +343,8 @@ T\oplus \tilde{p}_i = \begin{bmatrix}Rp_i + t \\ Rn_i\end{bmatrix}</script><p>�
 <script type="math/tex; mode=display">
 \begin{aligned}
 \mu_i^s &= \frac{1}{|V_i|}\sum_{p_j\in V_i}p_j \\
-\Sigma_i^s &= \frac{1}{|V_i|}\sum_{p_j \in V_i}(p_j - \mu_i)^T(p_j - \mu_i)\\
-\end{aligned}</script><p>然后对方差进行特征分解（2维情况下）</p>
+\Sigma_i^s &= \frac{1}{|V_i|}\sum_{p_j \in V_i}(p_j - \mu_i)(p_j - \mu_i)^T\\
+\end{aligned}</script><p>然后对方差进行特征分解（2维情况下）,用类似于 PCA （主成分分析）的方法找出这堆点对应曲面的曲率和法向量：</p>
 <script type="math/tex; mode=display">
 \Sigma_i^s = R\begin{bmatrix}\lambda_1 & 0 \\0 & \lambda_2\end{bmatrix}R^T</script><p>对曲率的定义为： $\sigma_i = \frac{\lambda_1}{\lambda_1 + \lambda_2}$</p>
 <p>对法向量的定义为：最小特征值对应的特征向量</p>
@@ -366,7 +366,8 @@ T\oplus \tilde{p}_i = \begin{bmatrix}Rp_i + t \\ Rn_i\end{bmatrix}</script><p>�
 <p>选点的时候需要注意选取的激光点的均衡以保证可观性,因为是平面匹配,不存在角度不可观的情况。只需要考虑X方向和Y方向的可观性。要保证两者的约束基本上是一致的,才能让结果不出现偏移。</p>
 <h3 id="曲面重建"><a href="#曲面重建" class="headerlink" title="曲面重建"></a>曲面重建</h3><p>已知点云集合 $P_k$ 中每一个点 $p_i$ 的法向量 $n_i$ , 则 $P_k$ 中隐藏的曲面为:</p>
 <script type="math/tex; mode=display">
-I^{P_k}(x) = \frac{\sum_{p_i\in P_k}W_i(x)((x-p_i)\vec{n_i})}{\sum_{p_j\in P_k}W_j(x)}
+I^{P_k}(x) = \frac{\sum_{p_i\in P_k}W_i(x)((x-p_i)^T\vec{n_i})}{\sum_{p_j\in P_k}W_j(x)}</script><p>其中，</p>
+<script type="math/tex; mode=display">
 W_i(x) = e^{-||x-p_i||^2/h^2}</script><p>$I^{P_k}(x) = 0$ 对应的集合表示曲面，空间中点到曲面的距离代入方程计算即可，证明过程看参考文献 <a href="http://graphics.berkeley.edu/papers/Kolluri-PGM-2005-08/sodatalk.pdf" target="_blank" rel="noopener">Provably good moving least square</a>。</p>
 <h3 id="匹配求解"><a href="#匹配求解" class="headerlink" title="匹配求解"></a>匹配求解</h3><ul>
 <li>当前帧中一点 $x_i$ 到曲面的距离为$I^{P_k}(x_i)$</li>
@@ -418,7 +419,10 @@ W_i(x) = e^{-||x-p_i||^2/h^2}</script><p>$I^{P_k}(x) = 0$ 对应的集合表示�
     <a href="/2020/04/26/CMU-DB-5-database-storage-2/" rel="prev" title="[CMU-15-445/645] Database Storage - Part 2">
       <i class="fa fa-chevron-left"></i> [CMU-15-445/645] Database Storage - Part 2
     </a></div>
-      <div class="post-nav-item"></div>
+      <div class="post-nav-item">
+    <a href="/2020/05/01/lidarSLAM-hw4/" rel="next" title="lidarSLAM - 第四次作业">
+      lidarSLAM - 第四次作业 <i class="fa fa-chevron-right"></i>
+    </a></div>
     </div>
       </footer>
     
@@ -496,7 +500,7 @@ W_i(x) = e^{-||x-p_i||^2/h^2}</script><p>$I^{P_k}(x) = 0$ 对应的集合表示�
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">28</span>
+          <span class="site-state-item-count">29</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
@@ -550,6 +554,10 @@ W_i(x) = e^{-||x-p_i||^2/h^2}</script><p>$I^{P_k}(x) = 0$ 对应的集合表示�
         
         
           <li>
+            <a href="/2020/05/01/lidarSLAM-hw4/" title="lidarSLAM - 第四次作业" target="_blank">lidarSLAM - 第四次作业</a>
+          </li>
+        
+          <li>
             <a href="/2020/04/28/lidarSLAM-frontend-1/" title="激光SLAM 前端配准方法 - ICP, PL-ICP, NICP, IMLS-ICP" target="_blank">激光SLAM 前端配准方法 - ICP, PL-ICP, NICP, IMLS-ICP</a>
           </li>
         
@@ -563,10 +571,6 @@ W_i(x) = e^{-||x-p_i||^2/h^2}</script><p>$I^{P_k}(x) = 0$ 对应的集合表示�
         
           <li>
             <a href="/2020/04/25/ros-melodic-csm/" title="ROS melodic 下使用 CSM 库" target="_blank">ROS melodic 下使用 CSM 库</a>
-          </li>
-        
-          <li>
-            <a href="/2020/04/23/lidarSLAM-hw1/" title="lidarSLAM-第二次作业" target="_blank">lidarSLAM-第二次作业</a>
           </li>
         
       </ul>

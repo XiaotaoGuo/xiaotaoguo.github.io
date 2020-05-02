@@ -1,6 +1,101 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>lidarSLAM - 第四次作业</title>
+    <url>/2020/05/01/lidarSLAM-hw4/</url>
+    <content><![CDATA[<p>本文是我在学习深蓝学院的<a href="https://www.shenlanxueyuan.com/course/152" target="_blank" rel="noopener">激光slam课程</a>第四次作业的笔记。本次作业主要是熟悉 imls-icp 的过程以及对 csm 接口调用，除此之外还有对课上讲的四种 icp 算法进行总结以及想一下 icp 的改进思路。</p>
+<a id="more"></a>
+<h2 id="实现两帧之间的-IMLS-ICP-激光匹配"><a href="#实现两帧之间的-IMLS-ICP-激光匹配" class="headerlink" title="实现两帧之间的 IMLS-ICP 激光匹配"></a>实现两帧之间的 IMLS-ICP 激光匹配</h2><blockquote>
+<p>补充代码,实现两帧间的 IMLS-ICP 激光匹配;</p>
+</blockquote>
+<h3 id="前提准备"><a href="#前提准备" class="headerlink" title="前提准备"></a>前提准备</h3><p>编程环境： <code>ubuntu 18.04 + ROS medodic</code><br>IDE: CLion, 安装官方教程配置：</p>
+<ul>
+<li>以项目方式打开想要编译的 package 文件夹中的 <code>CMakeLists.txt</code></li>
+<li>CMake设置中： Generation path 设置成 <code>WORKSPACE_PATH/build</code></li>
+<li>Cmake Option: <code>-DCATKIN_DEVEL_PREFIX:PATH=WORKSPACE_PATH/devel</code></li>
+</ul>
+<p>本次作业只给了模块代码，所以可以放在上次给的工作空间/自己的工作空间里编译运行。首先，需要安装好一些需要的模块：</p>
+<ul>
+<li>champion_nav_msgs：这个模块在上一次作业也有用到，如果上次安装了这次就不用了，否则可以根据内部的 <code>readme.md</code> 自行编译安装，注意 ros 版本的差异更改对应文件的对应位置。</li>
+<li>libnabo: 参考<a href="https://blog.csdn.net/qq_36501182/article/details/79043592" target="_blank" rel="noopener">这篇教程</a></li>
+<li>csm：第二次作业有用到，可以根据<a href="https://guoxiaotao.xyz/2020/04/25/ros-melodic-csm/">这篇教程</a>选择自己喜欢的方式安装，安装完成后在 <code>CMakeLists.txt</code> 修改csm的对应路径位置。</li>
+</ul>
+<p>另外注意一下 melodic 下安装的 pcl 版本貌似是1.8的，需要在对应 <code>hpp</code>， <code>CMakeLists.txt</code> 下修改需要的 pcl 版本。</p>
+<h3 id="代码结构"><a href="#代码结构" class="headerlink" title="代码结构"></a>代码结构</h3><p>老规矩，还是先阅读给定的框架代码，了解代码结构再考虑补全。</p>
+<p><code>main.cpp</code>：和之前的作业类似，在一个定义好的类 <code>imlsDebug</code> 里面完成所有项目需要的基本函数（数据读取、初始化、话题订阅/发布），用另一个类 <code>imls_icp</code> 完成作业需要的功能（针对这次作业而言，就是激光数据配准）。</p>
+<p><code>imlsDebug</code>：六个函数和一些成员变量，主要功能如下：</p>
+<ul>
+<li><p>构造函数：初始化两条路径的发布话题信息（ imls-icp 生成的和 odom 生成的）、利用<code>rosbag:View</code> 来读取 rosbag 中的话题信息（激光和里程计数据），并逐条处理，手动进入相应的 callback函数。（rosbag 读取的 api 可以参考<a href="http://wiki.ros.org/rosbag/Code%20API" target="_blank" rel="noopener">官方文档</a>）</p>
+</li>
+<li><p><code>void odomCallback(...)</code> 和 <code>pubPath(const nav_msgs::OdometryConstPtr&amp; msg, ...)</code> : 简单的接收里程计数据并发布</p>
+</li>
+<li><p><code>void ConvertChampionLaserScanToEigenPointCloud(...)</code>：工具函数，将激光扫描数据（距离，角度）换算成2d坐标（x, y）</p>
+</li>
+<li><p><code>void championLaserScanCallback(...)</code>：先将激光数据转换成点云，调用 <code>imls_icp</code> 中的方法对上一阵点云数据进行匹配，匹配成功的话输出当前帧位姿（通过上一阵位姿乘相对位姿变换）并发布</p>
+</li>
+<li><p><code>void pubPath(Eigen::Vector3d&amp; pose, nav_msgs::Path &amp;path, ros::Publisher &amp;mcu_path_pub_)</code>：发布由 imls-icp 生成的位姿</p>
+</li>
+</ul>
+<p><code>imls_icp</code>类中功能函数比较多，大部分函数名字和注释都能说明功能，这里不赘述，只介绍一下几个核心的功能函数：</p>
+<ul>
+<li><p><code>projSourcePtToSurface(...)</code> ：将当前帧点云投影到上一阵点云构造的曲面上（对每个店调用下面的函数），并去除匹配不合格的点，计算输出匹配后的点云和法向量</p>
+</li>
+<li><p><code>bool ImplicitMLSFunction(Eigen::Vector2d x, double&amp; height)</code>：将当前激光点投影到上一帧曲面上，计算高度；大致流程是利用 kd 数搜索距离当前点最近的三个点（需要具有代表性）构造平面，进行投影。</p>
+</li>
+<li><p><code>SolveMotionEstimationProblem()</code>：已知匹配后的对应点和法向量，计算相对位姿，这部分已经写好了</p>
+</li>
+</ul>
+<p>我们需要完成的有三个函数：<code>computeNormal()</code>（给定某个点周围的 n 个点，计算法向量），<code>ImplictMLSFunction()</code> 的高度计算部分（参考课上学习的公式），<code>projSourcePtToSurface()</code>将匹配后的点转换成点云和法向量输出。</p>
+<h3 id="代码补充"><a href="#代码补充" class="headerlink" title="代码补充"></a>代码补充</h3><ul>
+<li><code>ComputeNormal</code>：补充如下，基本参考课上内容，利用 pca 求解法向量</li>
+</ul>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * @brief IMLSICPMatcher::ComputeNormal</span></span><br><span class="line"><span class="comment"> * 计算法向量</span></span><br><span class="line"><span class="comment"> * @param nearPoints    某个点周围的所有激光点</span></span><br><span class="line"><span class="comment"> * @return</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="function">Eigen::Vector2d <span class="title">IMLSICPMatcher::ComputeNormal</span><span class="params">(<span class="built_in">std</span>::<span class="built_in">vector</span>&lt;Eigen::Vector2d&gt; &amp;nearPoints)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    Eigen::Vector2d normal;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//根据周围的激光点计算法向量，参考ppt中NICP计算法向量的方法</span></span><br><span class="line">    <span class="comment">// 计算周围点的几何中心</span></span><br><span class="line">    Eigen::Vector2d meanPoints = Eigen::Vector2d::Zero();</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">auto</span> p: nearPoints) &#123;</span><br><span class="line">        meanPoints += p;</span><br><span class="line">    &#125;</span><br><span class="line">    meanPoints /= nearPoints.<span class="built_in">size</span>();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 计算方差</span></span><br><span class="line">    Eigen::Matrix2d sigma = Eigen::Matrix2d::Zero();</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">auto</span> p: nearPoints) &#123;</span><br><span class="line">        Eigen::Vector2d diff = p - meanPoints;</span><br><span class="line">        sigma += diff * diff.transpose();</span><br><span class="line">    &#125;</span><br><span class="line">    sigma /= nearPoints.<span class="built_in">size</span>();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 特征分解</span></span><br><span class="line">    <span class="function">Eigen::EigenSolver&lt;Eigen::Matrix2d&gt; <span class="title">solver</span><span class="params">(sigma)</span></span>;</span><br><span class="line">    <span class="comment">// 取出特征值和特征向量</span></span><br><span class="line">    Eigen::MatrixXd eigenvalue = solver.eigenvalues().real();</span><br><span class="line">    Eigen::MatrixXd eigenvector = solver.eigenvectors().real();</span><br><span class="line">    Eigen::Index evalsMin;</span><br><span class="line">    <span class="comment">// 找到最小特征值的位置</span></span><br><span class="line">    eigenvalue.rowwise().sum().minCoeff(&amp;evalsMin);</span><br><span class="line">    <span class="comment">// 取出该列</span></span><br><span class="line">    normal &lt;&lt; eigenvector(<span class="number">0</span>, evalsMin), eigenvector(<span class="number">1</span>, evalsMin);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> normal;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<ul>
+<li><code>ImplicitMLSFunction</code>：这个函数主要是补充高度计算部分，按照论文里的公式计算即可：</li>
+</ul>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="comment">//TODO</span></span><br><span class="line"><span class="comment">//根据函数进行投影．计算height，即ppt中的I(x)</span></span><br><span class="line"><span class="keyword">double</span> sum1 = <span class="number">0.0</span>, sum2 = <span class="number">0.0</span>;</span><br><span class="line"><span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; nearPoints.<span class="built_in">size</span>(); i++) &#123;</span><br><span class="line">    <span class="keyword">auto</span> p_i = nearPoints[i];</span><br><span class="line">    <span class="keyword">auto</span> normal_i = nearNormals[i];</span><br><span class="line">    <span class="keyword">auto</span> diff = x - p_i;</span><br><span class="line">    <span class="keyword">double</span> wi = <span class="built_in">exp</span>(- (diff.squaredNorm()) / (m_h * m_h));</span><br><span class="line">    sum1 += (wi * (diff.dot(normal_i)));</span><br><span class="line">    sum2 += wi;</span><br><span class="line">&#125;</span><br><span class="line"><span class="built_in">height</span> = sum1 / sum2;</span><br><span class="line"><span class="comment">//end of TODO</span></span><br></pre></td></tr></table></figure>
+<ul>
+<li><code>projSourcePtToSurface</code> 这个主要是补充计算匹配后的点云 <code>yi</code>，同样按照论文公式计算即可</li>
+</ul>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="comment">//TODO</span></span><br><span class="line"><span class="comment">//计算yi．</span></span><br><span class="line">yi = xi - <span class="built_in">height</span> * nearNormal;</span><br><span class="line"><span class="comment">//end of TODO</span></span><br></pre></td></tr></table></figure>
+<h3 id="运行结果"><a href="#运行结果" class="headerlink" title="运行结果"></a>运行结果</h3><p>补充完成后运行结果如下所示：红色为根据 imls 算出的位姿轨迹，蓝色为 odom 的位姿轨迹。虽然由于没有进行后端优化导致后面轨迹飘了，但是整体来看大致方向是对的。</p>
+<img src="/2020/05/01/lidarSLAM-hw4/%E8%BF%90%E8%A1%8C%E7%BB%93%E6%9E%9C1.png" class="" title="lidarSLAM-hw4">
+<h2 id="用-csm-进行激光匹配比较结果"><a href="#用-csm-进行激光匹配比较结果" class="headerlink" title="用 csm 进行激光匹配比较结果"></a>用 csm 进行激光匹配比较结果</h2><blockquote>
+<p>将第一题 IMLS-ICP 匹配的接口换成第二次作业中 CSM 库的 ICP 匹配接口,并生成激光匹配的轨迹</p>
+</blockquote>
+<h3 id="代码修改"><a href="#代码修改" class="headerlink" title="代码修改"></a>代码修改</h3><p>这一题主要是熟悉 csm 的接口并调用，主要是以下几个部分：</p>
+<p>添加以下成员变量：</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="comment">// csm 进行 pl-icp 需要的变量</span></span><br><span class="line"><span class="keyword">bool</span> run_pl_icp = <span class="literal">true</span>;</span><br><span class="line">LDP m_prevLDP;</span><br><span class="line">sm_params m_PIICPParams;</span><br><span class="line">sm_result m_OutputResult;</span><br></pre></td></tr></table></figure>
+<p>添加 csm 相关的函数，注意部分变量的修改以及 <code>LaserScan</code> 和 <code>ChampionNavLaserScan</code> 之间的差异</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 进行pl-icp的相关函数</span></span><br><span class="line">    <span class="function"><span class="keyword">void</span> <span class="title">SetPIICPParams</span><span class="params">()</span> </span>&#123;...&#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">void</span> <span class="title">LaserScanToLDP</span><span class="params">(<span class="keyword">const</span> champion_nav_msgs::ChampionNavLaserScanConstPtr&amp; pScan,</span></span></span><br><span class="line"><span class="function"><span class="params">                        LDP&amp; ldp)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">int</span> nPts = pScan-&gt;ranges.<span class="built_in">size</span>(); <span class="comment">// intensity 在 ChampionNavLaserScan 没用</span></span><br><span class="line">        ...</span><br><span class="line">        ldp-&gt;theta[i] = pScan-&gt;angles[i]; <span class="comment">// ChampionNavLaserScan 不规定统一角度间隔，所以可以直接取</span></span><br><span class="line">        ...</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function">Eigen::Vector3d  <span class="title">PIICPBetweenTwoFrames</span><span class="params">(LDP&amp; currentLDPScan,</span></span></span><br><span class="line"><span class="function"><span class="params">                                           Eigen::Vector3d tmprPose)</span> </span>&#123;...&#125;</span><br></pre></td></tr></table></figure>
+<p>然后在构造函数中进行 csm 的相关设置：</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line">imlsDebug()</span><br><span class="line">    &#123;</span><br><span class="line">        ...</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 进行 pl-icp 相关设置</span></span><br><span class="line">        m_prevLDP = <span class="literal">NULL</span>;</span><br><span class="line">        SetPIICPParams();</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 读取 rosbag 信息</span></span><br><span class="line">        rosbag::Bag bag;</span><br><span class="line">        bag.<span class="built_in">open</span>(bagfile, rosbag::bagmode::Read);</span><br><span class="line"></span><br><span class="line">        ...</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<p>最后在激光数据的 <code>callback</code> 函数中增加使用 pl-icp 匹配的分支：</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="keyword">if</span>(m_isFirstFrame == <span class="literal">true</span>)</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="built_in">std</span>::<span class="built_in">cout</span> &lt;&lt;<span class="string">"First Frame"</span>&lt;&lt;<span class="built_in">std</span>::<span class="built_in">endl</span>;</span><br><span class="line">            m_isFirstFrame = <span class="literal">false</span>;</span><br><span class="line">            m_prevLaserPose = Eigen::Vector3d(<span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>);</span><br><span class="line">            pubPath(m_prevLaserPose, m_imlsPath, m_imlsPathPub);</span><br><span class="line">            <span class="comment">// 针对不同匹配算法做不一样的设置</span></span><br><span class="line">            <span class="keyword">if</span> (!run_pl_icp) &#123;</span><br><span class="line">                ConvertChampionLaserScanToEigenPointCloud(msg, m_prevPointCloud);</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                LaserScanToLDP(msg, m_prevLDP);</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">return</span> ;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (!run_pl_icp) &#123; <span class="comment">// 使用 imls-icp 匹配</span></span><br><span class="line"></span><br><span class="line">            ...</span><br><span class="line"></span><br><span class="line">        &#125; <span class="keyword">else</span> &#123; <span class="comment">// 用 csm 进行 pl-icp</span></span><br><span class="line"></span><br><span class="line">            <span class="comment">//把当前的激光数据转换为 pl-icp能识别的数据 &amp; 进行矫正</span></span><br><span class="line">            <span class="comment">//d_point_scan就是用激光计算得到的两帧数据之间的旋转 &amp; 平移</span></span><br><span class="line">            LDP currentLDP;</span><br><span class="line">            LaserScanToLDP(msg, currentLDP);</span><br><span class="line">            Eigen::Vector3d d_point_scan = PIICPBetweenTwoFrames(currentLDP, Eigen::Vector3d::Zero());</span><br><span class="line">            Eigen::Matrix3d lastPose, rPose;</span><br><span class="line"></span><br><span class="line">            lastPose &lt;&lt; <span class="built_in">cos</span>(m_prevLaserPose(<span class="number">2</span>)), -<span class="built_in">sin</span>(m_prevLaserPose(<span class="number">2</span>)), m_prevLaserPose(<span class="number">0</span>),</span><br><span class="line">                        <span class="built_in">sin</span>(m_prevLaserPose(<span class="number">2</span>)),  <span class="built_in">cos</span>(m_prevLaserPose(<span class="number">2</span>)), m_prevLaserPose(<span class="number">1</span>),</span><br><span class="line">                        <span class="number">0</span>,  <span class="number">0</span>,  <span class="number">1</span>;</span><br><span class="line"></span><br><span class="line">            rPose &lt;&lt; <span class="built_in">cos</span>(d_point_scan(<span class="number">2</span>)), -<span class="built_in">sin</span>(d_point_scan(<span class="number">2</span>)), d_point_scan(<span class="number">0</span>),</span><br><span class="line">                    <span class="built_in">sin</span>(d_point_scan(<span class="number">2</span>)),  <span class="built_in">cos</span>(d_point_scan(<span class="number">2</span>)), d_point_scan(<span class="number">1</span>),</span><br><span class="line">                    <span class="number">0</span>,  <span class="number">0</span>,  <span class="number">1</span>;</span><br><span class="line"></span><br><span class="line">            Eigen::Matrix3d nowPose = lastPose * rPose;</span><br><span class="line">            m_prevLaserPose &lt;&lt; nowPose(<span class="number">0</span>, <span class="number">2</span>) , nowPose(<span class="number">1</span>, <span class="number">2</span>), <span class="built_in">atan2</span>(nowPose(<span class="number">1</span>, <span class="number">0</span>), nowPose(<span class="number">0</span>, <span class="number">0</span>));</span><br><span class="line">            pubPath(m_prevLaserPose, m_imlsPath, m_imlsPathPub);</span><br><span class="line"></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<h3 id="pl-icp-运行结果"><a href="#pl-icp-运行结果" class="headerlink" title="pl-icp 运行结果"></a>pl-icp 运行结果</h3><p>运行结果如下所示，使用 pl-icp 的速度明显变快，但由于没有优化结果同样也发生了漂移。</p>
+<img src="/2020/05/01/lidarSLAM-hw4/%E8%BF%90%E8%A1%8C%E7%BB%93%E6%9E%9C2.png" class="" title="lidarSLAM-hw4">
+<h2 id="比较各类-ICP-算法的特点以及异同"><a href="#比较各类-ICP-算法的特点以及异同" class="headerlink" title="比较各类 ICP 算法的特点以及异同"></a>比较各类 ICP 算法的特点以及异同</h2><blockquote>
+<p>阅读 ICP 相关论文,总结课上所学的几种 ICP 及其相关变型并简述其异同(ICP,PL-ICL,NICP,<br>IMLS-ICP)</p>
+</blockquote>
+<p>课上讲解的几种 ICP 算法的基本思路都是类似的：找到前后两帧激光扫描数据的匹配关系，并根据匹配关系迭代找到相对位姿的最优值，主要的差异就是<strong>寻找对应点（匹配关系）</strong>以及<strong>计算误差</strong>两方面，几种 ICP 算法的详细说明可以参考我的<a href="https://guoxiaotao.xyz/2020/04/28/lidarSLAM-frontend-1/">上篇博客</a>。</p>
+<h2 id="ICP-算法改进思路"><a href="#ICP-算法改进思路" class="headerlink" title="ICP 算法改进思路"></a>ICP 算法改进思路</h2><blockquote>
+<p>简答题,开放性答案:现在你已经了解了多种 ICP 算法,你是否也能提出一种改进的 ICP 算法,或能提<br>升 ICP 总体匹配精度或速度的技巧?请简述你的改进策略。</p>
+</blockquote>
+<p>两个方面：</p>
+<ul>
+<li>精度上可以采用合理的方法提供初值（目前是人工设置）：其他传感器（odom等），用 Ransac 去除 outlier</li>
+<li>效率上可以对点云采样（提高匹配速度）</li>
+</ul>
+]]></content>
+      <categories>
+        <category>激光slam</category>
+      </categories>
+      <tags>
+        <tag>slam</tag>
+        <tag>lidar-slam</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>激光SLAM 前端配准方法 - ICP, PL-ICP, NICP, IMLS-ICP</title>
     <url>/2020/04/28/lidarSLAM-frontend-1/</url>
     <content><![CDATA[<p>本文是我在学习深蓝学院的<a href="https://www.shenlanxueyuan.com/course/152" target="_blank" rel="noopener">激光slam课程</a>第四章第一部分的学习笔记，前面几次基本把数据的预处理讲完了，本次课开始学习 slam 的内容，这次主要是讲了前端配准算法。</p>
@@ -61,8 +156,8 @@ T\oplus \tilde{p}_i = \begin{bmatrix}Rp_i + t \\ Rn_i\end{bmatrix}</script><p>�
 <script type="math/tex; mode=display">
 \begin{aligned}
 \mu_i^s &= \frac{1}{|V_i|}\sum_{p_j\in V_i}p_j \\
-\Sigma_i^s &= \frac{1}{|V_i|}\sum_{p_j \in V_i}(p_j - \mu_i)^T(p_j - \mu_i)\\
-\end{aligned}</script><p>然后对方差进行特征分解（2维情况下）</p>
+\Sigma_i^s &= \frac{1}{|V_i|}\sum_{p_j \in V_i}(p_j - \mu_i)(p_j - \mu_i)^T\\
+\end{aligned}</script><p>然后对方差进行特征分解（2维情况下）,用类似于 PCA （主成分分析）的方法找出这堆点对应曲面的曲率和法向量：</p>
 <script type="math/tex; mode=display">
 \Sigma_i^s = R\begin{bmatrix}\lambda_1 & 0 \\0 & \lambda_2\end{bmatrix}R^T</script><p>对曲率的定义为： $\sigma_i = \frac{\lambda_1}{\lambda_1 + \lambda_2}$</p>
 <p>对法向量的定义为：最小特征值对应的特征向量</p>
@@ -84,7 +179,8 @@ T\oplus \tilde{p}_i = \begin{bmatrix}Rp_i + t \\ Rn_i\end{bmatrix}</script><p>�
 <p>选点的时候需要注意选取的激光点的均衡以保证可观性,因为是平面匹配,不存在角度不可观的情况。只需要考虑X方向和Y方向的可观性。要保证两者的约束基本上是一致的,才能让结果不出现偏移。</p>
 <h3 id="曲面重建"><a href="#曲面重建" class="headerlink" title="曲面重建"></a>曲面重建</h3><p>已知点云集合 $P_k$ 中每一个点 $p_i$ 的法向量 $n_i$ , 则 $P_k$ 中隐藏的曲面为:</p>
 <script type="math/tex; mode=display">
-I^{P_k}(x) = \frac{\sum_{p_i\in P_k}W_i(x)((x-p_i)\vec{n_i})}{\sum_{p_j\in P_k}W_j(x)}
+I^{P_k}(x) = \frac{\sum_{p_i\in P_k}W_i(x)((x-p_i)^T\vec{n_i})}{\sum_{p_j\in P_k}W_j(x)}</script><p>其中，</p>
+<script type="math/tex; mode=display">
 W_i(x) = e^{-||x-p_i||^2/h^2}</script><p>$I^{P_k}(x) = 0$ 对应的集合表示曲面，空间中点到曲面的距离代入方程计算即可，证明过程看参考文献 <a href="http://graphics.berkeley.edu/papers/Kolluri-PGM-2005-08/sodatalk.pdf" target="_blank" rel="noopener">Provably good moving least square</a>。</p>
 <h3 id="匹配求解"><a href="#匹配求解" class="headerlink" title="匹配求解"></a>匹配求解</h3><ul>
 <li>当前帧中一点 $x_i$ 到曲面的距离为$I^{P_k}(x_i)$</li>
