@@ -1,14 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
+    <loc>https://guoxiaotao.xyz/2020/05/02/CMU-DB-5-buffer-pool/</loc>
+    <lastmod>2020-05-03</lastmod>
+  </url>  <url>
+    <loc>https://guoxiaotao.xyz/2020/04/26/CMU-DB-5-database-storage-2/</loc>
+    <lastmod>2020-05-03</lastmod>
+  </url>  <url>
     <loc>https://guoxiaotao.xyz/2020/05/01/lidarSLAM-hw4/</loc>
     <lastmod>2020-05-02</lastmod>
   </url>  <url>
     <loc>https://guoxiaotao.xyz/2020/04/28/lidarSLAM-frontend-1/</loc>
     <lastmod>2020-05-02</lastmod>
-  </url>  <url>
-    <loc>https://guoxiaotao.xyz/2020/04/26/CMU-DB-5-database-storage-2/</loc>
-    <lastmod>2020-04-28</lastmod>
   </url>  <url>
     <loc>https://guoxiaotao.xyz/2020/04/22/CMU-DB-4-database-storage-1/</loc>
     <lastmod>2020-04-26</lastmod>
