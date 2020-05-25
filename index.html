@@ -214,10 +214,16 @@
                 <i class="far fa-calendar"></i>
               </span>
               <span class="post-meta-item-text">Posted on</span>
-              
 
-              <time title="Created: 2020-05-24 13:09:46 / Modified: 19:17:03" itemprop="dateCreated datePublished" datetime="2020-05-24T13:09:46-04:00">2020-05-24</time>
+              <time title="Created: 2020-05-24 13:09:46" itemprop="dateCreated datePublished" datetime="2020-05-24T13:09:46-04:00">2020-05-24</time>
             </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-05-25 18:45:40" itemprop="dateModified" datetime="2020-05-25T18:45:40-04:00">2020-05-25</time>
+              </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="far fa-folder"></i>
@@ -248,13 +254,13 @@
               <span class="post-meta-item-icon">
                 <i class="far fa-file-word"></i>
               </span>
-              <span>4.6k</span>
+              <span>9.2k</span>
             </span>
             <span class="post-meta-item" title="Reading time">
               <span class="post-meta-item-icon">
                 <i class="far fa-clock"></i>
               </span>
-              <span>4 mins.</span>
+              <span>8 mins.</span>
             </span>
 
         </div>
@@ -266,7 +272,7 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <p>最近工作又搬家比较忙，趁周末有空继续学习一下。本文是我在学习深蓝学院的<a href="https://www.shenlanxueyuan.com/course/152" target="_blank" rel="noopener">激光slam课程</a>第四章第二部分的学习笔记，第一部分中主要是学习了如何用 ICP 及其变种来进行前后两帧点云匹配，具体可以看我的<a href="https://guoxiaotao.xyz/2020/04/28/lidarSLAM-frontend-1/">上一篇笔记</a>，这一部分主要是介绍了前端配准的另一个方法——基于势场的方法。相较于 ICP 方法，这种匹配方法不需要找到两个点云之间的对应点的匹配的关系，这两种方法都在实际使用中有涉及。本次学习的基于势场的匹配算法有：高斯牛顿优化方法、NDT 方法，相关匹配方法及分支定界加速。</p>
+          <p>最近工作又搬家比较忙，趁周末有空继续学习一下。本文是我在学习深蓝学院的<a href="https://www.shenlanxueyuan.com/course/152" target="_blank" rel="noopener">激光slam课程</a>前端配准第二部分的学习笔记，第一部分中主要是学习了如何用 ICP 及其变种来进行前后两帧点云匹配，具体可以看我的<a href="https://guoxiaotao.xyz/2020/04/28/lidarSLAM-frontend-1/">上一篇笔记</a>，这一部分主要是介绍了前端配准的另一个方法——基于势场的方法。相较于 ICP 方法，这种匹配方法不需要找到两个点云之间的对应点的匹配的关系，这两种方法都在实际使用中有涉及。本次学习的基于势场的匹配算法有：高斯牛顿优化方法、NDT 方法，相关匹配方法及分支定界加速。</p>
           <!--noindex-->
             <div class="post-button">
               <a class="btn" href="/2020/05/24/lidarSLAM-frontend-2/#more" rel="contents">
@@ -523,7 +529,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2020/04/28/lidarSLAM-frontend-1/" class="post-title-link" itemprop="url">激光SLAM 前端配准方法 - ICP, PL-ICP, NICP, IMLS-ICP</a>
+            <a href="/2020/04/28/lidarSLAM-frontend-1/" class="post-title-link" itemprop="url">激光SLAM 前端配准方法 - 基于 ICP 及其变种的方法</a>
         </h2>
 
         <div class="post-meta">
@@ -540,7 +546,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2020-05-02 14:58:39" itemprop="dateModified" datetime="2020-05-02T14:58:39-04:00">2020-05-02</time>
+                <time title="Modified: 2020-05-25 18:44:48" itemprop="dateModified" datetime="2020-05-25T18:44:48-04:00">2020-05-25</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -590,7 +596,7 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <p>本文是我在学习深蓝学院的<a href="https://www.shenlanxueyuan.com/course/152" target="_blank" rel="noopener">激光slam课程</a>第四章第一部分的学习笔记，前面几次基本把数据的预处理讲完了，本次课开始学习 slam 的内容，这次主要是讲了前端配准算法。</p>
+          <p>本文是我在学习深蓝学院的<a href="https://www.shenlanxueyuan.com/course/152" target="_blank" rel="noopener">激光slam课程</a>前端配准第一部分的学习笔记，前面几次基本把数据的预处理讲完了，本次课开始学习 slam 的内容，这次主要是讲了前端配准算法。</p>
 <p>无论是激光 slam 还是视觉 slam， 大部分都分成两个部分：前端和后端。其中后端的话各种 slam 都差不多，主要是根据数学公式求解类似 $Ax = b$ 的公式，而不同 slam 方法的前端可以有各种方法。前端总体来说无论是视觉还是激光都是起到一个里程计的作用，本次主要是学习帧间匹配算法中类 ICP 的方法，包括：ICP 匹配方法、PL-ICP 匹配方法、NICP 匹配方法和IMLS-ICP 匹配方法。</p>
           <!--noindex-->
             <div class="post-button">
@@ -1389,7 +1395,7 @@
           </li>
         
           <li>
-            <a href="/2020/04/28/lidarSLAM-frontend-1/" title="激光SLAM 前端配准方法 - ICP, PL-ICP, NICP, IMLS-ICP" target="_blank">激光SLAM 前端配准方法 - ICP, PL-ICP, NICP, IMLS-ICP</a>
+            <a href="/2020/04/28/lidarSLAM-frontend-1/" title="激光SLAM 前端配准方法 - 基于 ICP 及其变种的方法" target="_blank">激光SLAM 前端配准方法 - 基于 ICP 及其变种的方法</a>
           </li>
         
           <li>

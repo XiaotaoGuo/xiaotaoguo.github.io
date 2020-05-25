@@ -3,7 +3,7 @@
   <entry>
     <title>激光SLAM 前端配准方法 - 基于势场的方法</title>
     <url>/2020/05/24/lidarSLAM-frontend-2/</url>
-    <content><![CDATA[<p>最近工作又搬家比较忙，趁周末有空继续学习一下。本文是我在学习深蓝学院的<a href="https://www.shenlanxueyuan.com/course/152" target="_blank" rel="noopener">激光slam课程</a>第四章第二部分的学习笔记，第一部分中主要是学习了如何用 ICP 及其变种来进行前后两帧点云匹配，具体可以看我的<a href="https://guoxiaotao.xyz/2020/04/28/lidarSLAM-frontend-1/">上一篇笔记</a>，这一部分主要是介绍了前端配准的另一个方法——基于势场的方法。相较于 ICP 方法，这种匹配方法不需要找到两个点云之间的对应点的匹配的关系，这两种方法都在实际使用中有涉及。本次学习的基于势场的匹配算法有：高斯牛顿优化方法、NDT 方法，相关匹配方法及分支定界加速。</p>
+    <content><![CDATA[<p>最近工作又搬家比较忙，趁周末有空继续学习一下。本文是我在学习深蓝学院的<a href="https://www.shenlanxueyuan.com/course/152" target="_blank" rel="noopener">激光slam课程</a>前端配准第二部分的学习笔记，第一部分中主要是学习了如何用 ICP 及其变种来进行前后两帧点云匹配，具体可以看我的<a href="https://guoxiaotao.xyz/2020/04/28/lidarSLAM-frontend-1/">上一篇笔记</a>，这一部分主要是介绍了前端配准的另一个方法——基于势场的方法。相较于 ICP 方法，这种匹配方法不需要找到两个点云之间的对应点的匹配的关系，这两种方法都在实际使用中有涉及。本次学习的基于势场的匹配算法有：高斯牛顿优化方法、NDT 方法，相关匹配方法及分支定界加速。</p>
 <a id="more"></a>
 <h2 id="高斯牛顿优化方法"><a href="#高斯牛顿优化方法" class="headerlink" title="高斯牛顿优化方法"></a>高斯牛顿优化方法</h2><h3 id="基本原则-amp-数学描述"><a href="#基本原则-amp-数学描述" class="headerlink" title="基本原则 &amp; 数学描述"></a>基本原则 &amp; 数学描述</h3><p>HectorSLAN 使用的是这种方法。根据基于优化方法，只要给定一个目标函数，我们可以把激光帧间的匹配问题转换为求解目标函数的极值问题（通常是求最小值）：</p>
 <script type="math/tex; mode=display">
@@ -113,8 +113,107 @@ L_4(u, v) = Z_1l_1(u, v) + Z_2l_2(u, v) + Z_3l_3(u, v) + Z_4l_4(u, v)</script><h
     \frac{\partial{L(x, y)}}{\partial{x}} &= \frac{y - y_0}{y_1 - y_0}(M(P_{11}) - m(p_{01})) + \frac{y_1 - y}{y_1 - y_0}(M(P_{10}) - m(p_{00})) \\
     \frac{\partial{L(x, y)}}{\partial{y}} &= \frac{x - x_0}{x_1 - x_0}(M(P_{11}) - m(p_{01})) + \frac{x_1 - x}{x_1 - x_0}(M(P_{10}) - m(p_{00}))
 \end{aligned}</script><p>至此，我们可以求得 $\nabla{M(S_{i}(T))}$ 和 $M(S_{i}(T))$ 的值，进而求得 $\Delta{T}$，并进行迭代计算求得目标函数最小值。</p>
-<h2 id="NDT-方法"><a href="#NDT-方法" class="headerlink" title="NDT 方法"></a>NDT 方法</h2><p>未完待续。</p>
-<h2 id="相关匹配方法及分支定界加速-（CSM）"><a href="#相关匹配方法及分支定界加速-（CSM）" class="headerlink" title="相关匹配方法及分支定界加速 （CSM）"></a>相关匹配方法及分支定界加速 （CSM）</h2><p>未完待续。</p>
+<h2 id="NDT-Normal-Distribution-Transform-方法"><a href="#NDT-Normal-Distribution-Transform-方法" class="headerlink" title="NDT (Normal Distribution Transform) 方法"></a>NDT (Normal Distribution Transform) 方法</h2><h3 id="基本思想"><a href="#基本思想" class="headerlink" title="基本思想"></a>基本思想</h3><p>NDT 方法的基本思想是将空间划分成一个个 cell，这里的 cell 的概念要和栅格 grid 区分一下，通常单个栅格会取很小，其只代表了一个值。相对而言，cell 更像是一个小区域。有了各个 cell 之后为每一个 cell 定义一个高斯分布用来替代势场，因此整个空间里面就形成了一个分段连续的势场（在各自的 cell 里面连续）。通过这样的方法，结合连续的势场我们可以直接用牛顿法进行迭代（Hessian 矩阵非常好求），同时这样一个势场也不受离散化的影响。</p>
+<h3 id="数学描述"><a href="#数学描述" class="headerlink" title="数学描述"></a>数学描述</h3><p>首先定义几个变量：</p>
+<p>$T = (t_x, t_y, t_\theta)$ 表示需要求解的值</p>
+<p>$x_i = (x, y)^T$ 表示激光点坐标</p>
+<p>$<br>\begin{aligned}<br>    T(x_i) = \begin{bmatrix}<br>        \cos{\theta} &amp; -\sin{\theta} \\<br>        \sin{\theta} &amp;  \cos{\theta}<br>    \end{bmatrix}<br>    \begin{bmatrix}<br>        x_i \\ y_i<br>    \end{bmatrix} +<br>    \begin{bmatrix}<br>        t_x \\ t_y<br>    \end{bmatrix}<br>\end{aligned}<br>$</p>
+<p>$q_i$, $\Sigma_i$ 分别表示 $x_i$ 对应点的高斯分布的均值和方差，则当前激光点的的得分为(得分越小，匹配程度越高)：</p>
+<script type="math/tex; mode=display">x_i' = T(x_i)</script><script type="math/tex; mode=display">score_i = -\exp{(-\frac{(x_i' - q_i)^T\Sigma_i^{-1}(x_i' - q_i)}{2})}</script><p>则对应的目标函数为：$\min{\sum_i{score_i}}$，令 $q = x_i’ - q_i$，则有：</p>
+<script type="math/tex; mode=display">
+socre_i = -\exp{(-\frac{q^T\Sigma^{-1}q}{2})}</script><p>值得注意的是，目标函数并没有取误差的平方；同时对误差函数也不需要进行线性化（用 $J^TJ$ 代替 Hassian 矩阵），因为 Hassian 矩阵本身容易求解。</p>
+<h3 id="牛顿法"><a href="#牛顿法" class="headerlink" title="牛顿法"></a>牛顿法</h3><p>首先介绍以下牛顿法求解目标函数最小值：$\min{f(x)}$</p>
+<p>上式等价于令一阶导数为 0： $g(x) = f’(x) = 0$</p>
+<p>由于我们需要求解迭代量 $\Delta x$ 令一阶导数为 0，同时结合泰勒展开，即：</p>
+<script type="math/tex; mode=display">
+\begin{aligned}
+    g(x + \Delta x) &= g(x) + \frac{\partial{g(x)}}{\partial{x}} \\
+    \frac{\partial{g(x)}}{\partial{x}}\Delta x &= -g(x)
+\end{aligned}</script><p>接下来令 $x = x + \Delta x$，进行迭代即可。</p>
+<p>上式等价于 $H\Delta x = -J$。因此用牛顿法进行迭代求解时，关键是计算目标函数 $f(x)$ 的 Hassian 矩阵和 Jacobian 矩阵。在某些函数里面，Hassian 矩阵比较难求，因此用 $J^TJ$ 来表示（高斯牛顿法的思想）。</p>
+<p>如果 $f(x) = \sum{f_i(x)}$，则有：$J = \sum{J_i}$, $H = \sum{H_i}$</p>
+<h3 id="用牛顿法进行-NDT-求解"><a href="#用牛顿法进行-NDT-求解" class="headerlink" title="用牛顿法进行 NDT 求解"></a>用牛顿法进行 NDT 求解</h3><script type="math/tex; mode=display">
+f_i(T) = score_i = -\exp{(-\frac{(x_i' - q_i)^T\Sigma_i^{-1}(x_i' - q_i)}{2})}</script><p>首先求 J，令 $q = x_i’ - q_i = T(x_i) - q_i$，则有：</p>
+<script type="math/tex; mode=display">
+\begin{aligned}
+    J_i = \frac{\partial{f_i}}{\partial{T}} &= -\exp{(-\frac{q^T\Sigma^{-1}q}{2})}(-q^T\Sigma^{-1}\frac{\partial{q}}{\partial{T}}) \\
+    \frac{\partial{q}}{\partial{T}} &= \frac{\partial{T(x_i)}}{\partial{T}}
+\end{aligned}</script><p>上面涉及到矩阵求导，可以参考 <a href="https://zh.wikipedia.org/zh-hans/%E7%9F%A9%E9%98%B5%E5%BE%AE%E7%A7%AF%E5%88%86?oldformat=true" target="_blank" rel="noopener">维基百科：矩阵微积分</a></p>
+<p>下面对 $T(x_i)$ 求导：</p>
+<script type="math/tex; mode=display">
+\begin{aligned}
+    T(x_i) &= \begin{bmatrix}
+        \cos{\theta} & -\sin{\theta} \\
+        \sin{\theta} & \cos{\theta}
+    \end{bmatrix}
+    \begin{bmatrix}
+        x_i \\ y_i
+    \end{bmatrix} +
+    \begin{bmatrix}
+        t_x \\ y_x
+    \end{bmatrix} \\
+\rightarrow \frac{\partial{T(x_i)}}{\partial{T}} &=
+\begin{bmatrix}
+    1 & 0 & -x_i\sin{\theta} - y_i\cos{\theta} \\
+    0 & 1 & x_i\cos{\theta} - y_i\sin{\theta}
+\end{bmatrix}
+\end{aligned}</script><p>至此， J 求导完成，接下来求 H 矩阵，通过链式法则有：</p>
+<script type="math/tex; mode=display">
+\begin{aligned}
+    H_i = \frac{\partial{J_i}}{\partial{T}} &= -\exp{(-\frac{q^T\Sigma^{-1}q}{2})}(-q^T\Sigma^{-1}\frac{\partial{q}}{\partial{T}})(-q^T\Sigma^{-1}\frac{\partial{q}}{\partial{T}})\\
+    &+ -\exp{(-\frac{q^T\Sigma^{-1}q}{2})}(-q^T\Sigma^{-1}\frac{\partial{q}}{\partial{T}}) \\
+    &+ -\exp{(-\frac{q^T\Sigma^{-1}q}{2})}(-q^T\Sigma^{-1}\frac{\partial^2{q}}{\partial^2{T}})
+\end{aligned}</script><h3 id="算法流程"><a href="#算法流程" class="headerlink" title="算法流程"></a>算法流程</h3><p>总结以下， NDT 方法的算法流程分三步：</p>
+<ul>
+<li>对环境进行 cell 的划分，为每一个 cell 构造一个高斯分布</li>
+<li>根据初始解把当前帧的激光点转换到参考帧上，并确定属于哪个 cell</li>
+<li>用牛顿法进行迭代求解</li>
+</ul>
+<h2 id="相关匹配方法及分枝定界加速-（CSM）"><a href="#相关匹配方法及分枝定界加速-（CSM）" class="headerlink" title="相关匹配方法及分枝定界加速 （CSM）"></a>相关匹配方法及分枝定界加速 （CSM）</h2><h3 id="相关方法（Correlation-based-Method）——基本思想"><a href="#相关方法（Correlation-based-Method）——基本思想" class="headerlink" title="相关方法（Correlation-based Method）——基本思想"></a>相关方法（Correlation-based Method）——基本思想</h3><p>相关方法的基本思想是通过在一个范围内通过枚举所有位姿的可能性，从中选择一个最好的作为结果。这么做的原因主要是因为考虑到我们面对的是一个高度非凸问题，可能会有非常多局部极值，所以迭代方法对初值非常敏感，所以采用暴力匹配的方法可以避免出现初值影响，但是这么做的问题是计算量太大，所以通常需要通过加速策略来降低计算量。同时这个方法还有一个好处是可以计算位姿匹配的方差。</p>
+<h3 id="相关方法——算法流程"><a href="#相关方法——算法流程" class="headerlink" title="相关方法——算法流程"></a>相关方法——算法流程</h3><img src="/2020/05/24/lidarSLAM-frontend-2/%E4%BC%BC%E7%84%B6%E5%9C%BA.png" class="" title="lidarSLAM-frontend-2">
+<ul>
+<li>如上图所示，首先我们需要对地图通过高斯模糊来构造似然场</li>
+<li>在一个指定的搜索空间（比如 1m×1m，30°范围内）来进行搜索，这里可以有不同搜索的方法，后面会详细描述；对搜索得到的每一个位姿进行得分计算（匹配程度）</li>
+<li>根据上一步得到位姿得分，计算本次位姿匹配的方差</li>
+</ul>
+<h3 id="相关方法——位姿搜索"><a href="#相关方法——位姿搜索" class="headerlink" title="相关方法——位姿搜索"></a>相关方法——位姿搜索</h3><p>常用的搜索方式主要包括以下几种：</p>
+<ol>
+<li>暴力搜索：通过多层循环（对 $(x, y, \theta)$ 而言是三层）枚举每一个位姿,分别计算每一个位姿的得分,计算量巨大。因为激光雷达数据在每一个位姿都要重新投影,投影需要计算 sin 和 cos 函数（循环顺序是： $x\rightarrow y\rightarrow \theta$）;</li>
+<li>预先投影搜索：把暴力搜索中的三层循环 $(x, y, \theta)$ 交换一下顺序,最外层对 $\theta$ 进行搜索,这样内层 $x, y$ 的投影不需要单独计算 sin 和 cos 值，需要计算 sin 和 cos 函数的位姿数从 $n_xn_yn_\theta$ 降为 $n_\theta$ 。能极大的加速算法的运行速度;</li>
+<li>多分辨率搜索：<ul>
+<li>构造粗分辨率 25cm 和细分辨率 2.5cm 两个似然场</li>
+<li>首先在粗分辨率似然场上进行搜索,获取最优位姿</li>
+<li>把粗分辨率最优位姿对应的栅格进行细分辨率划分,然后再进行细分辨率搜索,再次得到最优位姿。</li>
+<li><strong>要求：粗分辨率地图的栅格的似然值为对应的细分辨率地图对应空间的所有栅格的上界</strong></li>
+</ul>
+</li>
+</ol>
+<h3 id="分枝定界算法——基本思想"><a href="#分枝定界算法——基本思想" class="headerlink" title="分枝定界算法——基本思想"></a>分枝定界算法——基本思想</h3><p>分枝定界算法是一种常用的树形搜索剪枝算法，主要用来求解整数规划问题。可以将最优解问题转换为树形搜索问<br>题,根节点表示整个解空间,叶子节点表示最优解,中间的节点表示解空间的某一部分子空间。</p>
+<p>算法主要分为两部分：</p>
+<ul>
+<li>分枝：跟节点表示整个解空间，深度为 1 的节点表示解空间的 n 个子空间之一（分辨率是根节点的 1 / n），以此类推。将解空间层层划分直至到真实解（分辨率达到所需要求）即叶节点。</li>
+<li>定界：要实现通过剪枝来进行加速（dfs 搜索），对于某个子树而言，<strong>必须保证该子树根节点的值是该子树所有节点的值的上界</strong>（如果是求解最小值问题就是下界）；这样在搜索过程过程中只需要维护一个当前最优值，当遇到某个节点的值低于该值，我们就不需要对以该节点为根节点的子树进行搜索，从而进行加速。</li>
+</ul>
+<h3 id="分支定界算法——-score-函数定义"><a href="#分支定界算法——-score-函数定义" class="headerlink" title="分支定界算法—— score 函数定义"></a>分支定界算法—— score 函数定义</h3><p>从上面可知，分枝定界算法当中一个核心问题就是怎么定义一个 score 函数使得其能够上面提到的要求：对任意子树，根节点的值是该子树所有节点的值的上界</p>
+<p>首先，搜索树中的节点表示一个正方形的搜索范围 $(c_x, c_y, c_\theta, c_h)$， $c_h$ 为高度。根节点最高，即：</p>
+<script type="math/tex; mode=display">
+\overline{\overline{W}}_c = (\{
+    (j_x, j_u)\in \mathbb{Z}^2:
+    \begin{aligned}
+        c_x \leq j_x \leq c_x + 2^{c_h} \\
+        c_y \leq j_y \leq c_y + 2^{c_h}
+    \end{aligned}
+    \} \times {c_\theta})</script><p>分枝：对于节点 $(c_x, c_y, c_\theta, c_h)$，分枝为 4 个子节点，分别为：</p>
+<script type="math/tex; mode=display">
+C_c = ((\{c_x, c_x + 2^{c_h-1}\}\times \{c_y, c_y + 2^{c_h-1}\}\times c_\theta) \cap \overline{W}) \times \{c_h - 1\}</script><p>定界：score 函数定义及证明如下：</p>
+<script type="math/tex; mode=display">
+\begin{aligned}
+    score(c) &= \sum_{k = 1}^{k}\max_{j \in \overline{\overline{W}}_c} M_{nearest}(T_{\zeta_j}, h_k) \\
+    &\geq \sum_{k = 1}^{K}\max_{j \in \overline{W}_c} M_{nearest}(T_{\zeta_j}, h_k) \\
+    &\geq \max_{j \in \overline{W}_c}\sum_{k = 1}^{K} M_{nearest}(T_{\zeta_j}, h_k)
+\end{aligned}</script><p>如上述，第一行和第二行表示取当前层空间和下一层空间所有解的每一个激光束遍历所有位置取最大匹配值（注意：对每一个激光束取得分最大值的位姿可能会不同），显然对第一个式子大于等于第二个，因为搜索范围更大；第三行则是对下一层所有解空间挑出一个位姿使得所有激光束的得分之和最大，第二个式子的结果大于等于第三个，因为对单个位姿而言并不一定能保证所有激光束的匹配结果都是最大。得分函数是预先计算的，在进行计算的时候可以直接取，因此这是一种空间换时间的做法。</p>
+<h3 id="分枝定界算法——算法流程"><a href="#分枝定界算法——算法流程" class="headerlink" title="分枝定界算法——算法流程"></a>分枝定界算法——算法流程</h3><p>以下是两种分枝定界算法的算法流程伪代码</p>
+<img src="/2020/05/24/lidarSLAM-frontend-2/%E5%88%86%E6%9E%9D%E5%AE%9A%E7%95%8C.png" class="" title="lidarSLAM-frontend-2">
 ]]></content>
       <categories>
         <category>激光slam</category>
@@ -328,9 +427,9 @@ L_4(u, v) = Z_1l_1(u, v) + Z_2l_2(u, v) + Z_3l_3(u, v) + Z_4l_4(u, v)</script><h
       </tags>
   </entry>
   <entry>
-    <title>激光SLAM 前端配准方法 - ICP, PL-ICP, NICP, IMLS-ICP</title>
+    <title>激光SLAM 前端配准方法 - 基于 ICP 及其变种的方法</title>
     <url>/2020/04/28/lidarSLAM-frontend-1/</url>
-    <content><![CDATA[<p>本文是我在学习深蓝学院的<a href="https://www.shenlanxueyuan.com/course/152" target="_blank" rel="noopener">激光slam课程</a>第四章第一部分的学习笔记，前面几次基本把数据的预处理讲完了，本次课开始学习 slam 的内容，这次主要是讲了前端配准算法。</p>
+    <content><![CDATA[<p>本文是我在学习深蓝学院的<a href="https://www.shenlanxueyuan.com/course/152" target="_blank" rel="noopener">激光slam课程</a>前端配准第一部分的学习笔记，前面几次基本把数据的预处理讲完了，本次课开始学习 slam 的内容，这次主要是讲了前端配准算法。</p>
 <p>无论是激光 slam 还是视觉 slam， 大部分都分成两个部分：前端和后端。其中后端的话各种 slam 都差不多，主要是根据数学公式求解类似 $Ax = b$ 的公式，而不同 slam 方法的前端可以有各种方法。前端总体来说无论是视觉还是激光都是起到一个里程计的作用，本次主要是学习帧间匹配算法中类 ICP 的方法，包括：ICP 匹配方法、PL-ICP 匹配方法、NICP 匹配方法和IMLS-ICP 匹配方法。</p>
 <a id="more"></a>
 <h2 id="ICP-匹配方法"><a href="#ICP-匹配方法" class="headerlink" title="ICP 匹配方法"></a>ICP 匹配方法</h2><p>关于原始 ICP 匹配方法算法和原理都在前面的两篇笔记（<a href="https://guoxiaotao.xyz/2020/04/23/lidarSLAM-hw1/">lidarSLAM 第二次作业</a>和<a href="https://guoxiaotao.xyz/2020/04/21/lidarSLAM-3/">激光雷达运动畸变去除</a>）记录过了，这里不再赘述。</p>
