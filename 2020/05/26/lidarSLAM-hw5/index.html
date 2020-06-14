@@ -21,21 +21,21 @@
     var CONFIG = {"hostname":"guoxiaotao.xyz","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
   </script>
 
-  <meta name="description" content="在学习slam的时候偶尔需要用到 CSM 这个库，但是目前这个库最高支持到kinetic可以直接通过 apt install 下载，后来找到几种做法可以通过源码安装 CSM 使用，在这里记录一下，另外注意一下安装csm需要安装一个gsl的库。">
+  <meta name="description" content="本文是我在学习深蓝学院的激光slam课程第五次作业的笔记。本次作业主要是熟悉 imls-icp 的过程以及对 csm 接口调用，除此之外还有对课上讲的四种 icp 算法进行总结以及想一下 icp 的改进思路。">
 <meta property="og:type" content="article">
-<meta property="og:title" content="ROS melodic 下使用 CSM 库">
-<meta property="og:url" content="https://guoxiaotao.xyz/2020/04/25/ros-melodic-csm/index.html">
+<meta property="og:title" content="lidarSLAM-hw5">
+<meta property="og:url" content="https://guoxiaotao.xyz/2020/05/26/lidarSLAM-hw5/index.html">
 <meta property="og:site_name" content="Tao&#39;s Blog">
-<meta property="og:description" content="在学习slam的时候偶尔需要用到 CSM 这个库，但是目前这个库最高支持到kinetic可以直接通过 apt install 下载，后来找到几种做法可以通过源码安装 CSM 使用，在这里记录一下，另外注意一下安装csm需要安装一个gsl的库。">
+<meta property="og:description" content="本文是我在学习深蓝学院的激光slam课程第五次作业的笔记。本次作业主要是熟悉 imls-icp 的过程以及对 csm 接口调用，除此之外还有对课上讲的四种 icp 算法进行总结以及想一下 icp 的改进思路。">
 <meta property="og:locale" content="en_US">
-<meta property="article:published_time" content="2020-04-25T20:08:47.000Z">
-<meta property="article:modified_time" content="2020-04-25T20:40:14.926Z">
+<meta property="article:published_time" content="2020-05-27T02:26:07.000Z">
+<meta property="article:modified_time" content="2020-05-27T03:44:46.859Z">
 <meta property="article:author" content="Xiaotao Guo">
 <meta property="article:tag" content="slam">
-<meta property="article:tag" content="ROS">
+<meta property="article:tag" content="lidar-slam">
 <meta name="twitter:card" content="summary">
 
-<link rel="canonical" href="https://guoxiaotao.xyz/2020/04/25/ros-melodic-csm/">
+<link rel="canonical" href="https://guoxiaotao.xyz/2020/05/26/lidarSLAM-hw5/">
 
 
 <script id="page-configurations">
@@ -48,7 +48,7 @@
   };
 </script>
 
-  <title>ROS melodic 下使用 CSM 库 | Tao's Blog</title>
+  <title>lidarSLAM-hw5 | Tao's Blog</title>
   
 
 
@@ -196,7 +196,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="https://guoxiaotao.xyz/2020/04/25/ros-melodic-csm/">
+    <link itemprop="mainEntityOfPage" href="https://guoxiaotao.xyz/2020/05/26/lidarSLAM-hw5/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="https://avatars3.githubusercontent.com/u/45047478?s=460&u=3be5d506be9a30bd6eadfd29cd36c61e30833bb2&v=4">
@@ -209,7 +209,7 @@
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
-          ROS melodic 下使用 CSM 库
+          lidarSLAM-hw5
         </h1>
 
         <div class="post-meta">
@@ -220,7 +220,7 @@
               <span class="post-meta-item-text">Posted on</span>
               
 
-              <time title="Created: 2020-04-25 16:08:47 / Modified: 16:40:14" itemprop="dateCreated datePublished" datetime="2020-04-25T16:08:47-04:00">2020-04-25</time>
+              <time title="Created: 2020-05-26 22:26:07 / Modified: 23:44:46" itemprop="dateCreated datePublished" datetime="2020-05-26T22:26:07-04:00">2020-05-26</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -228,7 +228,7 @@
               </span>
               <span class="post-meta-item-text">In</span>
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/slam/" itemprop="url" rel="index"><span itemprop="name">slam</span></a>
+                  <a href="/categories/%E6%BF%80%E5%85%89slam/" itemprop="url" rel="index"><span itemprop="name">激光slam</span></a>
                 </span>
             </span>
 
@@ -248,8 +248,8 @@
       </span>
       <span class="post-meta-item-text">Comment Counts: </span>
     
-    <a title="valine" href="/2020/04/25/ros-melodic-csm/#valine-comments" itemprop="discussionUrl">
-      <span class="post-comments-count valine-comment-count" data-xid="/2020/04/25/ros-melodic-csm/" itemprop="commentCount"></span>
+    <a title="valine" href="/2020/05/26/lidarSLAM-hw5/#valine-comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2020/05/26/lidarSLAM-hw5/" itemprop="commentCount"></span>
     </a>
   </span>
   
@@ -259,7 +259,7 @@
               <span class="post-meta-item-icon">
                 <i class="far fa-file-word"></i>
               </span>
-              <span>870</span>
+              <span>831</span>
             </span>
             <span class="post-meta-item" title="Reading time">
               <span class="post-meta-item-icon">
@@ -277,25 +277,17 @@
     <div class="post-body" itemprop="articleBody">
 
       
-        <p>在学习slam的时候偶尔需要用到 CSM 这个库，但是目前这个库最高支持到kinetic可以直接通过 apt install 下载，后来找到几种做法可以通过源码安装 CSM 使用，在这里记录一下，另外注意一下安装csm需要安装一个gsl的库。</p>
+        <p>本文是我在学习深蓝学院的<a href="https://www.shenlanxueyuan.com/course/152" target="_blank" rel="noopener">激光slam课程</a>第五次作业的笔记。本次作业主要是熟悉 imls-icp 的过程以及对 csm 接口调用，除此之外还有对课上讲的四种 icp 算法进行总结以及想一下 icp 的改进思路。</p>
 <a id="more"></a>
-<p>首先从Github上把<a href="https://github.com/AndreaCensi/csm" target="_blank" rel="noopener">源码</a> clone 或者下载下来解压，然后有两种思路可以安装。</p>
+<h2 id="实现高斯牛顿法进行点云配准"><a href="#实现高斯牛顿法进行点云配准" class="headerlink" title="实现高斯牛顿法进行点云配准"></a>实现高斯牛顿法进行点云配准</h2><blockquote>
+<p>补充代码,实现 gaussian_newton_scanmatcher 模块</p>
+</blockquote>
+<h3 id="代码结构"><a href="#代码结构" class="headerlink" title="代码结构"></a>代码结构</h3><p>老规矩，还是先阅读给定的框架代码，了解代码结构再考虑补全。这次作业主要也是涉及两个源文件，分别是 <code>main.cpp</code> 和 <code>gaussian_newton_method.cpp</code>。其中，<code>main.cpp</code> 里包含了一个 <code>GaussianNewtonDebug</code> 类，完成了 ROS 的相关设置，包括订阅和发布消息，消息的类型转换（将订阅的激光扫描话题消息转为更加方便使用的 <code>vector</code>），以及调用 <code>gaussian_new_method.cpp</code> 里定义的关于高斯牛顿法的相关函数。除了这两个文件之外，还提供了 <code>map.c</code> 和 <code>map_cspace.cpp</code> 两个文件，主要是外部提供的一些关于地图的模块。下面重点讲一下 <code>gaussian_new_method.cpp</code></p>
+<h3 id="高斯牛顿发相关代码"><a href="#高斯牛顿发相关代码" class="headerlink" title="高斯牛顿发相关代码"></a>高斯牛顿发相关代码</h3><p><code>gaussian_new_method.cpp</code> 主要提供了关于高斯牛顿法的几个函数，有几个比较简单就不说了，对要补充的三个函数下面进行介绍。</p>
 <ul>
-<li><p>第一种方式：只在目录内安装，然后作为第三方库保存在自己的workspace里，比较推荐这种方法，因为安装到usr目录的话可能后续如果要清理会比较麻烦。具体做法是在 csm 目录里使用作者写好的脚本安装：</p>
-  <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">./install_quickstart.sh</span><br></pre></td></tr></table></figure>
-<p>  安装完成后使用 csm 所需的文件都在 <code>csm/deploy</code>文件夹里，在需要用到<code>csm</code>的项目和目标链接的<code>CMakeList.txt</code>中加入这两项添加csm的目录和链接csm的动态库(csm的目录位置换成你自己的)：</p>
-  <figure class="highlight cmake"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">include_directories</span>(</span><br><span class="line">...</span><br><span class="line">PATH_TO_CSM/deploy/<span class="keyword">include</span>/csm</span><br><span class="line">)</span><br></pre></td></tr></table></figure>
-  <figure class="highlight cmake"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">target_link_libraries</span>(target_name</span><br><span class="line">...</span><br><span class="line">PATH_TO_CSM/deploy/lib/libcsm.so</span><br><span class="line">)</span><br></pre></td></tr></table></figure>
-<p>  然后就能顺利编译通过了。</p>
-</li>
-<li><p>第二种方式：直接安装到本机上，和上面的过程差不多，在 csm 的目录下执行常规的cmake安装操作：</p>
-  <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">mkdir build</span><br><span class="line"><span class="built_in">cd</span> build</span><br><span class="line">cmake ..</span><br><span class="line">make</span><br><span class="line">sudo make install <span class="comment"># 这一步会安装csm到本机上</span></span><br></pre></td></tr></table></figure>
-<p>  安装完成后应该能找到这几个位置： <code>/usr/local/include/csm</code>，<code>/usr/local/lib/libcsm.so</code>，<code>/usr/local/lib/libcsm-static.a</code>。也是一样在<code>CMakeList.txt</code>做相应修改就可以了：</p>
-  <figure class="highlight cmake"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">include_directories</span>(</span><br><span class="line">...</span><br><span class="line">/usr/local/<span class="keyword">include</span>/csm</span><br><span class="line">)</span><br></pre></td></tr></table></figure>
-  <figure class="highlight cmake"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">target_link_libraries</span>(target_name</span><br><span class="line">...</span><br><span class="line">/usr/local/lib/libcsm.so</span><br><span class="line">)</span><br></pre></td></tr></table></figure>
-</li>
+<li><code>Eigen::Vector3d InterpMapValueWithDerivatives(map_t* map,Eigen::Vector2d&amp; coords)</code>：通过周围四个已知点插值计算出指定坐标点的势场值和梯度，这里可以用课程中提到的拉格朗日双方向插值来进行计算，补充代码如下：</li>
 </ul>
-
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">Eigen::Vector3d <span class="title">InterpMapValueWithDerivatives</span><span class="params">(<span class="keyword">map_t</span>* <span class="built_in">map</span>,Eigen::Vector2d&amp; coords)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    Eigen::Vector3d ans;</span><br><span class="line">    <span class="comment">//TODO</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">//END OF TODO</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> ans;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
     </div>
 
     
@@ -310,7 +302,7 @@
   </li>
   <li class="post-copyright-link">
     <strong>Post link: </strong>
-    <a href="https://guoxiaotao.xyz/2020/04/25/ros-melodic-csm/" title="ROS melodic 下使用 CSM 库">https://guoxiaotao.xyz/2020/04/25/ros-melodic-csm/</a>
+    <a href="https://guoxiaotao.xyz/2020/05/26/lidarSLAM-hw5/" title="lidarSLAM-hw5">https://guoxiaotao.xyz/2020/05/26/lidarSLAM-hw5/</a>
   </li>
   <li class="post-copyright-license">
     <strong>Copyright Notice:  </strong>All articles in this blog are licensed under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> unless stating additionally.
@@ -323,7 +315,7 @@
           
           <div class="post-tags">
               <a href="/tags/slam/" rel="tag"><i class="fa fa-tag"></i> slam</a>
-              <a href="/tags/ROS/" rel="tag"><i class="fa fa-tag"></i> ROS</a>
+              <a href="/tags/lidar-slam/" rel="tag"><i class="fa fa-tag"></i> lidar-slam</a>
           </div>
 
         
@@ -332,13 +324,10 @@
         
     <div class="post-nav">
       <div class="post-nav-item">
-    <a href="/2020/04/23/lidarSLAM-hw1/" rel="prev" title="lidarSLAM-第二次作业">
-      <i class="fa fa-chevron-left"></i> lidarSLAM-第二次作业
+    <a href="/2020/05/24/lidarSLAM-frontend-2/" rel="prev" title="激光SLAM 前端配准方法 - 基于势场的方法">
+      <i class="fa fa-chevron-left"></i> 激光SLAM 前端配准方法 - 基于势场的方法
     </a></div>
-      <div class="post-nav-item">
-    <a href="/2020/04/25/lidarSLAM-hw2/" rel="next" title="lidarSLAM-第三次作业">
-      lidarSLAM-第三次作业 <i class="fa fa-chevron-right"></i>
-    </a></div>
+      <div class="post-nav-item"></div>
     </div>
       </footer>
     
@@ -400,6 +389,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#实现高斯牛顿法进行点云配准"><span class="nav-number">1.</span> <span class="nav-text">实现高斯牛顿法进行点云配准</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#代码结构"><span class="nav-number">1.1.</span> <span class="nav-text">代码结构</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#高斯牛顿发相关代码"><span class="nav-number">1.2.</span> <span class="nav-text">高斯牛顿发相关代码</span></a></li></ol></li></ol></div>
       </div>
       <!--/noindex-->
 

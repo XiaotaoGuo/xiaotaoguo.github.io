@@ -1,6 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>lidarSLAM-hw5</title>
+    <url>/2020/05/26/lidarSLAM-hw5/</url>
+    <content><![CDATA[<p>本文是我在学习深蓝学院的<a href="https://www.shenlanxueyuan.com/course/152" target="_blank" rel="noopener">激光slam课程</a>第五次作业的笔记。本次作业主要是熟悉 imls-icp 的过程以及对 csm 接口调用，除此之外还有对课上讲的四种 icp 算法进行总结以及想一下 icp 的改进思路。</p>
+<a id="more"></a>
+<h2 id="实现高斯牛顿法进行点云配准"><a href="#实现高斯牛顿法进行点云配准" class="headerlink" title="实现高斯牛顿法进行点云配准"></a>实现高斯牛顿法进行点云配准</h2><blockquote>
+<p>补充代码,实现 gaussian_newton_scanmatcher 模块</p>
+</blockquote>
+<h3 id="代码结构"><a href="#代码结构" class="headerlink" title="代码结构"></a>代码结构</h3><p>老规矩，还是先阅读给定的框架代码，了解代码结构再考虑补全。这次作业主要也是涉及两个源文件，分别是 <code>main.cpp</code> 和 <code>gaussian_newton_method.cpp</code>。其中，<code>main.cpp</code> 里包含了一个 <code>GaussianNewtonDebug</code> 类，完成了 ROS 的相关设置，包括订阅和发布消息，消息的类型转换（将订阅的激光扫描话题消息转为更加方便使用的 <code>vector</code>），以及调用 <code>gaussian_new_method.cpp</code> 里定义的关于高斯牛顿法的相关函数。除了这两个文件之外，还提供了 <code>map.c</code> 和 <code>map_cspace.cpp</code> 两个文件，主要是外部提供的一些关于地图的模块。下面重点讲一下 <code>gaussian_new_method.cpp</code></p>
+<h3 id="高斯牛顿发相关代码"><a href="#高斯牛顿发相关代码" class="headerlink" title="高斯牛顿发相关代码"></a>高斯牛顿发相关代码</h3><p><code>gaussian_new_method.cpp</code> 主要提供了关于高斯牛顿法的几个函数，有几个比较简单就不说了，对要补充的三个函数下面进行介绍。</p>
+<ul>
+<li><code>Eigen::Vector3d InterpMapValueWithDerivatives(map_t* map,Eigen::Vector2d&amp; coords)</code>：通过周围四个已知点插值计算出指定坐标点的势场值和梯度，这里可以用课程中提到的拉格朗日双方向插值来进行计算，补充代码如下：</li>
+</ul>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="function">Eigen::Vector3d <span class="title">InterpMapValueWithDerivatives</span><span class="params">(<span class="keyword">map_t</span>* <span class="built_in">map</span>,Eigen::Vector2d&amp; coords)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    Eigen::Vector3d ans;</span><br><span class="line">    <span class="comment">//TODO</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">//END OF TODO</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> ans;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>]]></content>
+      <categories>
+        <category>激光slam</category>
+      </categories>
+      <tags>
+        <tag>slam</tag>
+        <tag>lidar-slam</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>激光SLAM 前端配准方法 - 基于势场的方法</title>
     <url>/2020/05/24/lidarSLAM-frontend-2/</url>
     <content><![CDATA[<p>最近工作又搬家比较忙，趁周末有空继续学习一下。本文是我在学习深蓝学院的<a href="https://www.shenlanxueyuan.com/course/152" target="_blank" rel="noopener">激光slam课程</a>前端配准第二部分的学习笔记，第一部分中主要是学习了如何用 ICP 及其变种来进行前后两帧点云匹配，具体可以看我的<a href="https://guoxiaotao.xyz/2020/04/28/lidarSLAM-frontend-1/">上一篇笔记</a>，这一部分主要是介绍了前端配准的另一个方法——基于势场的方法。相较于 ICP 方法，这种匹配方法不需要找到两个点云之间的对应点的匹配的关系，这两种方法都在实际使用中有涉及。本次学习的基于势场的匹配算法有：高斯牛顿优化方法、NDT 方法，相关匹配方法及分支定界加速。</p>
