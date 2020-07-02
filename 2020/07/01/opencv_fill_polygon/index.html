@@ -21,21 +21,24 @@
     var CONFIG = {"hostname":"guoxiaotao.xyz","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
   </script>
 
-  <meta name="description" content="本文是我在上UCSD的 CSE 120: Principles of Operating Systems (Winter 2020) 整理的笔记，这一课主要介绍了操作系统里面虚拟内存的概念，主要是对上一节课的逻辑内存的一部分补充，关于segment和page的概念可以参考上一篇笔记。">
+  <meta name="description" content="最近需要通过 OpenCV 来给输出的图像画多边形，看了一些帖子之后发现 fillPoly() 函数很好用，在这里记录一下。">
 <meta property="og:type" content="article">
-<meta property="og:title" content="[UCSD CSE120]虚拟内存-virtual memory">
-<meta property="og:url" content="https://guoxiaotao.xyz/2020/04/19/virtual_memory/index.html">
+<meta property="og:title" content="使用 OpenCV 的 fillPoly() 函数画多边形">
+<meta property="og:url" content="https://guoxiaotao.xyz/2020/07/01/opencv_fill_polygon/index.html">
 <meta property="og:site_name" content="Tao&#39;s Blog">
-<meta property="og:description" content="本文是我在上UCSD的 CSE 120: Principles of Operating Systems (Winter 2020) 整理的笔记，这一课主要介绍了操作系统里面虚拟内存的概念，主要是对上一节课的逻辑内存的一部分补充，关于segment和page的概念可以参考上一篇笔记。">
+<meta property="og:description" content="最近需要通过 OpenCV 来给输出的图像画多边形，看了一些帖子之后发现 fillPoly() 函数很好用，在这里记录一下。">
 <meta property="og:locale" content="en_US">
-<meta property="article:published_time" content="2020-04-19T17:59:19.000Z">
-<meta property="article:modified_time" content="2020-04-21T06:01:41.104Z">
+<meta property="og:image" content="https://guoxiaotao.xyz/2020/07/01/opencv_fill_polygon/example-1.png">
+<meta property="og:image" content="https://guoxiaotao.xyz/2020/07/01/opencv_fill_polygon/example-2.png">
+<meta property="article:published_time" content="2020-07-02T00:17:22.000Z">
+<meta property="article:modified_time" content="2020-07-02T00:55:30.868Z">
 <meta property="article:author" content="Xiaotao Guo">
-<meta property="article:tag" content="OS">
-<meta property="article:tag" content="操作系统">
+<meta property="article:tag" content="C++">
+<meta property="article:tag" content="OpenCV">
 <meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://guoxiaotao.xyz/2020/07/01/opencv_fill_polygon/example-1.png">
 
-<link rel="canonical" href="https://guoxiaotao.xyz/2020/04/19/virtual_memory/">
+<link rel="canonical" href="https://guoxiaotao.xyz/2020/07/01/opencv_fill_polygon/">
 
 
 <script id="page-configurations">
@@ -48,7 +51,7 @@
   };
 </script>
 
-  <title>[UCSD CSE120]虚拟内存-virtual memory | Tao's Blog</title>
+  <title>使用 OpenCV 的 fillPoly() 函数画多边形 | Tao's Blog</title>
   
 
 
@@ -196,7 +199,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="https://guoxiaotao.xyz/2020/04/19/virtual_memory/">
+    <link itemprop="mainEntityOfPage" href="https://guoxiaotao.xyz/2020/07/01/opencv_fill_polygon/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="https://avatars3.githubusercontent.com/u/45047478?s=460&u=3be5d506be9a30bd6eadfd29cd36c61e30833bb2&v=4">
@@ -209,7 +212,7 @@
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
-          [UCSD CSE120]虚拟内存-virtual memory
+          使用 OpenCV 的 fillPoly() 函数画多边形
         </h1>
 
         <div class="post-meta">
@@ -218,23 +221,17 @@
                 <i class="far fa-calendar"></i>
               </span>
               <span class="post-meta-item-text">Posted on</span>
+              
 
-              <time title="Created: 2020-04-19 13:59:19" itemprop="dateCreated datePublished" datetime="2020-04-19T13:59:19-04:00">2020-04-19</time>
+              <time title="Created: 2020-07-01 20:17:22 / Modified: 20:55:30" itemprop="dateCreated datePublished" datetime="2020-07-01T20:17:22-04:00">2020-07-01</time>
             </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2020-04-21 02:01:41" itemprop="dateModified" datetime="2020-04-21T02:01:41-04:00">2020-04-21</time>
-              </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="far fa-folder"></i>
               </span>
               <span class="post-meta-item-text">In</span>
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Operating-Systems/" itemprop="url" rel="index"><span itemprop="name">Operating Systems</span></a>
+                  <a href="/categories/%E7%BC%96%E7%A8%8B%E6%8A%80%E5%B7%A7/" itemprop="url" rel="index"><span itemprop="name">编程技巧</span></a>
                 </span>
             </span>
 
@@ -254,8 +251,8 @@
       </span>
       <span class="post-meta-item-text">Comment Counts: </span>
     
-    <a title="valine" href="/2020/04/19/virtual_memory/#valine-comments" itemprop="discussionUrl">
-      <span class="post-comments-count valine-comment-count" data-xid="/2020/04/19/virtual_memory/" itemprop="commentCount"></span>
+    <a title="valine" href="/2020/07/01/opencv_fill_polygon/#valine-comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2020/07/01/opencv_fill_polygon/" itemprop="commentCount"></span>
     </a>
   </span>
   
@@ -265,13 +262,13 @@
               <span class="post-meta-item-icon">
                 <i class="far fa-file-word"></i>
               </span>
-              <span>4.8k</span>
+              <span>1.8k</span>
             </span>
             <span class="post-meta-item" title="Reading time">
               <span class="post-meta-item-icon">
                 <i class="far fa-clock"></i>
               </span>
-              <span>4 mins.</span>
+              <span>2 mins.</span>
             </span>
 
         </div>
@@ -283,321 +280,21 @@
     <div class="post-body" itemprop="articleBody">
 
       
-        <p>本文是我在上UCSD的 <a href="http://cseweb.ucsd.edu/classes/wi20/cse120-a/" target="_blank" rel="noopener">CSE 120: Principles of Operating Systems (Winter 2020)</a> 整理的笔记，这一课主要介绍了操作系统里面虚拟内存的概念，主要是对上一节课的逻辑内存的一部分补充，关于segment和page的概念可以参考上一篇笔记。</p>
+        <p>最近需要通过 OpenCV 来给输出的图像画多边形，看了一些帖子之后发现 fillPoly() 函数很好用，在这里记录一下。</p>
 <a id="more"></a>
-<h2 id="Review"><a href="#Review" class="headerlink" title="Review"></a>Review</h2><ol>
-<li><p>Segments and Pages</p>
-<ul>
-<li><p>Structuring memory as segements/pages allows:</p>
-<ul>
-<li>partitioning memory for convenient allocation</li>
-<li>reorganizing memory for convenient usage</li>
-</ul>
-</li>
-<li><p>Approaches</p>
-<ul>
-<li>Relocation via address translation</li>
-<li>Protection via matching operations with objects</li>
-</ul>
-</li>
-<li><p>Result: a logically organized memory</p>
-</li>
-</ul>
-</li>
-<li><p>Optimization</p>
-<ul>
-<li><p>Not all pieces need to be in memory</p>
-<ul>
-<li>Need only piece being referenced</li>
-<li>Other pieces can be on disk</li>
-<li>Bring pieces in only when needed</li>
-</ul>
-</li>
-<li><p>Illusion: there is much more memory</p>
-</li>
-<li><p>Needed:</p>
-<ul>
-<li>A way to identify whether a piece is in memory</li>
-<li>A way to bring in a piece (from where to where?)</li>
-<li>Relocation (address translation)</li>
-</ul>
-</li>
-</ul>
-</li>
-<li><p>From logical to virtual memory</p>
-<ul>
-<li><p>Logical memory becomes virtual memory</p>
-<ul>
-<li>Still logical (seperate organization from physical)</li>
-<li>Virtual: memory seems to exist, regardless of how (memory or disk)</li>
-</ul>
-</li>
-<li><p>Virtual memory: illusion of large memory</p>
-<ul>
-<li>Keep only portion of logical memory in physical</li>
-<li>Rest is kept on disk (larger, slower, cheaper)</li>
-<li>Unit of memory is segment or page (or both)</li>
-</ul>
-</li>
-<li><p>Logical address space $\rightarrow$ virtual address space</p>
-</li>
-</ul>
-</li>
-</ol>
-<h2 id="Virtual-memory-based-on-paging"><a href="#Virtual-memory-based-on-paging" class="headerlink" title="Virtual memory based on paging"></a>Virtual memory based on paging</h2><ol>
-<li><p>Paged virtual memory</p>
-<ul>
-<li>All of pages reside on disk</li>
-<li>Some also reside in physical memory (which ones?)</li>
-</ul>
-</li>
-<li><p>Contents of page table entry</p>
-<ul>
-<li>Valid: is entry valid (page in physical memory or not)</li>
-<li>Ref: has this page been referenced yet?</li>
-<li>Mod: has this page been modified?</li>
-<li>Frame: what frame is this page in?</li>
-<li>Prot: what are the allowable operations?</li>
-</ul>
-</li>
-<li><p>Address Translation</p>
-<ul>
-<li><p>Process:</p>
-<ul>
-<li>Get entry: index page table with page number</li>
-<li><p>If valid bit is off, which cause a page fualt, then trap into kernel</p>
-<ul>
-<li>Find page on disk</li>
-<li><p>Read it into a free frame</p>
-<ul>
-<li>may need to make room if there is no available frame: page replacement</li>
-</ul>
-</li>
-<li><p>Record frame number in page table entry</p>
-</li>
-<li>Set valid bit and other fields</li>
-</ul>
-</li>
-<li><p>Retry instruction (return from page-fault trap)</p>
-</li>
-</ul>
-</li>
-<li><p>Possible faults under segmentation/paging</p>
-<ul>
-<li><p>two kinds of address:</p>
-<ul>
-<li>Virtual address: (segment s, page p, offset i)</li>
-<li>Physical address: (frame f, offset i)</li>
-</ul>
-</li>
-<li><p>[ ] Use s to index segment table (to get page table)</p>
-<ul>
-<li>may get a segment fualt</li>
-</ul>
-</li>
-<li><p>[ ] Check bound (Is p &lt; bound?)</p>
-<ul>
-<li>may get a segmentation violation</li>
-</ul>
-</li>
-<li><p>[ ] Use p to index page table (to get frame f)</p>
-<ul>
-<li>may get a page fault</li>
-</ul>
-</li>
-<li><p>[ ] Physical address: concatenate f and i</p>
-</li>
-</ul>
-</li>
-<li><p>Cost of page faults is high</p>
-<ul>
-<li>Disk: 5 ~ 6 orders magnitude slower than RAM</li>
-<li><p>Example:</p>
-<ul>
-<li>RAM access time: 100 nsec</li>
-<li>Disk access time: 10 msec</li>
-<li>p = page fault probability</li>
-<li>Effective access time: 100 + p * 10,000,000 nsec</li>
-<li>if p = 0.1%, effective access time = 10,100 nsec (100 times slower!)</li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-</li>
-</ol>
-<h2 id="Possible-implementation"><a href="#Possible-implementation" class="headerlink" title="Possible implementation"></a>Possible implementation</h2><ol>
-<li><p>Principle of Locality</p>
-<ul>
-<li><p>Not all pieces referenced uniformly over time</p>
-<ul>
-<li>Make sure most referenced pieces in memory</li>
-<li>If not, thrashing: constant fetching of pieces</li>
-</ul>
-</li>
-<li><p>References cluster in time/space</p>
-<ul>
-<li>Will be same or neighboring areas</li>
-<li>Allows prediction based on past</li>
-</ul>
-</li>
-</ul>
-</li>
-<li><p>Page replacement policy</p>
-<ul>
-<li>Goal: remove page not in locality of reference</li>
-<li><p>Page replacement is about:</p>
-<ul>
-<li>which page(s) to remove</li>
-<li>when to remove them</li>
-</ul>
-</li>
-<li><p>How to do it in cheapest way possible, with:</p>
-<ul>
-<li>least amount of additional hardware</li>
-<li>least amount of software overhead</li>
-</ul>
-</li>
-</ul>
-</li>
-<li><p><em>Basic Page Replacement Algorithms</em></p>
-<ul>
-<li><p>FIFO: select page that is oldest</p>
-<ul>
-<li>Simple: keep pointer to next frame after last loaded</li>
-<li>Doesn’t perform well (oldest may be popular)</li>
-</ul>
-</li>
-<li><p>OPT: Optimal Page Replacement</p>
-<ul>
-<li>Optimal: replace page that will be accessed furthest in future</li>
-<li><p>Not realistic:</p>
-<ul>
-<li>Requires predicting the future</li>
-<li>Useful as a benchmark</li>
-</ul>
-</li>
-</ul>
-</li>
-<li><p><strong>LRU: Least Recently Used</strong></p>
-<ul>
-<li><p>Replace page that was least recently used</p>
-<ul>
-<li>LRU means used furthest in the past</li>
-</ul>
-</li>
-<li><p>Takes advantage of locality of reference</p>
-</li>
-<li>Must have some way of tracking frame with LRU page : requires hardware support</li>
-</ul>
-</li>
-</ul>
-</li>
-</ol>
-<h2 id="Others"><a href="#Others" class="headerlink" title="Others"></a>Others</h2><ol>
-<li><p><strong>Approximating LRU: Clock Algorithm</strong></p>
-<ul>
-<li><p>Select page that is old and not recently used</p>
-<ul>
-<li>Clock (second chance) is approximation of LRU</li>
-</ul>
-</li>
-<li><p>Hardware support: reference bit</p>
-<ul>
-<li>Associated with each frame is a reference bit</li>
-<li>Reference bit is in page table entry</li>
-</ul>
-</li>
-<li><p>How reference bit is used</p>
-<ul>
-<li>When frame filled with page, set bit to 0 (by OS)</li>
-<li>If frame is accessed, set bit to 1 (by hardware)</li>
-</ul>
-</li>
-<li><p><em>Working process</em></p>
-<ul>
-<li>Arrange all frames in circle (clock)</li>
-<li>Clock hand: next frame to consider</li>
-<li><p>Page fault: find frame</p>
-<ul>
-<li>If ref bit 0, select frame</li>
-<li>Else, set ref bit to 0</li>
-<li>Advance clock hand</li>
-<li>If frame found, break out of loop, else repeat</li>
-</ul>
-</li>
-<li><p>If frame had modified page, must write it to disk</p>
-</li>
-</ul>
-</li>
-</ul>
-</li>
-<li><p>Resident Set Management</p>
-<ul>
-<li><p>Resident set: process’s pages in physical memory</p>
-<ul>
-<li>One set per process</li>
-<li>How big should resident set be? Which pages?</li>
-<li>Who provides frame (same process or another)?</li>
-</ul>
-</li>
-<li><p>Local: limit frame selection to request process</p>
-<ul>
-<li>Isolates effects of page behavior on processes</li>
-<li>Inefficient: some processes have unused frames</li>
-</ul>
-</li>
-<li><p>Global: select any frame (from any process)</p>
-<ul>
-<li>Efficient: resident sets grow/shrink accordingly</li>
-<li>No isolation: process can negatively affect another (by replacing other process’s important pages)</li>
-</ul>
-</li>
-</ul>
-</li>
-<li><p>Multiprogramming Level</p>
-<ul>
-<li>Multiprogramming level: number of processes in physical memory (non-empty resident sets)</li>
-<li>Goal: increase multiprogramming level - how?</li>
-<li>However, beyond certain point: thrashing (make processor utilization pretty low since many processes may not be working)</li>
-<li>Resident set should contain the working set</li>
-</ul>
-</li>
-<li><p>Denning’s Working Set Model</p>
-<ul>
-<li><p>Introduction</p>
-<ul>
-<li><p>Working set: $W(t, \Delta)$</p>
-<ul>
-<li>Pages referenced during last delta (process time)</li>
-</ul>
-</li>
-<li><p>Process given frames to hold working set</p>
-</li>
-<li>Add/remove pages according to $W(t, \Delta)$</li>
-<li>If working set doesn’t fit, swap process out</li>
-</ul>
-</li>
-<li><p>Working set is a local replacement policy</p>
-<ul>
-<li>Process’s page fault behavior doesn’t affect others</li>
-</ul>
-</li>
-<li><p>Problem: difficult to implement</p>
-<ul>
-<li>Must timestamp pages in working set</li>
-<li>Must determine if timestamp older than $t - \Delta$</li>
-<li>How should $\Delta$ be determined?</li>
-</ul>
-</li>
-<li><p>Contrast to Clock</p>
-<ul>
-<li>Clock: simple, easy to implement, global policy</li>
-</ul>
-</li>
-</ul>
-</li>
-</ol>
+<p><code>cv::fillPoly()</code> 有多个重载版本，这里记录以下两个：</p>
+<h3 id="第一个版本"><a href="#第一个版本" class="headerlink" title="第一个版本"></a>第一个版本</h3><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">CV_EXPORTS_W <span class="keyword">void</span> <span class="title">fillPoly</span><span class="params">(InputOutputArray img, InputArrayOfArrays pts,</span></span></span><br><span class="line"><span class="function"><span class="params">                           <span class="keyword">const</span> Scalar&amp; color, <span class="keyword">int</span> lineType = LINE_8, <span class="keyword">int</span> shift = <span class="number">0</span>,</span></span></span><br><span class="line"><span class="function"><span class="params">                           Point offset = Point() )</span></span>;</span><br></pre></td></tr></table></figure>
+<p>这个 API 比较好理解，<code>img</code> 是需要画多边形的图像， <code>pts</code> 是多边形的各个顶点，<code>color</code> 和 <code>lineType</code> 分别是多边形的颜色和边框类型，<code>shift</code> 和 <code>offset</code> 分别是对点坐标的偏移和多边形整体的偏移。需要注意的是由于这个 API 不限定用来画凸多边形，也可以用来画凹多边形或者自身交叉的多边形，所以 <code>pts</code> 的顺序需要保证是你想要的多边形的顶点顺序。下面用两个例子说明。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">cv::Mat <span class="title">image</span><span class="params">(cv::Size(<span class="number">540</span>, <span class="number">540</span>), CV_8UC1)</span></span>;</span><br><span class="line"><span class="built_in">std</span>::<span class="built_in">vector</span>&lt;cv::Point&gt; fillContSingle;</span><br><span class="line"><span class="comment">//add all points of the contour to the vector</span></span><br><span class="line">fillContSingle.push_back(cv::Point(<span class="number">200</span>, <span class="number">100</span>));</span><br><span class="line">fillContSingle.push_back(cv::Point(<span class="number">200</span>, <span class="number">200</span>));</span><br><span class="line">fillContSingle.push_back(cv::Point(<span class="number">100</span>, <span class="number">200</span>));</span><br><span class="line">fillContSingle.push_back(cv::Point(<span class="number">300</span>, <span class="number">100</span>));</span><br><span class="line"></span><br><span class="line">cv::fillPoly( <span class="built_in">image</span>, <span class="built_in">std</span>::<span class="built_in">vector</span>&lt;<span class="built_in">std</span>::<span class="built_in">vector</span>&lt;cv::Point&gt;&gt;&#123;fillContSingle&#125;, cv::Scalar(<span class="number">128</span>));</span><br></pre></td></tr></table></figure>
+<p>上面的代码段的效果如下：</p>
+<img src="/2020/07/01/opencv_fill_polygon/example-1.png" class="" title="opencv-fill-polygon">
+<p>可以发现按照这个顺序的多边形画出来是自身交叉的。如果把其中其中第二和第三个点换一下，效果如下：</p>
+<img src="/2020/07/01/opencv_fill_polygon/example-2.png" class="" title="opencv-fill-polygon">
+<h3 id="第二个版本"><a href="#第二个版本" class="headerlink" title="第二个版本"></a>第二个版本</h3><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">CV_EXPORTS <span class="keyword">void</span> <span class="title">fillPoly</span><span class="params">(Mat&amp; img, <span class="keyword">const</span> Point** pts,</span></span></span><br><span class="line"><span class="function"><span class="params">                         <span class="keyword">const</span> <span class="keyword">int</span>* npts, <span class="keyword">int</span> ncontours,</span></span></span><br><span class="line"><span class="function"><span class="params">                         <span class="keyword">const</span> Scalar&amp; color, <span class="keyword">int</span> lineType = LINE_8, <span class="keyword">int</span> shift = <span class="number">0</span>,</span></span></span><br><span class="line"><span class="function"><span class="params">                         Point offset = Point() )</span></span>;</span><br></pre></td></tr></table></figure>
+<p>这个重载版本其实看不太懂跟第一个区别在哪里，需要额外设置参数的参数有每个多边形的点的数量和多边形的数量。感觉上是能够更明确自己需要画的效果，不过我自己没有尝试过，所以这里只是简单记录一下。需要注意的是这里点的参数是二维的<code>Point</code> 指针所以不能直接传入 <code>vector</code> 需要坐一定转换，使用的例子如下：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">std</span>::<span class="built_in">vector</span>&lt;cv::Point&gt; fillContSingle;</span><br><span class="line"><span class="comment">//add all points of the contour to the vector</span></span><br><span class="line">fillContSingle.push_back(cv::Point(<span class="number">100</span>, <span class="number">100</span>));</span><br><span class="line">fillContSingle.push_back(cv::Point(<span class="number">100</span>, <span class="number">200</span>));</span><br><span class="line">fillContSingle.push_back(cv::Point(<span class="number">-200</span>, <span class="number">200</span>));</span><br><span class="line">fillContSingle.push_back(cv::Point(<span class="number">200</span>, <span class="number">100</span>));</span><br><span class="line"></span><br><span class="line"><span class="built_in">std</span>::<span class="built_in">vector</span>&lt;<span class="built_in">std</span>::<span class="built_in">vector</span>&lt;cv::Point&gt; &gt; fillContAll;</span><br><span class="line"></span><br><span class="line">fillContAll.push_back(fillContSingle);</span><br><span class="line"></span><br><span class="line"><span class="comment">// convert 2d vector to Point**</span></span><br><span class="line"><span class="built_in">std</span>::<span class="built_in">vector</span>&lt;Point&gt; tmp = fillContAll.at(<span class="number">0</span>);</span><br><span class="line"><span class="keyword">const</span> Point* elementPoints[<span class="number">1</span>] = &#123; &amp;tmp[<span class="number">0</span>] &#125;;</span><br><span class="line"><span class="keyword">int</span> numberOfPoints = (<span class="keyword">int</span>)tmp.<span class="built_in">size</span>();</span><br><span class="line">fillPoly (<span class="built_in">image</span>, elementPoints, &amp;numberOfPoints, <span class="number">1</span>, Scalar (<span class="number">128</span>), <span class="number">8</span>);</span><br></pre></td></tr></table></figure>
+<p>效果和上图一样。</p>
+<p>参考：<a href="https://stackoverflow.com/questions/8281239/drawing-polygons-in-opencv" target="_blank" rel="noopener">StackOverFlow</a></p>
 
     </div>
 
@@ -613,7 +310,7 @@
   </li>
   <li class="post-copyright-link">
     <strong>Post link: </strong>
-    <a href="https://guoxiaotao.xyz/2020/04/19/virtual_memory/" title="[UCSD CSE120]虚拟内存-virtual memory">https://guoxiaotao.xyz/2020/04/19/virtual_memory/</a>
+    <a href="https://guoxiaotao.xyz/2020/07/01/opencv_fill_polygon/" title="使用 OpenCV 的 fillPoly() 函数画多边形">https://guoxiaotao.xyz/2020/07/01/opencv_fill_polygon/</a>
   </li>
   <li class="post-copyright-license">
     <strong>Copyright Notice:  </strong>All articles in this blog are licensed under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> unless stating additionally.
@@ -625,8 +322,8 @@
       <footer class="post-footer">
           
           <div class="post-tags">
-              <a href="/tags/OS/" rel="tag"><i class="fa fa-tag"></i> OS</a>
-              <a href="/tags/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/" rel="tag"><i class="fa fa-tag"></i> 操作系统</a>
+              <a href="/tags/C/" rel="tag"><i class="fa fa-tag"></i> C++</a>
+              <a href="/tags/OpenCV/" rel="tag"><i class="fa fa-tag"></i> OpenCV</a>
           </div>
 
         
@@ -635,13 +332,10 @@
         
     <div class="post-nav">
       <div class="post-nav-item">
-    <a href="/2020/04/19/logical_memory/" rel="prev" title="[UCSD CSE120]逻辑内存-logicalmemory">
-      <i class="fa fa-chevron-left"></i> [UCSD CSE120]逻辑内存-logicalmemory
+    <a href="/2020/05/26/lidarSLAM-hw5/" rel="prev" title="lidarSLAM - 第五次作业">
+      <i class="fa fa-chevron-left"></i> lidarSLAM - 第五次作业
     </a></div>
-      <div class="post-nav-item">
-    <a href="/2020/04/19/file-system/" rel="next" title="[UCSD CSE120]文件系统-filesystem">
-      [UCSD CSE120]文件系统-filesystem <i class="fa fa-chevron-right"></i>
-    </a></div>
+      <div class="post-nav-item"></div>
     </div>
       </footer>
     
@@ -703,7 +397,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Review"><span class="nav-number">1.</span> <span class="nav-text">Review</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Virtual-memory-based-on-paging"><span class="nav-number">2.</span> <span class="nav-text">Virtual memory based on paging</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Possible-implementation"><span class="nav-number">3.</span> <span class="nav-text">Possible implementation</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Others"><span class="nav-number">4.</span> <span class="nav-text">Others</span></a></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#第一个版本"><span class="nav-number">1.</span> <span class="nav-text">第一个版本</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#第二个版本"><span class="nav-number">2.</span> <span class="nav-text">第二个版本</span></a></li></ol></div>
       </div>
       <!--/noindex-->
 
@@ -899,59 +593,6 @@
   
 
   
-      
-
-<script>
-  if (typeof MathJax === 'undefined') {
-    window.MathJax = {
-      loader: {
-        source: {
-          '[tex]/amsCd': '[tex]/amscd',
-          '[tex]/AMScd': '[tex]/amscd'
-        }
-      },
-      tex: {
-        inlineMath: {'[+]': [['$', '$']]},
-        tags: 'ams'
-      },
-      options: {
-        renderActions: {
-          findScript: [10, doc => {
-            document.querySelectorAll('script[type^="math/tex"]').forEach(node => {
-              const display = !!node.type.match(/; *mode=display/);
-              const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
-              const text = document.createTextNode('');
-              node.parentNode.replaceChild(text, node);
-              math.start = {node: text, delim: '', n: 0};
-              math.end = {node: text, delim: '', n: 0};
-              doc.math.push(math);
-            });
-          }, '', false],
-          insertedScript: [200, () => {
-            document.querySelectorAll('mjx-container').forEach(node => {
-              let target = node.parentNode;
-              if (target.nodeName.toLowerCase() === 'li') {
-                target.parentNode.classList.add('has-jax');
-              }
-            });
-          }, '', false]
-        }
-      }
-    };
-    (function () {
-      var script = document.createElement('script');
-      script.src = '//cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
-      script.defer = true;
-      document.head.appendChild(script);
-    })();
-  } else {
-    MathJax.startup.document.state(0);
-    MathJax.texReset();
-    MathJax.typeset();
-  }
-</script>
-
-    
 
   
 
