@@ -32,7 +32,7 @@
 <meta property="og:image" content="https://guoxiaotao.xyz/2020/05/24/lidarSLAM-frontend-2/%E4%BC%BC%E7%84%B6%E5%9C%BA.png">
 <meta property="og:image" content="https://guoxiaotao.xyz/2020/05/24/lidarSLAM-frontend-2/%E5%88%86%E6%9E%9D%E5%AE%9A%E7%95%8C.png">
 <meta property="article:published_time" content="2020-05-24T17:09:46.000Z">
-<meta property="article:modified_time" content="2020-05-25T22:45:40.527Z">
+<meta property="article:modified_time" content="2020-07-05T20:23:10.831Z">
 <meta property="article:author" content="Xiaotao Guo">
 <meta property="article:tag" content="slam">
 <meta property="article:tag" content="lidar-slam">
@@ -230,7 +230,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2020-05-25 18:45:40" itemprop="dateModified" datetime="2020-05-25T18:45:40-04:00">2020-05-25</time>
+                <time title="Modified: 2020-07-05 16:23:10" itemprop="dateModified" datetime="2020-07-05T16:23:10-04:00">2020-07-05</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -358,13 +358,13 @@ l_i(x) = c(x - x_0)(x - x_1)...(x - x_{i-1})(x-x_{i})...(x-x_n)</script><p>显�
 <script type="math/tex; mode=display">
 c = \frac{1}{(x - x_0)...(x-x_{i})...(x-x_n)}</script><p>则：</p>
 <script type="math/tex; mode=display">
-l_i(x) = \prod_{k = 0, k\neq i}^{n}\frac{x - x_k}{x_i - x_k}</script><h4 id="朗格朗日插值方法-双线性插值"><a href="#朗格朗日插值方法-双线性插值" class="headerlink" title="朗格朗日插值方法 - 双线性插值"></a>朗格朗日插值方法 - 双线性插值</h4><p>设平面中有四个点：</p>
+l_i(x) = \prod_{k = 0, k\neq i}^{n}\frac{x - x_k}{x_i - x_k}</script><h4 id="朗格朗日插值方法-双线性插值"><a href="#朗格朗日插值方法-双线性插值" class="headerlink" title="朗格朗日插值方法 - 双线性插值"></a>朗格朗日插值方法 - 双线性插值</h4><p>设平面中有四个点及其势场值：</p>
 <script type="math/tex; mode=display">
 \begin{aligned}
-    Z_1 &= f(x_0, y_0) \\
-    Z_2 &= f(x_1, y_0) \\
-    Z_3 &= f(x_1, y_1) \\
-    Z_4 &= f(x_0, y_1) \\
+    Z_1 = M(P_{00}) &= f(x_0, y_0) \\
+    Z_2 = M(P_{10}) &= f(x_1, y_0) \\
+    Z_3 = M(P_{11}) &= f(x_1, y_1) \\
+    Z_4 = M(P_{01}) &= f(x_0, y_1) \\
 \end{aligned}</script><p>我们定义一个新的坐标：</p>
 <script type="math/tex; mode=display">
 \begin{aligned}
@@ -394,8 +394,8 @@ L_4(u, v) = Z_1l_1(u, v) + Z_2l_2(u, v) + Z_3l_3(u, v) + Z_4l_4(u, v)</script><h
 \end{aligned}</script><p>其对 x 和 y 的偏导数分别为：</p>
 <script type="math/tex; mode=display">
 \begin{aligned}
-    \frac{\partial{L(x, y)}}{\partial{x}} &= \frac{y - y_0}{y_1 - y_0}(M(P_{11}) - m(p_{01})) + \frac{y_1 - y}{y_1 - y_0}(M(P_{10}) - m(p_{00})) \\
-    \frac{\partial{L(x, y)}}{\partial{y}} &= \frac{x - x_0}{x_1 - x_0}(M(P_{11}) - m(p_{01})) + \frac{x_1 - x}{x_1 - x_0}(M(P_{10}) - m(p_{00}))
+    \frac{\partial{L(x, y)}}{\partial{x}} &= \frac{y - y_0}{y_1 - y_0}(M(P_{11}) - M(P_{01})) + \frac{y_1 - y}{y_1 - y_0}(M(P_{10}) - M(P_{00})) \\
+    \frac{\partial{L(x, y)}}{\partial{y}} &= \frac{x - x_0}{x_1 - x_0}(M(P_{11}) - M(P_{10})) + \frac{x_1 - x}{x_1 - x_0}(M(P_{01}) - M(P_{00}))
 \end{aligned}</script><p>至此，我们可以求得 $\nabla{M(S_{i}(T))}$ 和 $M(S_{i}(T))$ 的值，进而求得 $\Delta{T}$，并进行迭代计算求得目标函数最小值。</p>
 <h2 id="NDT-Normal-Distribution-Transform-方法"><a href="#NDT-Normal-Distribution-Transform-方法" class="headerlink" title="NDT (Normal Distribution Transform) 方法"></a>NDT (Normal Distribution Transform) 方法</h2><h3 id="基本思想"><a href="#基本思想" class="headerlink" title="基本思想"></a>基本思想</h3><p>NDT 方法的基本思想是将空间划分成一个个 cell，这里的 cell 的概念要和栅格 grid 区分一下，通常单个栅格会取很小，其只代表了一个值。相对而言，cell 更像是一个小区域。有了各个 cell 之后为每一个 cell 定义一个高斯分布用来替代势场，因此整个空间里面就形成了一个分段连续的势场（在各自的 cell 里面连续）。通过这样的方法，结合连续的势场我们可以直接用牛顿法进行迭代（Hessian 矩阵非常好求），同时这样一个势场也不受离散化的影响。</p>
 <h3 id="数学描述"><a href="#数学描述" class="headerlink" title="数学描述"></a>数学描述</h3><p>首先定义几个变量：</p>

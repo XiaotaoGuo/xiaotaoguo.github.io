@@ -2,23 +2,23 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
-    <loc>https://guoxiaotao.xyz/2020/07/01/opencv_fill_polygon/</loc>
-    
-    <lastmod>2020-07-02T00:55:30.868Z</lastmod>
-    
-  </url>
-  
-  <url>
     <loc>https://guoxiaotao.xyz/2020/05/26/lidarSLAM-hw5/</loc>
     
-    <lastmod>2020-07-02T00:17:56.700Z</lastmod>
+    <lastmod>2020-07-05T22:12:25.283Z</lastmod>
     
   </url>
   
   <url>
     <loc>https://guoxiaotao.xyz/2020/05/24/lidarSLAM-frontend-2/</loc>
     
-    <lastmod>2020-05-25T22:45:40.527Z</lastmod>
+    <lastmod>2020-07-05T20:23:10.831Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://guoxiaotao.xyz/2020/07/01/opencv_fill_polygon/</loc>
+    
+    <lastmod>2020-07-02T00:55:30.868Z</lastmod>
     
   </url>
   
