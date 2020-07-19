@@ -2,9 +2,30 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>https://guoxiaotao.xyz/2020/07/19/cpp_threads_usage/</loc>
+    
+    <lastmod>2020-07-19T21:15:54.561Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://guoxiaotao.xyz/2020/07/14/lidarSLAM-backend/</loc>
+    
+    <lastmod>2020-07-15T04:02:37.253Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://guoxiaotao.xyz/2020/04/18/%E6%BF%80%E5%85%89slam%E4%BB%8B%E7%BB%8D%E5%8F%8A%E7%9B%B8%E5%85%B3%E6%95%B0%E5%AD%A6%E5%9F%BA%E7%A1%80/</loc>
+    
+    <lastmod>2020-07-06T04:35:19.009Z</lastmod>
+    
+  </url>
+  
+  <url>
     <loc>https://guoxiaotao.xyz/2020/05/26/lidarSLAM-hw5/</loc>
     
-    <lastmod>2020-07-05T22:12:25.283Z</lastmod>
+    <lastmod>2020-07-06T04:11:52.704Z</lastmod>
     
   </url>
   
@@ -89,13 +110,6 @@
     <loc>https://guoxiaotao.xyz/2020/04/21/lidarSLAM-3/</loc>
     
     <lastmod>2020-04-22T03:26:33.329Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>https://guoxiaotao.xyz/2020/04/18/%E6%BF%80%E5%85%89slam%E4%BB%8B%E7%BB%8D%E5%8F%8A%E7%9B%B8%E5%85%B3%E6%95%B0%E5%AD%A6%E5%9F%BA%E7%A1%80/</loc>
-    
-    <lastmod>2020-04-21T20:05:22.903Z</lastmod>
     
   </url>
   
