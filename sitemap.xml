@@ -2,16 +2,23 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
-    <loc>https://guoxiaotao.xyz/2020/07/19/cpp_threads_usage/</loc>
+    <loc>https://guoxiaotao.xyz/2020/07/14/lidarSLAM-backend/</loc>
     
-    <lastmod>2020-07-19T21:15:54.561Z</lastmod>
+    <lastmod>2020-07-19T21:20:40.286Z</lastmod>
     
   </url>
   
   <url>
-    <loc>https://guoxiaotao.xyz/2020/07/14/lidarSLAM-backend/</loc>
+    <loc>https://guoxiaotao.xyz/2020/07/01/opencv_fill_polygon/</loc>
     
-    <lastmod>2020-07-15T04:02:37.253Z</lastmod>
+    <lastmod>2020-07-19T21:19:46.166Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://guoxiaotao.xyz/2020/07/19/cpp_threads_usage/</loc>
+    
+    <lastmod>2020-07-19T21:15:54.561Z</lastmod>
     
   </url>
   
@@ -33,13 +40,6 @@
     <loc>https://guoxiaotao.xyz/2020/05/24/lidarSLAM-frontend-2/</loc>
     
     <lastmod>2020-07-05T20:23:10.831Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>https://guoxiaotao.xyz/2020/07/01/opencv_fill_polygon/</loc>
-    
-    <lastmod>2020-07-02T00:55:30.868Z</lastmod>
     
   </url>
   
