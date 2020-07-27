@@ -21,20 +21,20 @@
     var CONFIG = {"hostname":"guoxiaotao.xyz","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
   </script>
 
-  <meta name="description" content="题目描述 Given a sorted array nums, remove the duplicates in-place such that duplicates appeared at most twice and return the new length. Do not allocate extra space for another array, you must do this by">
+  <meta name="description" content="题目描述 Given an array of non-negative integers, you are initially positioned at the first index of the array. Each element in the array represents your maximum jump length at that position. Determine if">
 <meta property="og:type" content="article">
-<meta property="og:title" content="[Leetcode]80. Remove Duplicates from Sorted Array II">
-<meta property="og:url" content="https://guoxiaotao.xyz/2020/07/25/leetcode-80/index.html">
+<meta property="og:title" content="[Leetcode]55. Jump Game">
+<meta property="og:url" content="https://guoxiaotao.xyz/2020/07/27/leetcode-55/index.html">
 <meta property="og:site_name" content="Tao&#39;s Blog">
-<meta property="og:description" content="题目描述 Given a sorted array nums, remove the duplicates in-place such that duplicates appeared at most twice and return the new length. Do not allocate extra space for another array, you must do this by">
+<meta property="og:description" content="题目描述 Given an array of non-negative integers, you are initially positioned at the first index of the array. Each element in the array represents your maximum jump length at that position. Determine if">
 <meta property="og:locale" content="en_US">
-<meta property="article:published_time" content="2020-07-26T01:52:06.000Z">
-<meta property="article:modified_time" content="2020-07-26T02:06:21.900Z">
+<meta property="article:published_time" content="2020-07-27T21:21:09.000Z">
+<meta property="article:modified_time" content="2020-07-27T22:05:41.953Z">
 <meta property="article:author" content="Xiaotao Guo">
 <meta property="article:tag" content="leetcode">
 <meta name="twitter:card" content="summary">
 
-<link rel="canonical" href="https://guoxiaotao.xyz/2020/07/25/leetcode-80/">
+<link rel="canonical" href="https://guoxiaotao.xyz/2020/07/27/leetcode-55/">
 
 
 <script id="page-configurations">
@@ -47,7 +47,7 @@
   };
 </script>
 
-  <title>[Leetcode]80. Remove Duplicates from Sorted Array II | Tao's Blog</title>
+  <title>[Leetcode]55. Jump Game | Tao's Blog</title>
   
 
 
@@ -195,7 +195,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="https://guoxiaotao.xyz/2020/07/25/leetcode-80/">
+    <link itemprop="mainEntityOfPage" href="https://guoxiaotao.xyz/2020/07/27/leetcode-55/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="https://avatars3.githubusercontent.com/u/45047478?s=460&u=3be5d506be9a30bd6eadfd29cd36c61e30833bb2&v=4">
@@ -208,7 +208,7 @@
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
-          [Leetcode]80. Remove Duplicates from Sorted Array II
+          [Leetcode]55. Jump Game
         </h1>
 
         <div class="post-meta">
@@ -219,7 +219,7 @@
               <span class="post-meta-item-text">Posted on</span>
               
 
-              <time title="Created: 2020-07-25 21:52:06 / Modified: 22:06:21" itemprop="dateCreated datePublished" datetime="2020-07-25T21:52:06-04:00">2020-07-25</time>
+              <time title="Created: 2020-07-27 17:21:09 / Modified: 18:05:41" itemprop="dateCreated datePublished" datetime="2020-07-27T17:21:09-04:00">2020-07-27</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -247,8 +247,8 @@
       </span>
       <span class="post-meta-item-text">Comment Counts: </span>
     
-    <a title="valine" href="/2020/07/25/leetcode-80/#valine-comments" itemprop="discussionUrl">
-      <span class="post-comments-count valine-comment-count" data-xid="/2020/07/25/leetcode-80/" itemprop="commentCount"></span>
+    <a title="valine" href="/2020/07/27/leetcode-55/#valine-comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2020/07/27/leetcode-55/" itemprop="commentCount"></span>
     </a>
   </span>
   
@@ -258,13 +258,13 @@
               <span class="post-meta-item-icon">
                 <i class="far fa-file-word"></i>
               </span>
-              <span>1k</span>
+              <span>2.2k</span>
             </span>
             <span class="post-meta-item" title="Reading time">
               <span class="post-meta-item-icon">
                 <i class="far fa-clock"></i>
               </span>
-              <span>1 mins.</span>
+              <span>2 mins.</span>
             </span>
 
         </div>
@@ -277,23 +277,32 @@
 
       
         <h3 id="题目描述"><a href="#题目描述" class="headerlink" title="题目描述"></a>题目描述</h3><blockquote>
-<p>Given a sorted array nums, remove the duplicates in-place such that duplicates appeared at most twice and return the new length.</p>
-<p>Do not allocate extra space for another array, you must do this by modifying the input array in-place with O(1) extra memory.</p>
+<p>Given an array of non-negative integers, you are initially positioned at the first index of the array.</p>
+<p>Each element in the array represents your maximum jump length at that position.</p>
+<p>Determine if you are able to reach the last index.</p>
 </blockquote>
 <a id="more"></a>
 <h3 id="例子"><a href="#例子" class="headerlink" title="例子"></a>例子</h3><h4 id="例子-1"><a href="#例子-1" class="headerlink" title="例子 1"></a>例子 1</h4><blockquote>
-<p>Given nums = [1,1,1,2,2,3],</p>
-<p>Your function should return length = 5, with the first five elements of nums being 1, 1, 2, 2 and 3 respectively.</p>
-<p>It doesn’t matter what you leave beyond the returned length.</p>
+<p>Input: nums = [2,3,1,1,4]<br>Output: true<br>Explanation: Jump 1 step from index 0 to 1, then 3 steps to the last index.</p>
 </blockquote>
 <h4 id="例子-2"><a href="#例子-2" class="headerlink" title="例子 2"></a>例子 2</h4><blockquote>
-<p>Given nums = [0,0,1,1,1,1,2,3,3],</p>
-<p>Your function should return length = 7, with the first seven elements of nums being modified to 0, 0, 1, 1, 2, 3 and 3 respectively.</p>
-<p>It doesn’t matter what values are set beyond the returned length.</p>
+<p>Input: nums = [3,2,1,0,4]<br>Output: false<br>Explanation: You will always arrive at index 3 no matter what. Its maximum jump length is 0, which makes it impossible to reach the last index.</p>
 </blockquote>
-<h3 id="解题思路"><a href="#解题思路" class="headerlink" title="解题思路"></a>解题思路</h3><p>这道题的要求和<a href="https://guoxiaotao.xyz/2020/07/25/leetcode-26/">前一道题</a>比较类似，区别是对每个数可以最多保持两位。通过前一道题的思路，同样可以采用快慢指针的思路，只需要额外增加一个变量用来保存出现过次数即可，代码如下：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">removeDuplicates</span><span class="params">(<span class="built_in">vector</span>&lt;<span class="keyword">int</span>&gt;&amp; nums)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (nums.empty()) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">int</span> slow = <span class="number">0</span>, count = <span class="number">1</span>;</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> fast = <span class="number">1</span>; fast &lt; nums.<span class="built_in">size</span>(); fast++) &#123;</span><br><span class="line">        <span class="keyword">if</span> (nums[fast] != nums[slow]) &#123;</span><br><span class="line">            nums[++slow] = nums[fast];</span><br><span class="line">            count = <span class="number">1</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">else</span> <span class="keyword">if</span> (count &lt; <span class="number">2</span>) &#123;</span><br><span class="line">            nums[++slow] = nums[fast];</span><br><span class="line">            count++;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> slow + <span class="number">1</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>时间复杂度： O(n)<br>空间复杂度： O(1)</p>
+<h3 id="限制"><a href="#限制" class="headerlink" title="限制"></a>限制</h3><blockquote>
+<ul>
+<li>1 &lt;= nums.length &lt;= 3 * 10^4</li>
+<li>0 &lt;= nums[i] &lt;= 10^5</li>
+</ul>
+</blockquote>
+<h3 id="解题思路"><a href="#解题思路" class="headerlink" title="解题思路"></a>解题思路</h3><h4 id="方法一：暴力法-回溯"><a href="#方法一：暴力法-回溯" class="headerlink" title="方法一：暴力法(回溯)"></a>方法一：暴力法(回溯)</h4><p>思路是在每一个位置都尝试每一个能走的步骤，最后看能不能到终点，代码如下：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Solution</span> &#123;</span></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="keyword">bool</span> <span class="title">canJump</span><span class="params">(<span class="built_in">vector</span>&lt;<span class="keyword">int</span>&gt;&amp; nums)</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> canJumpAtIndex(nums, <span class="number">0</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">bool</span> <span class="title">canJumpAtIndex</span><span class="params">(<span class="keyword">const</span> <span class="built_in">vector</span>&lt;<span class="keyword">int</span>&gt;&amp; nums, <span class="keyword">int</span> index)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (index &gt;= nums.<span class="built_in">size</span>() - <span class="number">1</span>) &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> <span class="built_in">step</span> = <span class="number">1</span>; <span class="built_in">step</span> &lt;= nums[index]; <span class="built_in">step</span>++) &#123;</span><br><span class="line">            <span class="keyword">if</span> (canJumpAtIndex(nums, index + <span class="built_in">step</span>)) &#123;</span><br><span class="line">                <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>由于没有记忆每一次的结果，所以导致中间有很多重复计算；<br>时间复杂度：O(n!)<br>空间复杂度：O(1) (不算递归堆栈的空间)</p>
+<h4 id="方法二：带记忆的暴力法"><a href="#方法二：带记忆的暴力法" class="headerlink" title="方法二：带记忆的暴力法"></a>方法二：带记忆的暴力法</h4><p>根据方法一可以做一些优化，通过一个数组作为 memo 记录走过的 index 可以显著提升速度，代码如下：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Solution</span> &#123;</span></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="keyword">bool</span> <span class="title">canJump</span><span class="params">(<span class="built_in">vector</span>&lt;<span class="keyword">int</span>&gt;&amp; nums)</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">        visited_index = <span class="built_in">vector</span>&lt;<span class="keyword">bool</span>&gt;(nums.<span class="built_in">size</span>(), <span class="literal">false</span>);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> canJumpAtIndex(nums, <span class="number">0</span>);</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line"></span><br><span class="line">    <span class="built_in">vector</span>&lt;<span class="keyword">bool</span>&gt; visited_index;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">bool</span> <span class="title">canJumpAtIndex</span><span class="params">(<span class="keyword">const</span> <span class="built_in">vector</span>&lt;<span class="keyword">int</span>&gt;&amp; nums, <span class="keyword">int</span> index)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (index &gt;= nums.<span class="built_in">size</span>() - <span class="number">1</span>) &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (visited_index[index]) &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        visited_index[index] = <span class="literal">true</span>;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> <span class="built_in">step</span> = <span class="number">1</span>; <span class="built_in">step</span> &lt;= nums[index]; <span class="built_in">step</span>++) &#123;</span><br><span class="line">            <span class="keyword">if</span> (canJumpAtIndex(nums, index + <span class="built_in">step</span>)) &#123;</span><br><span class="line">                <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>时间复杂度：O(n^2)<br>空间复杂度：O(n)</p>
+<h4 id="方法三：-贪心算法"><a href="#方法三：-贪心算法" class="headerlink" title="方法三： 贪心算法"></a>方法三： 贪心算法</h4><p>维护一个最远能到的index <code>furthest_index</code>，然后遍历一边数组同时更新 <code>furthest_index</code> 直到到指定位置，或者到<code>furthest_index</code>，代码如下：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Solution</span> &#123;</span></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="keyword">bool</span> <span class="title">canJump</span><span class="params">(<span class="built_in">vector</span>&lt;<span class="keyword">int</span>&gt;&amp; nums)</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">        greedy</span><br><span class="line">        <span class="keyword">int</span> furthest_index = <span class="number">0</span>;</span><br><span class="line">        <span class="keyword">int</span> current_index = <span class="number">0</span>;</span><br><span class="line">        <span class="keyword">while</span> (current_index &lt;= furthest_index &amp;&amp; current_index &lt; nums.<span class="built_in">size</span>()) &#123;</span><br><span class="line">            furthest_index = <span class="built_in">max</span>(furthest_index, current_index + nums[current_index]);</span><br><span class="line">            current_index++;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> furthest_index &gt;= nums.<span class="built_in">size</span>() - <span class="number">1</span>;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>时间复杂度：O(n)<br>空间复杂度：O(1)</p>
 
     </div>
 
@@ -309,7 +318,7 @@
   </li>
   <li class="post-copyright-link">
     <strong>Post link: </strong>
-    <a href="https://guoxiaotao.xyz/2020/07/25/leetcode-80/" title="[Leetcode]80. Remove Duplicates from Sorted Array II">https://guoxiaotao.xyz/2020/07/25/leetcode-80/</a>
+    <a href="https://guoxiaotao.xyz/2020/07/27/leetcode-55/" title="[Leetcode]55. Jump Game">https://guoxiaotao.xyz/2020/07/27/leetcode-55/</a>
   </li>
   <li class="post-copyright-license">
     <strong>Copyright Notice:  </strong>All articles in this blog are licensed under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> unless stating additionally.
@@ -330,13 +339,10 @@
         
     <div class="post-nav">
       <div class="post-nav-item">
-    <a href="/2020/07/25/leetcode-26/" rel="prev" title="[Leetcode]26. Remove Duplicates from Sorted Array">
-      <i class="fa fa-chevron-left"></i> [Leetcode]26. Remove Duplicates from Sorted Array
+    <a href="/2020/07/26/leetcode-41/" rel="prev" title="[Leetcode]41. First Missing Positive">
+      <i class="fa fa-chevron-left"></i> [Leetcode]41. First Missing Positive
     </a></div>
-      <div class="post-nav-item">
-    <a href="/2020/07/26/leetcode-189/" rel="next" title="[Leetcode]189.Rotate Array">
-      [Leetcode]189.Rotate Array <i class="fa fa-chevron-right"></i>
-    </a></div>
+      <div class="post-nav-item"></div>
     </div>
       </footer>
     
@@ -398,7 +404,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#题目描述"><span class="nav-number">1.</span> <span class="nav-text">题目描述</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#例子"><span class="nav-number">2.</span> <span class="nav-text">例子</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#例子-1"><span class="nav-number">2.1.</span> <span class="nav-text">例子 1</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#例子-2"><span class="nav-number">2.2.</span> <span class="nav-text">例子 2</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#解题思路"><span class="nav-number">3.</span> <span class="nav-text">解题思路</span></a></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#题目描述"><span class="nav-number">1.</span> <span class="nav-text">题目描述</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#例子"><span class="nav-number">2.</span> <span class="nav-text">例子</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#例子-1"><span class="nav-number">2.1.</span> <span class="nav-text">例子 1</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#例子-2"><span class="nav-number">2.2.</span> <span class="nav-text">例子 2</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#限制"><span class="nav-number">3.</span> <span class="nav-text">限制</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#解题思路"><span class="nav-number">4.</span> <span class="nav-text">解题思路</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#方法一：暴力法-回溯"><span class="nav-number">4.1.</span> <span class="nav-text">方法一：暴力法(回溯)</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#方法二：带记忆的暴力法"><span class="nav-number">4.2.</span> <span class="nav-text">方法二：带记忆的暴力法</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#方法三：-贪心算法"><span class="nav-number">4.3.</span> <span class="nav-text">方法三： 贪心算法</span></a></li></ol></li></ol></div>
       </div>
       <!--/noindex-->
 
